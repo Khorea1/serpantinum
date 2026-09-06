@@ -296,7 +296,7 @@ Rectangle {
     Rectangle {
         id: activeHighlight
         z: 3
-        radius: barWindow ? barWindow.s(sideWsRoot.isCompact ? 7 : 8) : (sideWsRoot.isCompact ? 7 : 8)
+        radius: 0
         color: sideWsRoot.isCompact ? Qt.lighter(ThemeBackend.mauve, 1.05) : ThemeBackend.mauve
 
         property int prevIdx: 0
@@ -381,7 +381,7 @@ Rectangle {
                 Rectangle {
                     id: wsVisualShape
                     anchors.fill: parent
-                    radius: barWindow ? barWindow.s(sideWsRoot.isCompact ? 8 : 10) : (sideWsRoot.isCompact ? 8 : 10)
+                    radius: 0
                     color: wsPill.isActive ? "transparent" : (wsPill.isOccupied ? ThemeBackend.surface2 : (sideWsRoot.isCompact ? ThemeBackend.surface1 : ThemeBackend.surface0))
                     border.width: 0
 
