@@ -302,14 +302,25 @@ Rectangle {
         property int prevIdx: 0
         property int curIdx: sideWsRoot.activeIndex
 
+        // Mirrors the top-bar highlight, on the vertical axis: leading edge
+        // arrives first, trailing edge catches up later (base + stretch),
+        // and OutBack makes each edge overshoot before settling — the pill
+        // grows past its final size while moving, then shrinks back into
+        // place rather than just gliding to a stop.
+        readonly property int baseDuration: 260
+        readonly property int stretchPerStep: 55
+        readonly property int maxStretchSteps: 4
+
         onCurIdxChanged: {
-            if (curIdx >= 0 && prevIdx >= 0) {
+            if (curIdx >= 0 && prevIdx >= 0 && curIdx !== prevIdx) {
+                let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
+                let stretch = stretchPerStep * steps;
                 if (curIdx > prevIdx) {
-                    topAnim.duration = 400;
-                    bottomAnim.duration = 300;
-                } else if (curIdx < prevIdx) {
-                    topAnim.duration = 300;
-                    bottomAnim.duration = 400;
+                    topAnim.duration = baseDuration + stretch;
+                    bottomAnim.duration = baseDuration;
+                } else {
+                    topAnim.duration = baseDuration;
+                    bottomAnim.duration = baseDuration + stretch;
                 }
             }
             if (curIdx >= 0) {
@@ -334,8 +345,8 @@ Rectangle {
         property real actualTop: targetTop
         property real actualBottom: targetBottom
 
-        Behavior on actualTop { NumberAnimation { id: topAnim; duration: 380; easing.type: Easing.OutQuint } }
-        Behavior on actualBottom { NumberAnimation { id: bottomAnim; duration: 380; easing.type: Easing.OutQuint } }
+        Behavior on actualTop { NumberAnimation { id: topAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
+        Behavior on actualBottom { NumberAnimation { id: bottomAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
 
         x: wsCol.x + (wsCol.width - width) / 2
         y: wsCol.y + actualTop

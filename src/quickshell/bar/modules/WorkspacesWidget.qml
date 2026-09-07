@@ -299,14 +299,26 @@ Rectangle {
         property int prevIdx: 0
         property int curIdx: workspacesWidgetRoot.activeIndex
 
+        // Leading edge arrives first (short duration), trailing edge catches up
+        // later (base + stretch). The gap between them is what makes the pill
+        // visibly elongate along the direction of travel while it's in motion,
+        // and the OutBack easing below makes each edge overshoot its target by
+        // a little before settling back — so the pill grows past its final
+        // size, then shrinks back into place instead of just gliding to a stop.
+        readonly property int baseDuration: 260
+        readonly property int stretchPerStep: 55
+        readonly property int maxStretchSteps: 4
+
         onCurIdxChanged: {
-            if (curIdx >= 0 && prevIdx >= 0) {
+            if (curIdx >= 0 && prevIdx >= 0 && curIdx !== prevIdx) {
+                let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
+                let stretch = stretchPerStep * steps;
                 if (curIdx > prevIdx) {
-                    leftAnim.duration = 400;
-                    rightAnim.duration = 300;
-                } else if (curIdx < prevIdx) {
-                    leftAnim.duration = 300;
-                    rightAnim.duration = 400;
+                    leftAnim.duration = baseDuration + stretch;
+                    rightAnim.duration = baseDuration;
+                } else {
+                    leftAnim.duration = baseDuration;
+                    rightAnim.duration = baseDuration + stretch;
                 }
             }
             if (curIdx >= 0) {
@@ -331,8 +343,8 @@ Rectangle {
         property real actualLeft: targetLeft
         property real actualRight: targetRight
 
-        Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 380; easing.type: Easing.OutQuint } }
-        Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 380; easing.type: Easing.OutQuint } }
+        Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
+        Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
 
         x: wsLayout.x + actualLeft
         y: wsLayout.y + (wsLayout.height - height) / 2
