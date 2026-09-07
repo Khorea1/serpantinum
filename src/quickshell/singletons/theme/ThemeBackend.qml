@@ -98,20 +98,22 @@ Item {
         property bool forceRescan: false
 
         command: {
-            let sys = Caching.serpantinumDir ? (Caching.serpantinumDir + "/assets/fonts") : "";
-            let usr = Caching.stateDir ? (Caching.stateDir + "/fonts") : (Caching.home + "/.local/state/serpantinum/fonts");
+            let local = "";
+            let user = Caching.stateDir ? (Caching.stateDir + "/fonts") : (Caching.home + "/.local/state/serpantinum/fonts");
             let cacheFile = Caching.stateDir ? (Caching.stateDir + "/fonts_cache.txt") : (Caching.home + "/.local/state/serpantinum/fonts_cache.txt");
             let force = forceRescan ? "true" : "false";
 
             let cmd = "CACHE=\"" + cacheFile + "\"; ";
             cmd += "if [ \"" + force + "\" = \"true\" ] || [ ! -f \"$CACHE\" ]; then ";
             cmd += "mkdir -p \"$(dirname \"$CACHE\")\"; ";
-            cmd += "find ";
-            if (sys !== "") cmd += "\"" + sys + "\" ";
-            cmd += "\"" + usr + "\" -type f \\( -iname \"*.ttf\" -o -iname \"*.otf\" -o -iname \"*.ttc\" \\) 2>/dev/null | sort | while read -r f; do ";
-            cmd += "FAM=$(fc-query -f \"%{family}\" \"$f\" 2>/dev/null | cut -d, -f1); ";
+            cmd += "{ ";
+            cmd += "find \"" + user + "\" -type f \\( -iname \"*.ttf\" -o -iname \"*.otf\" -o -iname \"*.ttc\" \\) 2>/dev/null; ";
+            cmd += "fc-list : file 2>/dev/null | cut -d: -f1; ";
+            cmd += "} | sort -u | while read -r f; do ";
+            cmd += "[ -f \"$f\" ] || continue; ";
+            cmd += "FAM=$(fc-query -f \"%{family[0]}\" \"$f\" 2>/dev/null); ";
             cmd += "if [ -z \"$FAM\" ]; then FAM=$(basename \"$f\" | sed 's/\\.[^.]*$//'); fi; ";
-            cmd += "STL=$(fc-query -f \"%{style}\" \"$f\" 2>/dev/null | cut -d, -f1); ";
+            cmd += "STL=$(fc-query -f \"%{style[0]}\" \"$f\" 2>/dev/null); ";
             cmd += "if [ -n \"$STL\" ] && [ \"$STL\" != \"Regular\" ]; then echo \"$FAM $STL|$f\"; else echo \"$FAM|$f\"; fi; ";
             cmd += "done > \"$CACHE.tmp\" || true; mv \"$CACHE.tmp\" \"$CACHE\"; ";
             cmd += "fi; ";
