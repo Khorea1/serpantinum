@@ -290,59 +290,94 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        id: activeHighlight
-        z: 3
-        radius: 0
-        color: workspacesWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.mauve, 1.05) : ThemeBackend.mauve
+Rectangle {
+    id: activeHighlight
+    z: 3
+    radius: 0
+    color: workspacesWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.mauve, 1.05) : ThemeBackend.mauve
+    property int prevIdx: 0
+    property int curIdx: workspacesWidgetRoot.activeIndex
+    // idx a partir de onde medimos o deslocamento acumulado para o "flourish" final
+    property int settledIdx: curIdx
+    readonly property int baseDuration: 260
+    readonly property int stretchPerStep: 35
+    readonly property int maxStretchSteps: 6
+    property real pulseLeft: 0
+    property real pulseRight: 0
 
-        property int prevIdx: 0
-        property int curIdx: workspacesWidgetRoot.activeIndex
+    SequentialAnimation {
+        id: pulseLeftAnim
+        NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: barWindow.s(18); duration: 0 }
+        NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: 0; duration: 220; easing.type: Easing.OutCubic }
+    }
+    SequentialAnimation {
+        id: pulseRightAnim
+        NumberAnimation { target: activeHighlight; property: "pulseRight"; to: barWindow.s(18); duration: 0 }
+        NumberAnimation { target: activeHighlight; property: "pulseRight"; to: 0; duration: 220; easing.type: Easing.OutCubic }
+    }
 
-        // Leading edge arrives first (short duration), trailing edge catches up
-        // later (base + stretch). The gap between them is what makes the pill
-        // visibly elongate along the direction of travel while it's in motion,
-        // and the OutBack easing below makes each edge overshoot its target by
-        // a little before settling back — so the pill grows past its final
-        // size, then shrinks back into place instead of just gliding to a stop.
-        readonly property int baseDuration: 260
-        readonly property int stretchPerStep: 55
-        readonly property int maxStretchSteps: 4
-
-        property real pulseLeft: 0
-        property real pulseRight: 0
-
-        SequentialAnimation {
-            id: pulseLeftAnim
-            NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: barWindow.s(22); duration: 0 }
-            NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: 0; duration: 380; easing.type: Easing.OutCubic }
-        }
-        SequentialAnimation {
-            id: pulseRightAnim
-            NumberAnimation { target: activeHighlight; property: "pulseRight"; to: barWindow.s(22); duration: 0 }
-            NumberAnimation { target: activeHighlight; property: "pulseRight"; to: 0; duration: 380; easing.type: Easing.OutCubic }
-        }
-
-        onCurIdxChanged: {
-            if (curIdx >= 0 && prevIdx >= 0 && curIdx !== prevIdx) {
-                let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
-                let stretch = stretchPerStep * steps;
-                if (curIdx > prevIdx) {
-                    // moved right: trailing edge is left
-                    leftAnim.duration = baseDuration + stretch;
-                    rightAnim.duration = baseDuration;
+    // Enquanto o usuário está "spamando" mudanças, só reposiciona liso e rápido.
+    // O estica-e-pulsa só acontece depois de um breve silêncio (idle).
+    Timer {
+        id: highlightSettleTimer
+        interval: 110
+        repeat: false
+        onTriggered: {
+            let from = activeHighlight.settledIdx;
+            let to = activeHighlight.curIdx;
+            if (from >= 0 && to >= 0 && from !== to) {
+                let steps = Math.min(Math.abs(to - from), activeHighlight.maxStretchSteps);
+                let stretch = activeHighlight.stretchPerStep * steps;
+                if (to > from) {
+                    leftAnim.duration = activeHighlight.baseDuration + stretch;
+                    rightAnim.duration = activeHighlight.baseDuration;
                     pulseLeftAnim.restart();
                 } else {
-                    // moved left: trailing edge is right
-                    leftAnim.duration = baseDuration;
-                    rightAnim.duration = baseDuration + stretch;
+                    leftAnim.duration = activeHighlight.baseDuration;
+                    rightAnim.duration = activeHighlight.baseDuration + stretch;
                     pulseRightAnim.restart();
                 }
+                // Força o Behavior a "replay" do settledIdx até o curIdx atual com o efeito
+                activeHighlight.actualLeft = activeHighlight.getX(from, from);
+                activeHighlight.actualRight = activeHighlight.actualLeft + barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28);
+                activeHighlight.actualLeft = activeHighlight.targetLeft;
+                activeHighlight.actualRight = activeHighlight.targetRight;
             }
-            if (curIdx >= 0) {
-                prevIdx = curIdx;
-            }
+            activeHighlight.settledIdx = to;
         }
+    }
+
+    onCurIdxChanged: {
+        // Durante o spam: duração neutra, sem stretch, sem pulso — só acompanha.
+        leftAnim.duration = baseDuration;
+        rightAnim.duration = baseDuration;
+        highlightSettleTimer.restart();
+    }
+
+    function getX(index, activeIndex) {
+        if (index < 0) return 0;
+        let xPos = 0;
+        let spacing = barWindow.s(workspacesWidgetRoot.isCompact ? 7 : 8);
+        let activeW = barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28);
+        let inactiveW = barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18);
+        for (let i = 0; i < index; i++) {
+            xPos += (i === activeIndex ? activeW : inactiveW) + spacing;
+        }
+        return xPos;
+    }
+    property real targetLeft: curIdx >= 0 ? getX(curIdx, curIdx) : 0
+    property real targetRight: curIdx >= 0 ? targetLeft + barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28) : 0
+    property real actualLeft: targetLeft
+    property real actualRight: targetRight
+    Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 260; easing.type: Easing.OutExpo } }
+    Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 260; easing.type: Easing.OutExpo } }
+    x: wsLayout.x + actualLeft - pulseLeft
+    y: wsLayout.y + (wsLayout.height - height) / 2
+    width: actualRight - actualLeft + pulseLeft + pulseRight
+    height: barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
+    opacity: (workspacesWidgetRoot.workspaceCount > 0 && workspacesWidgetRoot.activeIndex >= 0) ? 1.0 : 0.0
+    Behavior on opacity { NumberAnimation { duration: 150 } }
+}
 
         function getX(index, activeIndex) {
             if (index < 0) return 0;
