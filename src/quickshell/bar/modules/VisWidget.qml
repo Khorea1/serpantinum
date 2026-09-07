@@ -4,6 +4,7 @@ import QtQuick.Window
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import "../../reusables"
 import "../../"
 
@@ -19,7 +20,9 @@ Rectangle {
     property real targetX: 0
     property bool showLayout: !barWindow || barWindow.isStartupReady
     property int barCount: 16
-    property bool isVisVisible: moduleActive && showLayout
+    property var player: MprisController.activePlayer
+    property bool isMediaActive: player !== null && player.playbackState !== MprisPlaybackState.Stopped && player.trackTitle !== ""
+    property bool isVisVisible: moduleActive && showLayout && isMediaActive
     property bool isSubscribed: false
     readonly property bool shouldSubscribe: isVisVisible
 
@@ -96,11 +99,11 @@ Rectangle {
     color: isGrouped ? "transparent" : (isSolid ? (distinctPills ? Qt.darker(ThemeBackend.surface0, 1.15) : "transparent") : ThemeBackend.base)
     clip: true
 
-    property real targetWidth: (moduleActive && innerLayout.implicitWidth > 0) ? (innerLayout.implicitWidth + (barWindow ? barWindow.s(isCompact ? 20 : 24) : (isCompact ? 20 : 24))) : 0
+    property real targetWidth: (moduleActive && isMediaActive && innerLayout.implicitWidth > 0) ? (innerLayout.implicitWidth + (barWindow ? barWindow.s(isCompact ? 20 : 24) : (isCompact ? 20 : 24))) : 0
     width: targetWidth
     Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
 
-    opacity: (moduleActive && showLayout) ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
+    opacity: (moduleActive && isMediaActive && showLayout) ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
     visible: opacity > 0
     Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 

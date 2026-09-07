@@ -48,7 +48,7 @@ Rectangle {
     property real sidePadding: barWindow ? barWindow.s(isCompact ? 6 : 8) : (isCompact ? 6 : 8)
 
     property real targetWidth: {
-        if (!moduleActive) return 0;
+        if (!moduleActive || !isMediaActive) return 0;
         let iconW = barWindow ? barWindow.s(isCompact ? 26 : 28) : (isCompact ? 26 : 28);
         let gapInfo = barWindow ? barWindow.s(isCompact ? 8 : 10) : (isCompact ? 8 : 10);
         let btnW = (barWindow ? barWindow.s(isCompact ? 28 : 30) : (isCompact ? 28 : 30)) * 3 + btnSpacing * 2;
@@ -62,7 +62,7 @@ Rectangle {
         NumberAnimation { duration: 600; easing.type: Easing.OutQuint }
     }
 
-    opacity: moduleActive ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
+    opacity: (moduleActive && isMediaActive) ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
     visible: opacity > 0
     Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 

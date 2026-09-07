@@ -4,6 +4,7 @@ import QtQuick.Window
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import "../../reusables"
 import "../../"
 
@@ -20,7 +21,9 @@ Rectangle {
     property real targetY: 0
     property bool showLayout: !barWindow || barWindow.isStartupReady
     property int barCount: 12
-    property bool isVisVisible: moduleActive && showLayout
+    property var player: MprisController.activePlayer
+    property bool isMediaActive: player !== null && player.playbackState !== MprisPlaybackState.Stopped && player.trackTitle !== ""
+    property bool isVisVisible: moduleActive && showLayout && isMediaActive
     property bool isSubscribed: false
     readonly property bool shouldSubscribe: isVisVisible
 
@@ -66,7 +69,7 @@ Rectangle {
     }
 
     property real targetWidth: barWindow ? (isGrouped ? barWindow.barHeight - 8 : ((isSolid && distinctPills) ? barWindow.barHeight - 6 : barWindow.barHeight)) : (isGrouped ? 22 : ((isSolid && distinctPills) ? 24 : 30))
-    property real targetHeight: (moduleActive && innerCol.implicitHeight > 0) ? (innerCol.implicitHeight + (barWindow ? barWindow.s(isCompact ? 18 : 22) : (isCompact ? 18 : 22))) : 0
+    property real targetHeight: (moduleActive && isMediaActive && innerCol.implicitHeight > 0) ? (innerCol.implicitHeight + (barWindow ? barWindow.s(isCompact ? 18 : 22) : (isCompact ? 18 : 22))) : 0
 
     width: targetWidth
     height: targetHeight
@@ -79,7 +82,7 @@ Rectangle {
     color: isGrouped ? "transparent" : (isSolid ? (distinctPills ? Qt.darker(ThemeBackend.surface0, 1.15) : "transparent") : ThemeBackend.base)
     clip: true
 
-    opacity: (moduleActive && showLayout) ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
+    opacity: (moduleActive && isMediaActive && showLayout) ? ((barWindow && barWindow.barOpacity !== undefined) ? barWindow.barOpacity : 1.0) : 0.0
     visible: opacity > 0
     Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
