@@ -1,6 +1,8 @@
 [config]
 reload_apps = false
 
+command = "awww img --transition-type random {{ image }} && cp -f {{ image }} /home/khorea/.cache/marina/homepage/wallpaper/current.jpg"
+
 [templates.quickshell]
 input_path = "templates/serpantinum_matugen_colors.json.template"
 output_path = "~/.local/state/serpantinum/qs_colors.json"
@@ -16,3 +18,7 @@ output_path = "~/.config/kitty/colors.conf"
 [templates.cava]
 input_path = "templates/cava-colors.ini.template"
 output_path = "~/.config/cava/config"
+
+[templates.niri]
+input_path = '~/.config/matugen/templates/niri-colors.kdl'
+output_path = '~/.dotfiles/Configs/niri/.config/niri/colors.kdl'
