@@ -309,6 +309,25 @@ Rectangle {
         readonly property int stretchPerStep: 55
         readonly property int maxStretchSteps: 4
 
+        property real pulseBonus: 0
+
+        SequentialAnimation {
+            id: pulseAnim
+            NumberAnimation {
+                target: activeHighlight
+                property: "pulseBonus"
+                to: barWindow.s(22)
+                duration: 0
+            }
+            NumberAnimation {
+                target: activeHighlight
+                property: "pulseBonus"
+                to: 0
+                duration: 380
+                easing.type: Easing.OutCubic
+            }
+        }
+
         onCurIdxChanged: {
             if (curIdx >= 0 && prevIdx >= 0 && curIdx !== prevIdx) {
                 let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
@@ -320,6 +339,7 @@ Rectangle {
                     leftAnim.duration = baseDuration;
                     rightAnim.duration = baseDuration + stretch;
                 }
+                pulseAnim.restart();
             }
             if (curIdx >= 0) {
                 prevIdx = curIdx;
@@ -330,7 +350,7 @@ Rectangle {
             if (index < 0) return 0;
             let xPos = 0;
             let spacing = barWindow.s(workspacesWidgetRoot.isCompact ? 7 : 8);
-            let activeW = barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 36);
+            let activeW = barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28);
             let inactiveW = barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18);
             for (let i = 0; i < index; i++) {
                 xPos += (i === activeIndex ? activeW : inactiveW) + spacing;
@@ -339,16 +359,16 @@ Rectangle {
         }
 
         property real targetLeft: curIdx >= 0 ? getX(curIdx, curIdx) : 0
-        property real targetRight: curIdx >= 0 ? targetLeft + barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 36) : 0
+        property real targetRight: curIdx >= 0 ? targetLeft + barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28) : 0
         property real actualLeft: targetLeft
         property real actualRight: targetRight
 
         Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
         Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
 
-        x: wsLayout.x + actualLeft
+        x: wsLayout.x + actualLeft - pulseBonus / 2
         y: wsLayout.y + (wsLayout.height - height) / 2
-        width: actualRight - actualLeft
+        width: actualRight - actualLeft + pulseBonus
         height: barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
         opacity: (workspacesWidgetRoot.workspaceCount > 0 && workspacesWidgetRoot.activeIndex >= 0) ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -381,7 +401,7 @@ Rectangle {
                 property bool isActive: index === workspacesWidgetRoot.activeIndex
                 property bool initAnimTrigger: false
 
-                width: isActive ? barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 36) : barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
+                width: isActive ? barWindow.s(workspacesWidgetRoot.isCompact ? 34 : 28) : barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
                 height: barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
                 anchors.verticalCenter: parent.verticalCenter
 
