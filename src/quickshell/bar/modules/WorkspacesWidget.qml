@@ -309,23 +309,18 @@ Rectangle {
         readonly property int stretchPerStep: 55
         readonly property int maxStretchSteps: 4
 
-        property real pulseBonus: 0
+        property real pulseLeft: 0
+        property real pulseRight: 0
 
         SequentialAnimation {
-            id: pulseAnim
-            NumberAnimation {
-                target: activeHighlight
-                property: "pulseBonus"
-                to: barWindow.s(22)
-                duration: 0
-            }
-            NumberAnimation {
-                target: activeHighlight
-                property: "pulseBonus"
-                to: 0
-                duration: 380
-                easing.type: Easing.OutCubic
-            }
+            id: pulseLeftAnim
+            NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: barWindow.s(22); duration: 0 }
+            NumberAnimation { target: activeHighlight; property: "pulseLeft"; to: 0; duration: 380; easing.type: Easing.OutCubic }
+        }
+        SequentialAnimation {
+            id: pulseRightAnim
+            NumberAnimation { target: activeHighlight; property: "pulseRight"; to: barWindow.s(22); duration: 0 }
+            NumberAnimation { target: activeHighlight; property: "pulseRight"; to: 0; duration: 380; easing.type: Easing.OutCubic }
         }
 
         onCurIdxChanged: {
@@ -333,13 +328,16 @@ Rectangle {
                 let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
                 let stretch = stretchPerStep * steps;
                 if (curIdx > prevIdx) {
+                    // moved right: trailing edge is left
                     leftAnim.duration = baseDuration + stretch;
                     rightAnim.duration = baseDuration;
+                    pulseLeftAnim.restart();
                 } else {
+                    // moved left: trailing edge is right
                     leftAnim.duration = baseDuration;
                     rightAnim.duration = baseDuration + stretch;
+                    pulseRightAnim.restart();
                 }
-                pulseAnim.restart();
             }
             if (curIdx >= 0) {
                 prevIdx = curIdx;
@@ -366,9 +364,9 @@ Rectangle {
         Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
         Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
 
-        x: wsLayout.x + actualLeft - pulseBonus / 2
+        x: wsLayout.x + actualLeft - pulseLeft
         y: wsLayout.y + (wsLayout.height - height) / 2
-        width: actualRight - actualLeft + pulseBonus
+        width: actualRight - actualLeft + pulseLeft + pulseRight
         height: barWindow.s(workspacesWidgetRoot.isCompact ? 16 : 18)
         opacity: (workspacesWidgetRoot.workspaceCount > 0 && workspacesWidgetRoot.activeIndex >= 0) ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { duration: 180 } }
