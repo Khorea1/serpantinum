@@ -34,7 +34,7 @@ Rectangle {
         NumberAnimation { duration: 600; easing.type: Easing.OutQuint }
     }
 
-    radius: ThemeBackend.borderRadius
+    radius: 0
     border.width: 0
     color: isGrouped ? "transparent" : (isSolid ? (distinctPills ? Qt.darker(ThemeBackend.surface0, 1.15) : "transparent") : ThemeBackend.base)
     height: barWindow ? (isGrouped ? barWindow.barHeight - 8 : ((isSolid && distinctPills) ? barWindow.barHeight - 6 : barWindow.barHeight)) : (isGrouped ? 22 : ((isSolid && distinctPills) ? 24 : 30))
@@ -108,9 +108,9 @@ Rectangle {
                         id: mediaThumbBox
                         width: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 26 : 28) : (mediaWidgetRoot.isCompact ? 26 : 28)
                         height: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 26 : 28) : (mediaWidgetRoot.isCompact ? 26 : 28)
-                        radius: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 9 : 10) : (mediaWidgetRoot.isCompact ? 9 : 10)
+                        radius: 0
                         color: mediaWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.surface1, 1.1) : ThemeBackend.surface1
-                        border.width: 1
+                        border.width: 0
                         border.color: (isMediaActive && MprisController.isPlaying) ? ThemeBackend.mauve : (mediaWidgetRoot.isCompact ? ThemeBackend.surface2 : ThemeBackend.surface1)
                         clip: true
                         anchors.verticalCenter: parent.verticalCenter
@@ -148,14 +148,14 @@ Rectangle {
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: mediaThumbBox.radius
+                                radius: 0
                                 color: "black"
                             }
                         }
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: parent.radius
+                            radius: 0
                             color: ThemeBackend.surface0
                             opacity: 0.15
                             visible: isMediaActive && MprisController.artUrl !== "" && mediaArtImg.status === Image.Ready
@@ -264,7 +264,7 @@ Rectangle {
                     id: prevMediaButton
                     height: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
                     width: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
-                    cornerRadius: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 9 : 10) : (mediaWidgetRoot.isCompact ? 9 : 10)
+                    cornerRadius: 0
                     buttonIcon: "󰒮"
                     iconFontSize: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 15 : 16) : (mediaWidgetRoot.isCompact ? 15 : 16)
                     accentColor: mediaWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
@@ -277,7 +277,7 @@ Rectangle {
                     id: playMediaButton
                     height: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
                     width: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
-                    cornerRadius: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 9 : 10) : (mediaWidgetRoot.isCompact ? 9 : 10)
+                    cornerRadius: 0
                     buttonIcon: (isMediaActive && MprisController.isPlaying) ? "󰏤" : "󰐊"
                     iconFontSize: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 17 : 18) : (mediaWidgetRoot.isCompact ? 17 : 18)
                     accentColor: mediaWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
@@ -290,7 +290,7 @@ Rectangle {
                     id: nextMediaButton
                     height: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
                     width: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 28 : 30) : (mediaWidgetRoot.isCompact ? 28 : 30)
-                    cornerRadius: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 9 : 10) : (mediaWidgetRoot.isCompact ? 9 : 10)
+                    cornerRadius: 0
                     buttonIcon: "󰒭"
                     iconFontSize: barWindow ? barWindow.s(mediaWidgetRoot.isCompact ? 15 : 16) : (mediaWidgetRoot.isCompact ? 15 : 16)
                     accentColor: mediaWidgetRoot.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0

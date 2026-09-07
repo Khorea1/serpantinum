@@ -249,14 +249,14 @@ Rectangle {
         SysMonPill {
             value: isNaN(SysData.cpu) ? 0 : SysData.cpu / 100.0
             textVal: (isNaN(SysData.cpu) ? 0 : Math.round(SysData.cpu)) + "%"
-            icon: "\uF2DB"
+            icon: ""
             accentColor: ThemeBackend.mauve
         }
 
         SysMonPill {
             value: isNaN(SysData.ramPercent) ? 0 : SysData.ramPercent / 100.0
             textVal: (isNaN(SysData.ramPercent) ? 0 : Math.round(SysData.ramPercent)) + "%"
-            icon: "󰍛"
+            icon: ""
             accentColor: ThemeBackend.sapphire
         }
 
