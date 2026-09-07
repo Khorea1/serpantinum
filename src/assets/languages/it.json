@@ -37,7 +37,8 @@
       "update": "Aggiorna",
       "about": "Informazioni",
       "display_widgets": "Widget",
-      "display_general": "Generale"
+      "display_general": "Generale",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -80,7 +81,9 @@
         "bottom_right": "In basso a destra",
         "bottom_left": "In basso a sinistra",
         "top_center": "In alto al centro",
-        "bottom_center": "In basso al centro"
+        "bottom_center": "In basso al centro",
+        "select_on_screen": "Seleziona sullo schermo...",
+        "close_selector": "Chiudi selettore"
       },
       "sound": {
         "title": "Suono delle notifiche",
@@ -467,7 +470,46 @@
         "excluded_apps_desc": "Escludi le app dal tracciamento complessivo da ora in poi"
       }
     },
-    "update_available": "Aggiornamento disponibile"
+    "update_available": "Aggiornamento disponibile",
+    "osd": {
+      "capslock": {
+        "title": "Mostra con Blocco Maiuscole"
+      },
+      "numlock": {
+        "title": "Mostra con Blocco Numeri"
+      },
+      "airplane": {
+        "title": "Mostra in Modalità Aereo"
+      },
+      "attach_bar": {
+        "title": "Aggancia alla barra in stile solid/fill",
+        "desc": "Aggancia l'OSD alla barra nei modi solid o fill. Se disattivato, l'OSD rimarrà sempre nella posizione configurata."
+      },
+      "test": "Testa OSD",
+      "position": {
+        "title": "Posizione sullo schermo dell'On-Screen Display",
+        "desc": "Trascina la casella di anteprima per cambiare posizione",
+        "select_on_screen": "Seleziona sullo schermo...",
+        "close_selector": "Chiudi selettore",
+        "bottom_center": "In basso al centro",
+        "bottom_left": "In basso a sinistra",
+        "bottom_right": "In basso a destra",
+        "top_center": "In alto al centro",
+        "top_left": "In alto a sinistra",
+        "top_right": "In alto a destra"
+      },
+      "orientation": {
+        "horizontal": "Orizzontale",
+        "vertical": "Verticale"
+      }
+    },
+    "common": {
+      "show_bar": "Mostra barra",
+      "unavailable": "Non disponibile"
+    },
+    "position": {
+      "custom": "Personalizzato"
+    }
   },
   "sysnotif": {
     "battery": {

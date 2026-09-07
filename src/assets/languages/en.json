@@ -37,7 +37,8 @@
       "update": "Update",
       "about": "About",
       "display_widgets": "Widgets",
-      "display_general": "General"
+      "display_general": "General",
+      "osd": "On-Screen Display"
     },
     "launcher": {
       "position": {
@@ -80,7 +81,9 @@
         "bottom_right": "Bottom right",
         "bottom_left": "Bottom left",
         "top_center": "Top center",
-        "bottom_center": "Bottom center"
+        "bottom_center": "Bottom center",
+        "select_on_screen": "Select on screen...",
+        "close_selector": "Close the selector"
       },
       "sound": {
         "title": "Notification sound",
@@ -468,7 +471,46 @@
         "excluded_apps_desc": "Exclude apps from overall tracking going forward"
       }
     },
-    "update_available": "Update available"
+    "update_available": "Update available",
+    "osd": {
+      "capslock": {
+        "title": "Show on Caps Lock"
+      },
+      "numlock": {
+        "title": "Show on Num Lock"
+      },
+      "airplane": {
+        "title": "Show on Airplane Mode"
+      },
+      "attach_bar": {
+        "title": "Attach to the bar in solid/fill style",
+        "desc": "Snap OSD popups to the status bar in solid or fill mode. When disabled, the OSD always stays in the configured position."
+      },
+      "test": "Test OSD",
+      "position": {
+        "title": "Screen position of On-Screen Display",
+        "desc": "Drag the preview box to change position",
+        "select_on_screen": "Select on screen...",
+        "close_selector": "Close the selector",
+        "bottom_center": "Bottom Center",
+        "bottom_left": "Bottom Left",
+        "bottom_right": "Bottom Right",
+        "top_center": "Top Center",
+        "top_left": "Top Left",
+        "top_right": "Top Right"
+      },
+      "orientation": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertical"
+      }
+    },
+    "common": {
+      "show_bar": "Show bar",
+      "unavailable": "Unavailable"
+    },
+    "position": {
+      "custom": "Custom"
+    }
   },
   "sysnotif": {
     "battery": {

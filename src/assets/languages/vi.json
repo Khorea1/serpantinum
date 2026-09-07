@@ -37,7 +37,8 @@
       "update": "Cập nhật",
       "about": "Giới thiệu",
       "display_widgets": "Tiện ích",
-      "display_general": "Chung"
+      "display_general": "Chung",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -80,7 +81,9 @@
         "bottom_right": "Dưới cùng bên phải",
         "bottom_left": "Dưới cùng bên trái",
         "top_center": "Giữa phía trên",
-        "bottom_center": "Giữa phía dưới"
+        "bottom_center": "Giữa phía dưới",
+        "select_on_screen": "Chọn trên màn hình...",
+        "close_selector": "Đóng bộ chọn"
       },
       "sound": {
         "title": "Âm thanh thông báo",
@@ -468,7 +471,46 @@
         "excluded_apps_desc": "Loại trừ ứng dụng khỏi việc theo dõi tổng thể từ bây giờ"
       }
     },
-    "update_available": "Có bản cập nhật mới"
+    "update_available": "Có bản cập nhật mới",
+    "osd": {
+      "capslock": {
+        "title": "Hiện khi bật Caps Lock"
+      },
+      "numlock": {
+        "title": "Hiện khi bật Num Lock"
+      },
+      "airplane": {
+        "title": "Hiện ở Chế độ máy bay"
+      },
+      "attach_bar": {
+        "title": "Gắn vào thanh ở kiểu solid/fill",
+        "desc": "Gắn OSD vào thanh trạng thái ở chế độ solid hoặc fill. Khi tắt, OSD sẽ luôn ở vị trí đã định cấu hình."
+      },
+      "test": "Thử nghiệm OSD",
+      "position": {
+        "title": "Vị trí màn hình của On-Screen Display",
+        "desc": "Kéo hộp xem trước để thay đổi vị trí",
+        "select_on_screen": "Chọn trên màn hình...",
+        "close_selector": "Đóng bộ chọn",
+        "bottom_center": "Dưới cùng ở giữa",
+        "bottom_left": "Dưới cùng bên trái",
+        "bottom_right": "Dưới cùng bên phải",
+        "top_center": "Trên cùng ở giữa",
+        "top_left": "Trên cùng bên trái",
+        "top_right": "Trên cùng bên phải"
+      },
+      "orientation": {
+        "horizontal": "Ngang",
+        "vertical": "Dọc"
+      }
+    },
+    "common": {
+      "show_bar": "Hiện thanh bar",
+      "unavailable": "Không khả dụng"
+    },
+    "position": {
+      "custom": "Tùy chỉnh"
+    }
   },
   "sysnotif": {
     "battery": {

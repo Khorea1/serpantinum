@@ -37,7 +37,8 @@
       "update": "업데이트",
       "about": "정보",
       "display_widgets": "위젯",
-      "display_general": "일반"
+      "display_general": "일반",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -80,7 +81,9 @@
         "bottom_right": "오른쪽 아래",
         "bottom_left": "왼쪽 아래",
         "top_center": "위쪽 가운데",
-        "bottom_center": "아래쪽 가운데"
+        "bottom_center": "아래쪽 가운데",
+        "select_on_screen": "화면에서 선택...",
+        "close_selector": "선택기 닫기"
       },
       "sound": {
         "title": "알림음",
@@ -468,7 +471,46 @@
         "excluded_apps_desc": "앞으로 전체 사용량 집계에서 제외할 앱을 지정합니다"
       }
     },
-    "update_available": "업데이트 있음"
+    "update_available": "업데이트 있음",
+    "osd": {
+      "capslock": {
+        "title": "Caps Lock 활성화 시 표시"
+      },
+      "numlock": {
+        "title": "Num Lock 활성화 시 표시"
+      },
+      "airplane": {
+        "title": "비행기 탑승 모드 시 표시"
+      },
+      "attach_bar": {
+        "title": "solid/fill 스타일에서 바에 고정",
+        "desc": "solid 또는 fill 모드에서 OSD 팝업을 상태 바에 고정합니다. 비활성화하면 OSD가 항상 설정된 위치에 표시됩니다."
+      },
+      "test": "OSD 테스트",
+      "position": {
+        "title": "화면 On-Screen Display 위치",
+        "desc": "미리보기 상자를 드래그하여 위치를 변경하세요",
+        "select_on_screen": "화면에서 선택...",
+        "close_selector": "선택기 닫기",
+        "bottom_center": "하단 중앙",
+        "bottom_left": "하단 왼쪽",
+        "bottom_right": "하단 오른쪽",
+        "top_center": "상단 중앙",
+        "top_left": "상단 왼쪽",
+        "top_right": "상단 오른쪽"
+      },
+      "orientation": {
+        "horizontal": "가로",
+        "vertical": "세로"
+      }
+    },
+    "common": {
+      "show_bar": "바 표시",
+      "unavailable": "사용 불가"
+    },
+    "position": {
+      "custom": "사용자 지정"
+    }
   },
   "sysnotif": {
     "battery": {

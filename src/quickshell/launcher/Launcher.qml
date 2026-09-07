@@ -146,9 +146,31 @@ PanelWindow {
         return Config.rawSettings.bar.position || "top";
     }
 
+    property real barOpacity: {
+        let dummy = configRevision;
+        if (!rawBarSettings || rawBarSettings.opacity === undefined) return 1.0;
+        let op = Number(rawBarSettings.opacity);
+        return op > 1.0 ? (op / 100.0) : op;
+    }
+
     property bool barAutohide: (rawBarSettings && rawBarSettings.autohide !== undefined) ? Boolean(rawBarSettings.autohide) : false
 
-    readonly property bool isFullscreenActive: {
+    readonly property bool isOsdFullscreen: (typeof OsdController !== "undefined") ? Boolean(OsdController.isFullscreen) : false
+
+    readonly property bool isToplevelFullscreen: {
+        try {
+            if (typeof ToplevelManager !== "undefined" && ToplevelManager.activeToplevel && ToplevelManager.activeToplevel.fullscreen) {
+                let atl = ToplevelManager.activeToplevel;
+                if (atl.screens && atl.screens.length > 0) {
+                    return atl.screens.indexOf(launcherWindow.screen) !== -1;
+                }
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    readonly property bool isHyprlandFullscreen: {
         try {
             if (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) {
                 return Boolean(Hyprland.focusedWorkspace.hasFullscreen || (Hyprland.activeToplevel && Hyprland.activeToplevel.fullscreen));
@@ -157,6 +179,8 @@ PanelWindow {
         return false;
     }
 
+    readonly property bool isFullscreenActive: isOsdFullscreen || isToplevelFullscreen || isHyprlandFullscreen
+
     readonly property bool isBarEffectivelyHidden: barAutohide || isFullscreenActive
 
     property real barHeight: {
@@ -164,8 +188,8 @@ PanelWindow {
         return (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.bar && Config.rawSettings.bar.height) ? s(Config.rawSettings.bar.height) : s(40);
     }
 
-    property bool isBarSolid: barStyle === "solid" || barStyle === "fill"
-    property bool barMatchesLauncher: isBarSolid && (attachEdge === barPosition)
+    property bool isBarSolid: (barStyle === "solid" || barStyle === "fill") && Math.round(barOpacity * 100) >= 100
+    property bool barMatchesLauncher: isBarSolid && (attachEdge === barPosition) && !isBarEffectivelyHidden
 
     property string attachEdge: launcherPosition
     property bool isSideAttached: attachEdge === "left" || attachEdge === "right"
@@ -691,7 +715,7 @@ PanelWindow {
     Item {
         id: topBarHole
 
-        property int barThickness: 48
+        property int barThickness: launcherWindow.barHeight
         property string bp: launcherWindow.barPosition
         property bool activeBar: !launcherWindow.isBarEffectivelyHidden
 

@@ -161,7 +161,9 @@ Item {
                 let lines = this.text.trim().split("\n").map(s => s.trim()).filter(s => s.length > 0);
                 window.historyList = lines;
                 if (window.currentFilter === "History") {
-                    window.applyFilters(false);
+                    if (!window.reorderHistory()) {
+                        window.applyFilters(false);
+                    }
                 }
             }
         }
@@ -358,6 +360,52 @@ Item {
         }
     }
 
+    function reorderHistory() {
+        if (window.currentFilter !== "History" || displayModel.count === 0 || !window.targetWallName) {
+            return false;
+        }
+
+        let cleanTarget = window.getCleanBaseName(window.targetWallName);
+        let fullTarget = window.getCleanName(window.targetWallName);
+        let foundIdx = -1;
+
+        for (let i = 0; i < displayModel.count; i++) {
+            let fn = displayModel.get(i).fileName;
+            if (fn === window.targetWallName || window.getCleanName(fn) === fullTarget || window.getCleanBaseName(fn) === cleanTarget) {
+                foundIdx = i;
+                break;
+            }
+        }
+
+        if (foundIdx === -1) {
+            return false;
+        }
+
+        if (foundIdx === 0) {
+            view.currentIndex = 0;
+            return true;
+        }
+
+        let histItems = window.getHistoryItems();
+        if (histItems.length !== displayModel.count) {
+            return false;
+        }
+
+        let displaySet = {};
+        for (let i = 0; i < displayModel.count; i++) {
+            displaySet[displayModel.get(i).fileName] = true;
+        }
+        for (let i = 0; i < histItems.length; i++) {
+            if (!displaySet[histItems[i].fileName]) {
+                return false;
+            }
+        }
+
+        displayModel.move(foundIdx, 0, 1);
+        view.currentIndex = 0;
+        return true;
+    }
+
     function applyWallpaper(safeFileName, isVideo) {
         if (!safeFileName || window.isApplying) return;
 
@@ -372,6 +420,10 @@ Item {
 
         const transitionTypes = ["fade"];
         const randomTransition = transitionTypes[Math.floor(Math.random() * transitionTypes.length)];
+
+        if (window.currentFilter === "History") {
+            window.reorderHistory();
+        }
 
         wallpaperHistoryReader.running = false;
         wallpaperHistoryReader.running = true;
@@ -1379,6 +1431,14 @@ Item {
         }
         addDisplaced: Transition {
             enabled: window.allowAddAnimation && !window.isModelChanging && !window.isFilterAnimating && !(window.currentFilter === "Search" && window.hasSearched && !window.isSearchPaused)
+            NumberAnimation { properties: "x,y"; duration: 400; easing.type: Easing.OutCubic }
+        }
+        move: Transition {
+            enabled: !window.isModelChanging && !window.isFilterAnimating && !(window.currentFilter === "Search" && window.hasSearched && !window.isSearchPaused)
+            NumberAnimation { properties: "x,y"; duration: 400; easing.type: Easing.OutCubic }
+        }
+        moveDisplaced: Transition {
+            enabled: !window.isModelChanging && !window.isFilterAnimating && !(window.currentFilter === "Search" && window.hasSearched && !window.isSearchPaused)
             NumberAnimation { properties: "x,y"; duration: 400; easing.type: Easing.OutCubic }
         }
         remove: Transition {

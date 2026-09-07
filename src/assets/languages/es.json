@@ -38,7 +38,8 @@
       "about": "Acerca de",
       "autostart": "Inicio automático",
       "display_widgets": "Widgets",
-      "display_general": "General"
+      "display_general": "General",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -81,7 +82,9 @@
         "bottom_right": "Inferior derecha",
         "bottom_left": "Inferior izquierda",
         "top_center": "Superior centro",
-        "bottom_center": "Inferior centro"
+        "bottom_center": "Inferior centro",
+        "select_on_screen": "Seleccionar en pantalla...",
+        "close_selector": "Cerrar selector"
       },
       "sound": {
         "title": "Sonido de notificación",
@@ -512,6 +515,45 @@
       "run_now": "Ejecutar ahora",
       "delete": "Eliminar",
       "toggle": "Activar / desactivar"
+    },
+    "osd": {
+      "capslock": {
+        "title": "Mostrar con Bloq Mayús"
+      },
+      "numlock": {
+        "title": "Mostrar con Bloq Num"
+      },
+      "airplane": {
+        "title": "Mostrar en Modo Avión"
+      },
+      "attach_bar": {
+        "title": "Acoplar a la barra en estilo solid/fill",
+        "desc": "Acoplar las ventanas OSD a la barra en modo solid o fill. Si se desactiva, el OSD permanecerá siempre en la posición configurada."
+      },
+      "test": "Probar OSD",
+      "position": {
+        "title": "Posición en pantalla del On-Screen Display",
+        "desc": "Arrastra el cuadro de vista previa para cambiar la posición",
+        "select_on_screen": "Seleccionar en pantalla...",
+        "close_selector": "Cerrar selector",
+        "bottom_center": "Centro inferior",
+        "bottom_left": "Inferior izquierda",
+        "bottom_right": "Inferior derecha",
+        "top_center": "Centro superior",
+        "top_left": "Superior izquierda",
+        "top_right": "Superior derecha"
+      },
+      "orientation": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertical"
+      }
+    },
+    "common": {
+      "show_bar": "Mostrar barra",
+      "unavailable": "No disponible"
+    },
+    "position": {
+      "custom": "Personalizado"
     }
   },
   "sysnotif": {

@@ -38,7 +38,8 @@
       "about": "Über",
       "autostart": "Autostart",
       "display_widgets": "Widgets",
-      "display_general": "Allgemein"
+      "display_general": "Allgemein",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -81,7 +82,9 @@
         "bottom_right": "Unten rechts",
         "bottom_left": "Unten links",
         "top_center": "Oben zentriert",
-        "bottom_center": "Unten zentriert"
+        "bottom_center": "Unten zentriert",
+        "select_on_screen": "Auf Bildschirm auswählen...",
+        "close_selector": "Auswahl schließen"
       },
       "sound": {
         "title": "Benachrichtigungston",
@@ -512,6 +515,45 @@
       "run_now": "Jetzt starten",
       "delete": "Löschen",
       "toggle": "Aktivieren / deaktivieren"
+    },
+    "osd": {
+      "capslock": {
+        "title": "Bei Feststelltaste anzeigen"
+      },
+      "numlock": {
+        "title": "Bei Num-Taste anzeigen"
+      },
+      "airplane": {
+        "title": "Im Flugmodus anzeigen"
+      },
+      "attach_bar": {
+        "title": "An Leiste im Solid-/Fill-Stil anheften",
+        "desc": "OSD-Popups an die Leiste im Solid- oder Fill-Modus anheften. Bei Deaktivierung bleibt das OSD immer an der eingestellten Position."
+      },
+      "test": "OSD testen",
+      "position": {
+        "title": "Bildschirmposition des On-Screen Displays",
+        "desc": "Vorschaufeld ziehen, um die Position zu ändern",
+        "select_on_screen": "Auf Bildschirm auswählen...",
+        "close_selector": "Auswahl schließen",
+        "bottom_center": "Unten Mitte",
+        "bottom_left": "Unten Links",
+        "bottom_right": "Unten Rechts",
+        "top_center": "Oben Mitte",
+        "top_left": "Oben Links",
+        "top_right": "Oben Rechts"
+      },
+      "orientation": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertikal"
+      }
+    },
+    "common": {
+      "show_bar": "Leiste anzeigen",
+      "unavailable": "Nicht verfügbar"
+    },
+    "position": {
+      "custom": "Benutzerdefiniert"
     }
   },
   "sysnotif": {

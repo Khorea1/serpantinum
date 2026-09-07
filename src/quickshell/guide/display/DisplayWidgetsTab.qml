@@ -251,19 +251,21 @@ Item {
         ColumnLayout {
             id: widgetsCol
             width: parent.width - (parent.contentHeight > parent.height ? rootObj.s(6) : 0)
-            spacing: rootObj.s(12)
+            spacing: rootObj.s(6)
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: rowHideBarLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowHideBarLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowHideBarLayout
                     anchors.left: parent.left
-                    anchors.leftMargin: rootObj.s(12)
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
-                    anchors.rightMargin: rootObj.s(12)
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
@@ -300,14 +302,6 @@ Item {
                         }
                     }
                 }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.3)
-                Layout.topMargin: rootObj.s(2)
-                Layout.bottomMargin: rootObj.s(6)
             }
 
             Repeater {

@@ -17,7 +17,7 @@ PanelWindow {
     screen: OsdController.screen
 
     WlrLayershell.namespace: "osd"
-    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.layer: WlrLayer.Overlay
     focusable: false
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
@@ -42,13 +42,22 @@ PanelWindow {
     readonly property color numColor: Qt.lighter(ThemeBackend.sapphire, 1.4)
     readonly property color airColor: Qt.lighter(ThemeBackend.red, 1.2)
 
-    property bool isVisible: OsdController.isVisible
     property string kind: OsdController.kind
     property int briVal: OsdController.briVal
     property string stateVal: OsdController.stateVal
 
     readonly property bool isToggleKind: kind === "capslock" || kind === "numlock" || kind === "airplane"
     readonly property bool isToggleActive: stateVal === "on" || stateVal === "true" || stateVal === "1"
+
+    readonly property bool isToggleAllowed: {
+        if (isVerticalLayout) return false;
+        if (kind === "capslock") return showCapsLock;
+        if (kind === "numlock") return showNumLock;
+        if (kind === "airplane") return showAirplane;
+        return true;
+    }
+
+    property bool isVisible: OsdController.isVisible && isToggleAllowed
 
     readonly property color toggleActiveColor: {
         if (kind === "capslock") return capsColor;
@@ -96,10 +105,49 @@ PanelWindow {
         }
     }
 
-    property string barStyle: {
+    property var defaultOsdSettings: ({
+        "horizontalPosition": 50,
+        "verticalPosition": 90,
+        "orientation": "horizontal",
+        "showCapsLock": true,
+        "showNumLock": true,
+        "showAirplane": true,
+        "attachToBar": true
+    })
+
+    property var osdSettings: {
         let dummy = configRevision;
-        if (typeof Config === "undefined" || !Config.rawSettings || !Config.rawSettings.bar) return "modular";
-        let s = Config.rawSettings.bar.style;
+        let s = (typeof Config !== "undefined" && Config.rawSettings) ? Config.rawSettings["osd"] : undefined;
+        if (s !== undefined && s !== null) return s;
+        if (typeof Config !== "undefined" && typeof Config.getSetting === "function") {
+            return Config.getSetting("osd", defaultOsdSettings);
+        }
+        return defaultOsdSettings;
+    }
+
+    readonly property string orientation: osdSettings.orientation !== undefined ? osdSettings.orientation : "horizontal"
+    readonly property bool isVertical: orientation === "vertical"
+    readonly property bool attachToBar: osdSettings.attachToBar !== undefined ? osdSettings.attachToBar : true
+    readonly property real horizontalPosition: osdSettings.horizontalPosition !== undefined ? osdSettings.horizontalPosition : 50
+    readonly property real verticalPosition: osdSettings.verticalPosition !== undefined ? osdSettings.verticalPosition : 90
+    readonly property bool showCapsLock: osdSettings.showCapsLock !== undefined ? osdSettings.showCapsLock : true
+    readonly property bool showNumLock: osdSettings.showNumLock !== undefined ? osdSettings.showNumLock : true
+    readonly property bool showAirplane: osdSettings.showAirplane !== undefined ? osdSettings.showAirplane : true
+
+    onAttachToBarChanged: OsdController.hide()
+
+    property var barConfig: {
+        let dummy = configRevision;
+        if (typeof Config !== "undefined") {
+            if (Config.rawSettings && Config.rawSettings.bar) return Config.rawSettings.bar;
+            if (typeof Config.getSetting === "function") return Config.getSetting("bar", null);
+        }
+        return null;
+    }
+
+    property string barStyle: {
+        if (!barConfig) return "modular";
+        let s = barConfig.style;
         if (typeof s === "string") return s;
         if (s && typeof s === "object") {
             if (s.fill || s.mode === "fill") return "fill";
@@ -113,14 +161,14 @@ PanelWindow {
     }
 
     property string barPosition: {
-        let dummy = configRevision;
-        if (typeof Config === "undefined" || !Config.rawSettings || !Config.rawSettings.bar) return "top";
-        return Config.rawSettings.bar.position || "top";
+        if (!barConfig) return "top";
+        return barConfig.position || "top";
     }
 
     property real barOpacity: {
-        let dummy = configRevision;
-        return (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.bar && Config.rawSettings.bar.opacity !== undefined) ? (Config.rawSettings.bar.opacity / 100.0) : 1.0;
+        if (!barConfig || barConfig.opacity === undefined) return 1.0;
+        let op = Number(barConfig.opacity);
+        return op > 1.0 ? (op / 100.0) : op;
     }
 
     property bool isFullscreen: OsdController.isFullscreen
@@ -129,18 +177,18 @@ PanelWindow {
     property bool isBottomBar: barPosition === "bottom"
     property bool isFill: barStyle === "fill"
     property bool isSolid: (barStyle === "solid" || barStyle === "fill") && !isFullscreen && Math.round(barOpacity * 100) >= 100
-    readonly property bool isAttached: isSolid && (!isSideBar || !isToggleKind)
+    readonly property bool isAttached: attachToBar && isSolid && (!isSideBar || !isToggleKind)
+    readonly property bool isVerticalLayout: isAttached ? isSideBar : isVertical
 
     property real barHeight: {
-        let dummy = configRevision;
-        return (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.bar && Config.rawSettings.bar.height) ? s(Config.rawSettings.bar.height) : s(40);
+        return (barConfig && barConfig.height) ? s(barConfig.height) : s(40);
     }
 
     property real cornerRadius: ThemeBackend.borderRadius || s(12)
     property real menuMargin: isAttached ? 0 : s(20)
 
-    property real osdWidth: (isAttached && isSideBar) ? s(58) : s(296)
-    property real osdHeight: (isAttached && isSideBar) ? s(296) : s(58)
+    property real osdWidth: isVerticalLayout ? s(58) : s(296)
+    property real osdHeight: isVerticalLayout ? s(296) : s(58)
     property real collapsedWidth: s(58)
 
     visible: isVisible || osdContainer.animProgress > 0.001
@@ -157,7 +205,7 @@ PanelWindow {
                 return (osdWindow.width - osdWidth) / 2;
             }
         } else {
-            return (osdWindow.width - osdWidth) / 2;
+            return (osdWindow.width - osdWidth) * (horizontalPosition / 100.0);
         }
     }
 
@@ -173,7 +221,7 @@ PanelWindow {
                 }
             }
         } else {
-            return (osdWindow.height * 0.9) - (osdHeight / 2);
+            return (osdWindow.height - osdHeight) * (verticalPosition / 100.0);
         }
     }
 
@@ -247,13 +295,16 @@ PanelWindow {
                 }
                 return osdWindow.clampedX;
             }
-            return (osdWindow.width - width) / 2;
+            return (osdWindow.width - width) * (osdWindow.horizontalPosition / 100.0);
         }
         y: {
-            if (osdWindow.isAttached && !osdWindow.isSideBar && osdWindow.isBottomBar) {
-                return (osdWindow.clampedY + osdWindow.osdHeight) - height;
+            if (osdWindow.isAttached) {
+                if (!osdWindow.isSideBar && osdWindow.isBottomBar) {
+                    return (osdWindow.clampedY + osdWindow.osdHeight) - height;
+                }
+                return osdWindow.clampedY;
             }
-            return osdWindow.clampedY;
+            return (osdWindow.height - height) * (osdWindow.verticalPosition / 100.0);
         }
         width: {
             if (osdWindow.isAttached) {
@@ -262,11 +313,20 @@ PanelWindow {
                 }
                 return osdWindow.osdWidth;
             }
+            if (osdWindow.isVerticalLayout) {
+                return osdWindow.osdWidth;
+            }
             return osdWindow.collapsedWidth + (osdWindow.osdWidth - osdWindow.collapsedWidth) * animProgress;
         }
         height: {
-            if (osdWindow.isAttached && !osdWindow.isSideBar) {
-                return osdWindow.osdHeight * animProgress;
+            if (osdWindow.isAttached) {
+                if (!osdWindow.isSideBar) {
+                    return osdWindow.osdHeight * animProgress;
+                }
+                return osdWindow.osdHeight;
+            }
+            if (osdWindow.isVerticalLayout) {
+                return osdWindow.collapsedWidth + (osdWindow.osdHeight - osdWindow.collapsedWidth) * animProgress;
             }
             return osdWindow.osdHeight;
         }
@@ -568,7 +628,7 @@ PanelWindow {
             }
 
             ColumnLayout {
-                visible: osdWindow.isSideBar && osdWindow.isAttached
+                visible: osdWindow.isVerticalLayout
                 anchors.fill: parent
                 anchors.topMargin: osdWindow.s(14)
                 anchors.bottomMargin: osdWindow.s(14)
@@ -725,7 +785,7 @@ PanelWindow {
             }
 
             Item {
-                visible: !(osdWindow.isSideBar && osdWindow.isAttached)
+                visible: !osdWindow.isVerticalLayout
                 anchors.fill: parent
 
                 Item {

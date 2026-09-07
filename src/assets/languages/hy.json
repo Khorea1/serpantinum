@@ -37,7 +37,8 @@
       "update": "Թարմացում",
       "about": "Ծրագրի մասին",
       "display_widgets": "Վիջեթներ",
-      "display_general": "Ընդհանուր"
+      "display_general": "Ընդհանուր",
+      "osd": "OSD"
     },
     "launcher": {
       "position": {
@@ -80,7 +81,9 @@
         "bottom_right": "Ներքևի աջ կողմում",
         "bottom_left": "Ներքևի ձախ կողմում",
         "top_center": "Վերևի կենտրոնում",
-        "bottom_center": "Ներքևի կենտրոնում"
+        "bottom_center": "Ներքևի կենտրոնում",
+        "select_on_screen": "Ընտրել էկրանին...",
+        "close_selector": "Փակել ընտրիչը"
       },
       "sound": {
         "title": "Ծանուցման ձայն",
@@ -468,7 +471,46 @@
         "excluded_apps_desc": "Այսուհետ այս հավելվածները չներառել ընդհանուր հաշվառման մեջ"
       }
     },
-    "update_available": "Հասանելի է թարմացում"
+    "update_available": "Հասանելի է թարմացում",
+    "osd": {
+      "capslock": {
+        "title": "Ցուցադրել Caps Lock-ի դեպքում"
+      },
+      "numlock": {
+        "title": "Ցուցադրել Num Lock-ի դեպքում"
+      },
+      "airplane": {
+        "title": "Ցուցադրել Ինքնաթիռի ռեժիմում"
+      },
+      "attach_bar": {
+        "title": "Միացնել վահանակին solid/fill ոճում",
+        "desc": "Միացնել OSD պատուհանները վահանակին solid կամ fill ռեժիմներում: Անջատելու դեպքում OSD-ն միշտ կմնա կարգավորված դիրքում:"
+      },
+      "test": "Ստուգել OSD-ն",
+      "position": {
+        "title": "On-Screen Display-ի էկրանային դիրքը",
+        "desc": "Քաշեք նախադիտման պատուհանը դիրքը փոխելու համար",
+        "select_on_screen": "Ընտրել էկրանին...",
+        "close_selector": "Փակել ընտրիչը",
+        "bottom_center": "Ներքևի կենտրոն",
+        "bottom_left": "Ներքևի ձախ",
+        "bottom_right": "Ներքևի աջ",
+        "top_center": "Վերևի կենտրոն",
+        "top_left": "Վերևի ձախ",
+        "top_right": "Վերևի աջ"
+      },
+      "orientation": {
+        "horizontal": "Հորիզոնական",
+        "vertical": "Ուղղահայաց"
+      }
+    },
+    "common": {
+      "show_bar": "Ցուցադրել վահանակը",
+      "unavailable": "Անհասանելի"
+    },
+    "position": {
+      "custom": "Հարմարեցված"
+    }
   },
   "sysnotif": {
     "battery": {

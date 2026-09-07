@@ -139,10 +139,10 @@ Item {
 
     Flickable {
         anchors.fill: parent
-        anchors.topMargin: rootObj.s(4)
+        anchors.topMargin: rootObj.s(8)
         anchors.leftMargin: rootObj.s(8)
         anchors.rightMargin: rootObj.s(8)
-        anchors.bottomMargin: rootObj.s(4)
+        anchors.bottomMargin: rootObj.s(8)
         contentHeight: settingsCol.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -150,17 +150,21 @@ Item {
         ColumnLayout {
             id: settingsCol
             width: parent.width
-            spacing: 0
+            spacing: rootObj.s(6)
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: rowAvatarLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowAvatarLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowAvatarLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
@@ -321,33 +325,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowLangLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowLangLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowLangLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.language.title")
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.language.desc")
                             font.family: ThemeBackend.fontFamily
@@ -385,33 +387,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowQuickactionsLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowQuickactionsLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowQuickactionsLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.quickactions.title") || "Quickactions"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.quickactions.desc") || "Enable floating quickactions overlay"
                             font.family: ThemeBackend.fontFamily
@@ -437,33 +437,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowMuteSfxLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowMuteSfxLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowMuteSfxLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.mutesfx.title") || "Mute SFX"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.mutesfx.desc") || "Disable user interface sound effects"
                             font.family: ThemeBackend.fontFamily
@@ -492,33 +490,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowSfxVolumeLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowSfxVolumeLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowSfxVolumeLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.sfxvolume.title") || "SFX Volume"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.sfxvolume.desc") || "Volume level for user interface sound effects"
                             font.family: ThemeBackend.fontFamily
@@ -564,105 +560,100 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
+                implicitHeight: locSectionCol.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
+                clip: true
 
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: locSectionCol.implicitHeight
-                color: "transparent"
+                Behavior on implicitHeight { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
                 ColumnLayout {
                     id: locSectionCol
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
+                    anchors.top: parent.top
+                    anchors.topMargin: rootObj.s(12)
                     spacing: 0
 
-                    Rectangle {
+                    RowLayout {
+                        id: rowLocLayout
                         Layout.fillWidth: true
-                        implicitHeight: rowLocLayout.implicitHeight + rootObj.s(18)
-                        color: "transparent"
+                        spacing: rootObj.s(16)
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: rootObj.s(2)
+
+                            Text {
+                                text: I18n.t("guide.general.location.title")
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: rootObj.s(13)
+                                color: ThemeBackend.text
+                            }
+
+                            Text {
+                                text: I18n.t("guide.general.location.desc")
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: rootObj.s(11)
+                                color: ThemeBackend.subtext0
+                            }
+                        }
 
                         RowLayout {
-                            id: rowLocLayout
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: rootObj.s(16)
+                            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                            spacing: rootObj.s(8)
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: rootObj.s(2)
-                                Text {
-                                    text: I18n.t("guide.general.location.title")
-                                    font.family: ThemeBackend.fontFamily
-                                    font.pixelSize: rootObj.s(13)
-                                    color: ThemeBackend.text
-                                }
-                                Text {
-                                    text: I18n.t("guide.general.location.desc")
-                                    font.family: ThemeBackend.fontFamily
-                                    font.pixelSize: rootObj.s(11)
-                                    color: ThemeBackend.subtext0
+                            LoaderIcon {
+                                id: detectLoader
+                                Layout.preferredWidth: rootObj.s(32)
+                                Layout.preferredHeight: rootObj.s(32)
+                                Layout.alignment: Qt.AlignVCenter
+                                running: Location.isDetecting
+                                visible: Location.isDetecting
+                                accentColor: ThemeBackend.mauve
+                            }
+
+                            ClickButton {
+                                implicitHeight: rootObj.s(32)
+                                buttonText: "Auto-detect"
+                                buttonIcon: "󰢹"
+                                accentColor: ThemeBackend.surface0
+                                textColor: ThemeBackend.text
+                                cornerRadius: ThemeBackend.borderRadius
+                                horizontalPadding: rootObj.s(12)
+                                iconFontSize: rootObj.s(15)
+                                textFontSize: rootObj.s(12)
+                                onTriggered: {
+                                    generalTabRoot.isLocEditOpen = false;
+                                    Location.detectAuto();
                                 }
                             }
 
-                            RowLayout {
-                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                                spacing: rootObj.s(8)
+                            IconButton {
+                                Layout.preferredWidth: rootObj.s(32)
+                                Layout.preferredHeight: rootObj.s(32)
+                                cornerRadius: ThemeBackend.borderRadius
+                                buttonIcon: "󰏫"
+                                iconFontSize: rootObj.s(16)
+                                accentColor: generalTabRoot.isLocEditOpen ? ThemeBackend.surface1 : ThemeBackend.surface0
+                                textColor: generalTabRoot.isLocEditOpen ? ThemeBackend.mauve : ThemeBackend.text
+                                onClicked: generalTabRoot.isLocEditOpen = !generalTabRoot.isLocEditOpen
+                            }
 
-                                LoaderIcon {
-                                    id: detectLoader
-                                    Layout.preferredWidth: rootObj.s(32)
-                                    Layout.preferredHeight: rootObj.s(32)
-                                    Layout.alignment: Qt.AlignVCenter
-                                    running: Location.isDetecting
-                                    visible: Location.isDetecting
-                                    accentColor: ThemeBackend.mauve
-                                }
-
-                                ClickButton {
-                                    implicitHeight: rootObj.s(32)
-                                    buttonText: "Auto-detect"
-                                    buttonIcon: "󰢹"
-                                    accentColor: ThemeBackend.surface0
-                                    textColor: ThemeBackend.text
-                                    cornerRadius: ThemeBackend.borderRadius
-                                    horizontalPadding: rootObj.s(12)
-                                    iconFontSize: rootObj.s(15)
-                                    textFontSize: rootObj.s(12)
-                                    onTriggered: {
-                                        generalTabRoot.isLocEditOpen = false;
-                                        Location.detectAuto();
-                                    }
-                                }
-
-                                IconButton {
-                                    Layout.preferredWidth: rootObj.s(32)
-                                    Layout.preferredHeight: rootObj.s(32)
-                                    cornerRadius: ThemeBackend.borderRadius
-                                    buttonIcon: "󰏫"
-                                    iconFontSize: rootObj.s(16)
-                                    accentColor: generalTabRoot.isLocEditOpen ? ThemeBackend.surface1 : ThemeBackend.surface0
-                                    textColor: generalTabRoot.isLocEditOpen ? ThemeBackend.mauve : ThemeBackend.text
-                                    onClicked: generalTabRoot.isLocEditOpen = !generalTabRoot.isLocEditOpen
-                                }
-
-                                ClickButton {
-                                    implicitHeight: rootObj.s(32)
-                                    buttonText: Location.city
-                                    buttonIcon: "󰍎"
-                                    accentColor: ThemeBackend.surface0
-                                    textColor: ThemeBackend.text
-                                    cornerRadius: ThemeBackend.borderRadius
-                                    horizontalPadding: rootObj.s(12)
-                                    iconFontSize: rootObj.s(15)
-                                    textFontSize: rootObj.s(12)
-                                    onTriggered: locationPopup.open()
-                                }
+                            ClickButton {
+                                implicitHeight: rootObj.s(32)
+                                buttonText: Location.city
+                                buttonIcon: "󰍎"
+                                accentColor: ThemeBackend.surface0
+                                textColor: ThemeBackend.text
+                                cornerRadius: ThemeBackend.borderRadius
+                                horizontalPadding: rootObj.s(12)
+                                iconFontSize: rootObj.s(15)
+                                textFontSize: rootObj.s(12)
+                                onTriggered: locationPopup.open()
                             }
                         }
                     }
@@ -689,8 +680,8 @@ Item {
                                 Layout.fillWidth: true
                                 height: 1
                                 color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                                Layout.topMargin: rootObj.s(5)
-                                Layout.bottomMargin: rootObj.s(13)
+                                Layout.topMargin: rootObj.s(10)
+                                Layout.bottomMargin: rootObj.s(10)
                             }
 
                             RowLayout {
@@ -749,33 +740,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowWeatherIntervalLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowWeatherIntervalLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowWeatherIntervalLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.weatherinterval.title") || "Weather Polling Interval"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.weatherinterval.desc") || "Polling frequency in minutes"
                             font.family: ThemeBackend.fontFamily
@@ -820,33 +809,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowWeatherUnitLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowWeatherUnitLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowWeatherUnitLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.weatherunit.title") || "Weather Unit"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.weatherunit.desc") || "Temperature scale for weather displays"
                             font.family: ThemeBackend.fontFamily
@@ -887,33 +874,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowShotReleaseLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowShotReleaseLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowShotReleaseLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.screenshot_on_release.title") || "Capture region on mouse release"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.screenshot_on_release.desc") || "Take the screenshot as soon as you finish dragging, without clicking the shutter"
                             font.family: ThemeBackend.fontFamily
@@ -924,7 +909,6 @@ Item {
 
                     Toggle {
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                        Layout.rightMargin: rootObj.s(8)
                         checked: generalTabRoot.screenshotCaptureOnRelease
                         accentColor: ThemeBackend.mauve
                         baseColor: ThemeBackend.surface1
@@ -940,33 +924,31 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.alpha(ThemeBackend.surface1, 0.2)
-                Layout.topMargin: rootObj.s(5)
-                Layout.bottomMargin: rootObj.s(5)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: rowCopySettingsLayout.implicitHeight + rootObj.s(18)
-                color: "transparent"
+                implicitHeight: rowCopySettingsLayout.implicitHeight + rootObj.s(24)
+                radius: ThemeBackend.borderRadius
+                color: Qt.alpha(ThemeBackend.surface0, 0.4)
+                border.width: 0
 
                 RowLayout {
                     id: rowCopySettingsLayout
                     anchors.left: parent.left
+                    anchors.leftMargin: rootObj.s(14)
                     anchors.right: parent.right
+                    anchors.rightMargin: rootObj.s(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: rootObj.s(16)
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: rootObj.s(2)
+
                         Text {
                             text: I18n.t("guide.general.copysettings.title") || "Copy settings"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: rootObj.s(13)
                             color: ThemeBackend.text
                         }
+
                         Text {
                             text: I18n.t("guide.general.copysettings.desc") || "Copy configuration JSON to clipboard"
                             font.family: ThemeBackend.fontFamily

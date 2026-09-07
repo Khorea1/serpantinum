@@ -1,3 +1,24 @@
+### 2.1.2
+
+- style: tune down the scale effect for clickbutton
+- feat: create a on-screen position configuration for notifications and osd. New reusable - screen selector
+- style: make all of the settings have separate configuration boxes
+- fix: wallpaper picker recent wallpaper animation fixed
+- fix wallpaper dir not being properly set on install
+- fix: serpantinum not cleanly killing the quickshell process
+- fix: a right corner in clipboard having a wrong target coordinate
+- fix sounds not having access to the config
+- Remove duplicate no-op lines in QR polygon parser (#253)
+- Fix QR marker vertical position (#252)
+- refactor: remove all fauly singleton imports, categorize singletons
+- fix faulty pull request
+- style: overhaul the systempanel colors
+- fix: add previous/next media key bindings (#247)
+- fix(current_focus): exit after SIGTERM cleanup instead of resuming loop (#245)
+- really minor change (#242)
+- fix a singleton bug
+- i18n: add missing translations for new widgets
+
 ### 2.1.1
 
 - feat/refactor: add a user widget and relocate sysinfo singletons

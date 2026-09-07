@@ -14,7 +14,7 @@ Variants {
     delegate: Component {
         PanelWindow {
             id: barWindow
-            visible: barConfigReady
+            visible: barConfigReady && !shouldHideForRedact
 
             property bool pendingReload: false
             property bool startupFilesReady: false
@@ -62,9 +62,7 @@ Variants {
                     barWindow.configRevision++;
                 }
                 function onDataReadyChanged() {
-                    if (Config && Config.dataReady) {
-                        barWindow.configRevision++;
-                    }
+                    barWindow.configRevision++;
                 }
                 function onRawSettingsChanged() {
                     barWindow.configRevision++;
@@ -97,13 +95,14 @@ Variants {
 
             property bool barConfigReady: {
                 let dummy = configRevision;
-                if (typeof Config === "undefined" || !Config.dataReady || !Config.rawSettings) return false;
-                return Config.rawSettings.bar !== undefined && Config.rawSettings.bar.autohide !== undefined;
+                if (typeof Config === "undefined") return true;
+                if (Config.dataReady !== undefined) return Config.dataReady;
+                return true;
             }
 
             property bool autohide: {
                 let dummy = configRevision;
-                return barConfigReady ? Config.rawSettings.bar.autohide : false;
+                return (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.bar && Config.rawSettings.bar.autohide !== undefined) ? Config.rawSettings.bar.autohide : false;
             }
             property int autohideTimeout: {
                 let dummy = configRevision;
@@ -216,11 +215,11 @@ Variants {
             property real effectiveBarHeight: Math.round(!isVertical ? barWindow.height : (isFill ? barWindow.height : ((barWindow.height - (autohide ? edgePadding * 2 : 0)) * (barWidthPercent / 100.0))))
             property real verticalOffset: Math.round(!isVertical ? 0 : (isFill ? 0 : ((barWindow.height - effectiveBarHeight) / 2)))
 
-            property real currentBarMinX: contentWrapper ? contentWrapper.dynamicMinX : horizontalOffset
-            property real currentBarMaxX: contentWrapper ? contentWrapper.dynamicMaxX : (horizontalOffset + effectiveBarWidth)
+            property real currentBarMinX: (contentWrapper && contentWrapper.dynamicMaxX > contentWrapper.dynamicMinX) ? contentWrapper.dynamicMinX : horizontalOffset
+            property real currentBarMaxX: (contentWrapper && contentWrapper.dynamicMaxX > contentWrapper.dynamicMinX) ? contentWrapper.dynamicMaxX : (horizontalOffset + effectiveBarWidth)
 
-            property real currentBarMinY: verticalWrapper ? verticalWrapper.dynamicMinY : verticalOffset
-            property real currentBarMaxY: verticalWrapper ? verticalWrapper.dynamicMaxY : (verticalOffset + effectiveBarHeight)
+            property real currentBarMinY: (verticalWrapper && verticalWrapper.dynamicMaxY > verticalWrapper.dynamicMinY) ? verticalWrapper.dynamicMinY : verticalOffset
+            property real currentBarMaxY: (verticalWrapper && verticalWrapper.dynamicMaxY > verticalWrapper.dynamicMinY) ? verticalWrapper.dynamicMaxY : (verticalOffset + effectiveBarHeight)
 
             Timer {
                 id: positionChangeTimer
