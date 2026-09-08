@@ -159,7 +159,7 @@ Item {
         let cleanPath = imagePath.startsWith("file://") ? imagePath.substring(7) : imagePath;
         let themeConfig = Config.getSetting("theme", {});
         let selectedMode = mode || themeConfig.mode || "dark";
-        let selectedType = schemeType || themeConfig.schemeType || "scheme-tonal-spot";
+        let selectedType = schemeType || themeConfig.schemeType || "scheme-vibrant";
 
         if (root._hasGeneratedSuccessfully
             && root._lastGeneratedReqType === "image"
@@ -294,7 +294,7 @@ Item {
                     let stateDir = (typeof Caching !== "undefined" && Caching.stateDir) ? Caching.stateDir : (Quickshell.env("HOME") + "/.local/state/serpantinum");
                     Quickshell.execDetached(["bash", "-c", "mkdir -p \"" + stateDir + "\" && cp -f \"" + stateDir + "/qs_colors.json\" \"" + stateDir + "/qs_matugen_colors.json\" 2>/dev/null || true"]);
                 }
-                Quickshell.execDetached(["bash", "-c", "killall -USR1 .kitty-wrapped 2>/dev/null || pkill -SIGUSR1 kitty 2>/dev/null || true"]);
+                Quickshell.execDetached(["bash", "-c", "kitty @ set-colors --configured 2>/dev/null || killall -USR1 .kitty-wrapped 2>/dev/null || pkill -SIGUSR1 kitty 2>/dev/null || true"]);
             }
 
             root._currentReqType = "";

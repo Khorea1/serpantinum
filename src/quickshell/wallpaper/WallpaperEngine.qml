@@ -27,6 +27,10 @@ ShellRoot {
                 mask: Region {}
                 color: "#0a0a0f"
 
+                // When awww is active for this screen, hide the PanelWindow entirely
+                // so awww's Background-layer surface is visible
+                visible: !(Wallpaper.backend === "awww" && Wallpaper.screenAwwwActive[barWindow.screen.name])
+
                 anchors { top: true; bottom: true; left: true; right: true }
 
                 readonly property string wpCacheDir: Caching.getCacheDir("wallpaper")
@@ -117,8 +121,27 @@ ShellRoot {
                             let savedName = parts[1] ? parts[1].trim() : "";
                             if (savedPath !== "") {
                                 barWindow.originalFileName = savedName;
-                                barWindow._loadNew(savedPath, false);
-                                if (barWindow.isVideo(savedPath)) {
+
+                                let vid = barWindow.isVideo(savedPath);
+                                let useAwww = Wallpaper.backend === "awww" && !vid;
+
+                                if (useAwww) {
+                                    // awww backend: tell awww to restore this image
+                                    let screenName = barWindow.screen ? barWindow.screen.name : "";
+                                    let outputFlag = "--outputs " + screenName;
+                                    Quickshell.execDetached(["bash", "-c",
+                                        "awww img " + outputFlag + " --transition-type none '" + savedPath + "'"
+                                    ]);
+                                    // Update in-memory state + awww flag
+                                    barWindow.currentWallpaperPath = savedPath;
+                                    let aw = Object.assign({}, Wallpaper.screenAwwwActive);
+                                    aw[screenName] = true;
+                                    Wallpaper.screenAwwwActive = aw;
+                                } else {
+                                    barWindow._loadNew(savedPath, false);
+                                }
+
+                                if (vid) {
                                     videoSnapshotProcess.targetPath = savedPath;
                                     videoSnapshotProcess.running = false;
                                     videoSnapshotProcess.running = true;
@@ -248,22 +271,41 @@ ShellRoot {
                     let snapshotPath = barWindow.wpSnapshotPath;
                     let monSnapshotPath = barWindow.wpMonitorSnapshotPath;
 
-                    Quickshell.execDetached(["bash", "-c",
-                        "mkdir -p '" + wpCopyDir + "'" +
-                        " && printf '%s' '" + cleanPath + "' > '" + wpStatePath + "'" +
-                        " && printf '%s' '" + origName + "' > '" + wpStatePath + "_name'" +
-                        " && cp -f '" + cleanPath + "' '" + dest + "'" +
-                        (vid ? "" : " && cp -f '" + cleanPath + "' '" + snapshotPath + "' && cp -f '" + cleanPath + "' '" + monSnapshotPath + "'") +
-                        " && ( HIST='" + histFile + "'; if [ -f \"$HIST\" ]; then grep -v -F -x '" + origName + "' \"$HIST\" > \"$HIST.tmp\" 2>/dev/null || true; printf '%s\n' '" + origName + "' | cat - \"$HIST.tmp\" > \"$HIST\" 2>/dev/null; rm -f \"$HIST.tmp\"; else printf '%s\n' '" + origName + "' > \"$HIST\"; fi )"
-                    ]);
+                    // awww backend: images handled by Wallpaper.setWallpaper via CLI.
+                    // Only persist state and render video through QML.
+                    let useAwww = Wallpaper.backend === "awww" && !vid;
 
-                    if (vid) {
-                        videoSnapshotProcess.targetPath = cleanPath;
-                        videoSnapshotProcess.running = false;
-                        videoSnapshotProcess.running = true;
+                    if (!useAwww) {
+                        Quickshell.execDetached(["bash", "-c",
+                            "mkdir -p '" + wpCopyDir + "'" +
+                            " && printf '%s' '" + cleanPath + "' > '" + wpStatePath + "'" +
+                            " && printf '%s' '" + origName + "' > '" + wpStatePath + "_name'" +
+                            " && cp -f '" + cleanPath + "' '" + dest + "'" +
+                            (vid ? "" : " && cp -f '" + cleanPath + "' '" + snapshotPath + "' && cp -f '" + cleanPath + "' '" + monSnapshotPath + "'") +
+                            " && ( HIST='" + histFile + "'; if [ -f \"$HIST\" ]; then grep -v -F -x '" + origName + "' \"$HIST\" > \"$HIST.tmp\" 2>/dev/null || true; printf '%s\n' '" + origName + "' | cat - \"$HIST.tmp\" > \"$HIST\" 2>/dev/null; rm -f \"$HIST.tmp\"; else printf '%s\n' '" + origName + "' > \"$HIST\"; fi )"
+                        ]);
+
+                        if (vid) {
+                            videoSnapshotProcess.targetPath = cleanPath;
+                            videoSnapshotProcess.running = false;
+                            videoSnapshotProcess.running = true;
+                        }
+
+                        barWindow._loadNew(cleanPath, true);
+                    } else {
+                        // awww image: persist state + snapshot for lock screen, skip QML render
+                        Quickshell.execDetached(["bash", "-c",
+                            "mkdir -p '" + wpCopyDir + "'" +
+                            " && printf '%s' '" + cleanPath + "' > '" + wpStatePath + "'" +
+                            " && printf '%s' '" + origName + "' > '" + wpStatePath + "_name'" +
+                            " && cp -f '" + cleanPath + "' '" + dest + "'" +
+                            " && cp -f '" + cleanPath + "' '" + snapshotPath + "'" +
+                            " && cp -f '" + cleanPath + "' '" + monSnapshotPath + "'" +
+                            " && ( HIST='" + histFile + "'; if [ -f \"$HIST\" ]; then grep -v -F -x '" + origName + "' \"$HIST\" > \"$HIST.tmp\" 2>/dev/null || true; printf '%s\n' '" + origName + "' | cat - \"$HIST.tmp\" > \"$HIST\" 2>/dev/null; rm -f \"$HIST.tmp\"; else printf '%s\n' '" + origName + "' > \"$HIST\"; fi )"
+                        ]);
+                        // Update in-memory state (a www already set via Wallpaper singleton)
+                        barWindow.currentWallpaperPath = cleanPath;
                     }
-
-                    barWindow._loadNew(cleanPath, true);
                 }
 
                 PropertyAnimation {
