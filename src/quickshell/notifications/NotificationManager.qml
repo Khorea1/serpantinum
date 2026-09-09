@@ -17,6 +17,22 @@ Item {
     property real lastNotifTime: 0
     property bool _isBatchUpdating: false
 
+    // ─── Unread tracking ──────────────────────────────────────────────
+    property var seenNotifications: []
+    readonly property int unreadCount: {
+        const seen = seenNotifications;
+        if (seen.length === 0) return historyList.length;
+        let count = 0;
+        for (let i = 0; i < historyList.length; i++) {
+            if (seen.indexOf(historyList[i].id) === -1) count++;
+        }
+        return count;
+    }
+
+    function markNotificationsSeen() {
+        seenNotifications = historyList.map(n => n.id);
+    }
+
     // ─── Model aliases (backward-compatible with popups/box/panel) ─────
     ListModel { id: historyModel }
     ListModel { id: popupsModel }
@@ -210,6 +226,56 @@ Item {
         return false;
     }
 
+    // ─── DND: permanent toggle + timed snooze ─────────────────────────
+    // `notifications.dnd` (bool) is the permanent switch, `notifications.dndUntil`
+    // (epoch ms) is an optional timed silence window layered on top of it.
+    property real _dndClockTick: 0
+
+    Timer {
+        id: dndClockTimer
+        interval: 15000
+        repeat: true
+        running: true
+        onTriggered: root._dndClockTick = Date.now()
+    }
+
+    readonly property var _dndCfg: {
+        root._dndClockTick;
+        return (typeof Config !== "undefined" && Config.getSetting)
+            ? Config.getSetting("notifications", { dnd: false, dndUntil: 0 })
+            : { dnd: false, dndUntil: 0 };
+    }
+
+    readonly property bool dndPermanent: !!_dndCfg.dnd
+    readonly property real dndUntil: _dndCfg.dndUntil || 0
+    readonly property bool dndSnoozed: dndUntil > 0 && Date.now() < dndUntil
+    readonly property bool dndActive: dndPermanent || dndSnoozed
+    readonly property int dndRemainingMs: dndSnoozed ? Math.max(0, dndUntil - Date.now()) : 0
+
+    function _patchNotificationConfig(patch) {
+        const cfg = Object.assign({}, (typeof Config !== "undefined" && Config.getSetting)
+            ? Config.getSetting("notifications", {}) : {});
+        Object.assign(cfg, patch);
+        Config.setSetting("notifications", cfg);
+    }
+
+    function setDndSnooze(minutes) {
+        _patchNotificationConfig({ dndUntil: Date.now() + Math.max(1, minutes) * 60000 });
+    }
+
+    function clearDndSnooze() {
+        _patchNotificationConfig({ dndUntil: 0 });
+    }
+
+    function toggleDndPermanent() {
+        const nextValue = !root.dndPermanent;
+        _patchNotificationConfig(nextValue ? { dnd: true } : { dnd: false, dndUntil: 0 });
+    }
+
+    function disableDnd() {
+        _patchNotificationConfig({ dnd: false, dndUntil: 0 });
+    }
+
     // ─── Merged: History persistence (JSON file) ──────────────────────
     readonly property string historyFile: (typeof Caching !== "undefined" ? Caching.cacheDir : "/tmp") + "/notification_history.json"
     readonly property string imageCacheDir: (typeof Caching !== "undefined" ? Caching.cacheDir : "/tmp") + "/notification_images"
@@ -354,6 +420,144 @@ Item {
         historyFileView.writeAdapter();
     }
 
+    // Dismiss one or many persisted history entries by id (used by the
+    // Notification Center UI for per-item and per-group dismiss). Also kills
+    // the matching live popup/toast if it's still on screen, so dismissing
+    // from history never leaves a stale popup behind.
+    function dismissHistoryItems(ids) {
+        if (!ids || ids.length === 0) return;
+        const idSet = {};
+        for (const id of ids) idSet[id] = true;
+
+        const toRemove = historyList.filter(n => idSet[n.id]);
+        if (toRemove.length === 0) return;
+
+        for (const item of toRemove) {
+            if (item.uid !== undefined && root.liveNotifs[item.uid]) {
+                dismissNotification(item.uid);
+            }
+            _deleteCachedImage(item.image);
+        }
+
+        historyList = historyList.filter(n => !idSet[n.id]);
+        saveHistory();
+    }
+
+    // Convenience: nuke everything — persisted history AND any currently
+    // visible popups/toasts. Used by the Notification Center's "dismiss all".
+    function dismissEverything() {
+        dismissAllPopups();
+        clearNotifications();
+        clearHistory();
+    }
+
+    // ─── Batch dismiss ────────────────────────────────────────────────
+    property var _dismissQueue: []
+    property int _dismissBatchSize: 8
+    property int _dismissTickMs: 8
+
+    Timer {
+        id: dismissBatchTimer
+        interval: root._dismissTickMs
+        repeat: true
+        running: root._dismissQueue.length > 0
+        onTriggered: root._processDismissBatch()
+    }
+
+    function _processDismissBatch() {
+        if (_dismissQueue.length === 0) { dismissBatchTimer.stop(); return; }
+        const batch = _dismissQueue.splice(0, _dismissBatchSize);
+        for (const uid of batch) {
+            let n = liveNotifs[uid];
+            delete liveNotifs[uid];
+            if (n) { try { if (typeof n.dismiss === "function") n.dismiss(); else if (typeof n.close === "function") n.close(); } catch (e) {} }
+            for (let i = historyModel.count - 1; i >= 0; i--) {
+                let nData = historyModel.get(i);
+                if (nData && nData.uid === uid) { historyModel.remove(i, 1); break; }
+            }
+        }
+        if (_dismissQueue.length === 0) {
+            dismissBatchTimer.stop();
+            _isBatchUpdating = false;
+            rebuildGroups();
+        }
+    }
+
+    function dismissAllPopups() {
+        const uids = [];
+        for (let key in liveNotifs) { uids.push(Number(key)); }
+        if (uids.length === 0) return;
+        _isBatchUpdating = true;
+        _dismissQueue = uids;
+        if (!dismissBatchTimer.running) dismissBatchTimer.start();
+    }
+
+    // ─── Zombie sweeper ───────────────────────────────────────────────
+    Timer {
+        id: sweeperTimer
+        interval: 2000
+        repeat: true
+        running: true
+        onTriggered: root._sweepStaleNotifs()
+    }
+
+    function _sweepStaleNotifs() {
+        let changed = false;
+        for (let key in liveNotifs) {
+            let n = liveNotifs[key];
+            if (!n) { delete liveNotifs[key]; changed = true; continue; }
+            if (typeof n.dismissed !== "undefined" && n.dismissed) {
+                delete liveNotifs[key]; changed = true;
+            } else if (typeof n.closed !== "undefined" && n.closed) {
+                delete liveNotifs[key]; changed = true;
+            }
+        }
+        if (changed) rebuildGroups();
+    }
+
+    // ─── Image persistence ────────────────────────────────────────────
+    function getImageCachePath(notifData) {
+        const ts = notifData.timestamp || Date.now();
+        const uid = notifData.uid || "0";
+        return imageCacheDir + "/notif_" + ts + "_" + uid + ".png";
+    }
+
+    function persistNotificationImage(notifData) {
+        if (!notifData || !notifData.image) return;
+        const imgUrl = notifData.image.toString();
+        if (!imgUrl || imgUrl === "" || imgUrl.startsWith("image://")) return;
+        const cachePath = getImageCachePath(notifData);
+        if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
+            Quickshell.execDetached(["bash", "-c",
+                "curl -sL '" + imgUrl.replace(/'/g, "'\\''") + "' -o '" + cachePath + "' 2>/dev/null || true"]);
+        } else if (imgUrl.startsWith("file://")) {
+            const src = imgUrl.replace("file://", "");
+            Quickshell.execDetached(["cp", "--", src, cachePath]);
+        }
+    }
+
+    // ─── Convenience helpers ──────────────────────────────────────────
+    function getHistoryCountForRange(range) {
+        if (range === -1) return historyList.length;
+        return historyList.filter(n => getHistoryTimeRange(n.timestamp) === range).length;
+    }
+
+    function markGroupNotificationsSeen(groupKey) {
+        const newSeen = seenNotifications.slice();
+        for (let i = 0; i < historyList.length; i++) {
+            const n = historyList[i];
+            let resolved = resolveApp(n);
+            let gKey = resolved.groupKey;
+            if (n.urgency === 2) gKey += "_crit_" + n.uid;
+            if (gKey === groupKey && newSeen.indexOf(n.id) === -1) {
+                newSeen.push(n.id);
+            }
+        }
+        seenNotifications = newSeen;
+    }
+
+    readonly property bool hasUnread: unreadCount > 0
+
     function pruneHistory() {
         const _pCfg = (typeof Config !== "undefined" && Config.getSetting) ? Config.getSetting("notifications", { maxAgeDays: 30 }) : {};
         const maxAgeDays = _pCfg.maxAgeDays || 30;
@@ -368,6 +572,100 @@ Item {
     }
 
     function deleteHistory() { clearHistory(); }
+
+    // ─── Search / filter (for NotificationCenter) ─────────────────────
+    property string searchFilter: ""
+    property string appFilter: ""
+
+    function searchHistory(query) {
+        searchFilter = (query || "").trim().toLowerCase();
+    }
+
+    function filterByApp(appName) {
+        appFilter = (appName || "").trim().toLowerCase();
+    }
+
+    function getFilteredHistory() {
+        let list = historyList;
+        if (searchFilter !== "") {
+            list = list.filter(function(n) {
+                let s = (n.summary || "").toLowerCase();
+                let b = (n.body || "").toLowerCase();
+                let a = (n.appName || "").toLowerCase();
+                let d = (n.displayName || "").toLowerCase();
+                return s.indexOf(searchFilter) !== -1 || b.indexOf(searchFilter) !== -1 || a.indexOf(searchFilter) !== -1 || d.indexOf(searchFilter) !== -1;
+            });
+        }
+        if (appFilter !== "") {
+            list = list.filter(function(n) {
+                let a = (n.appName || "").toLowerCase();
+                let d = (n.displayName || "").toLowerCase();
+                return a.indexOf(appFilter) !== -1 || d.indexOf(appFilter) !== -1;
+            });
+        }
+        return list;
+    }
+
+    function getHistoryTimeRange(timestamp) {
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var itemDate = new Date(timestamp);
+        var itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+        var diffMs = today.getTime() - itemDay.getTime();
+        var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return 0;  // today
+        if (diffDays === 1) return 1;  // yesterday
+        return 2;                      // older
+    }
+
+    function getHistoryTimeRangeLabel(range) {
+        if (range === 0) return "Today";
+        if (range === 1) return "Yesterday";
+        return "Older";
+    }
+
+    function getHistoryTimeRangeCount(range) {
+        var list = getFilteredHistory();
+        if (range === -1) return list.length;
+        return list.filter(function(n) { return getHistoryTimeRange(n.timestamp) === range; }).length;
+    }
+
+    function getHistoryApps() {
+        var apps = {};
+        for (var i = 0; i < historyList.length; i++) {
+            var n = historyList[i];
+            var name = n.displayName || n.appName || "";
+            if (name && !apps[name]) apps[name] = true;
+        }
+        return Object.keys(apps).sort();
+    }
+
+    // ─── App launch (click-to-open) ──────────────────────────────────
+    function launchApp(desktopEntry) {
+        if (!desktopEntry) return;
+        var entry = null;
+        if (typeof desktopEntry === "string") {
+            entry = DesktopEntries.byId(desktopEntry);
+        } else {
+            entry = desktopEntry;
+        }
+        if (entry && entry.launch) {
+            entry.launch();
+        } else if (typeof desktopEntry === "string" && desktopEntry !== "") {
+            Quickshell.execDetached(["gtk-launch", desktopEntry]);
+        }
+    }
+
+    function invokeNotificationAction(uid, actionId) {
+        var n = liveNotifs[uid];
+        if (!n || !n.actions) return;
+        for (var i = 0; i < n.actions.length; i++) {
+            if (n.actions[i].identifier === actionId) {
+                n.actions[i].invoke();
+                return;
+            }
+        }
+    }
 
     // ─── App resolution (from current src) ────────────────────────────
     function resolveApp(n) {
@@ -598,11 +896,8 @@ Item {
                 if (policy.urgency !== 2) { try { n.dismiss(); } catch (e) {} return; }
             }
 
-            // ── DnD check (uses Config, same as NotificationPopups.qml) ──
-            const notifCfg = (typeof Config !== "undefined" && Config.getSetting)
-                ? Config.getSetting("notifications", { dnd: false })
-                : { dnd: false };
-            const dndBlocked = !!notifCfg.dnd && !root._allowedInDnd(policy.urgency, policy.bypassDnd);
+            // ── DnD check (permanent toggle OR active timed snooze) ──
+            const dndBlocked = root.dndActive && !root._allowedInDnd(policy.urgency, policy.bypassDnd);
 
             // Sound is handled by Notification.qml — no duplicate here
 

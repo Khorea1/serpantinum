@@ -637,7 +637,17 @@
   },
   "notifications": {
     "center": {
-      "reserved": "Reserved for future updates"
+      "reserved": "Reserved for future updates",
+      "active_count": "{count} active",
+      "dismiss_all_active": "Dismiss all active popups",
+      "dnd": {
+        "on_permanent": "Do Not Disturb is on",
+        "on_snoozed": "Silenced for {time}",
+        "off_prompt": "Silence notifications for a while",
+        "enable_permanent": "Enable permanent DND",
+        "disable_permanent": "Turn off permanent DND",
+        "off": "Off"
+      }
     },
     "types": {
       "default": {

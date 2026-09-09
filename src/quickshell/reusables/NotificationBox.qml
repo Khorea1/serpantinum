@@ -28,7 +28,7 @@ Item {
     property real contentMargins: root.s(12)
     property string titleText: I18n.t("syspanel.notifications.title")
 
-    property bool dndEnabled: Boolean(Config.rawSettings && Config.rawSettings.notifications && Config.rawSettings.notifications.dnd)
+    property bool dndEnabled: NotificationManager.dndActive
     readonly property bool showEmptyGraphic: (Config.rawSettings && Config.rawSettings.notifications && Config.rawSettings.notifications.showEmptyGraphic !== undefined) ? Boolean(Config.rawSettings.notifications.showEmptyGraphic) : true
 
     property bool isClearingNotifs: false
@@ -108,14 +108,6 @@ Item {
         clearFinishTimer.start();
     }
 
-    Connections {
-        target: Config
-        function onSettingsLoaded() {
-            let n = Config.getSetting("notifications", { "dnd": false });
-            root.dndEnabled = Boolean(n && n.dnd);
-        }
-    }
-
     Rectangle {
         id: shadowRect
         anchors.fill: parent
@@ -191,11 +183,12 @@ Item {
                 textColor: root.dndEnabled ? ThemeBackend.crust : ThemeBackend.text
 
                 onTriggered: {
-                    root.dndEnabled = !root.dndEnabled;
-                    let n = Config.getSetting("notifications", { "dnd": false });
-                    if (typeof n !== "object" || n === null) n = {};
-                    n.dnd = root.dndEnabled;
-                    Config.setSetting("notifications", n);
+                    if (root.dndEnabled) {
+                        // Was on (permanent or snoozed) -> turn fully off.
+                        NotificationManager.disableDnd();
+                    } else {
+                        NotificationManager.toggleDndPermanent();
+                    }
                 }
             }
         }

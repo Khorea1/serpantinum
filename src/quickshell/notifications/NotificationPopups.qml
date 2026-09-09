@@ -102,22 +102,22 @@ PanelWindow {
     focusable: false
     color: "transparent"
 
-    implicitWidth: s(350)
+    readonly property real popupWidth: Math.round(Math.min(screen.width * 0.22, s(320)))
+    readonly property int effectivePopupWidth: Math.max(s(240), popupWidth)
+    implicitWidth: effectivePopupWidth
 
     mask: Region {
         item: popupContainer
     }
 
-    property bool dndEnabled: {
-        let n = Config.getSetting("notifications", { "dnd": false, "position": "top right" });
-        return Boolean(n && n.dnd);
-    }
+    // Sourced from NotificationManager so a timed DND snooze (not just the
+    // permanent toggle) also hides popups, and re-evaluates as the snooze ticks.
+    property bool dndEnabled: NotificationManager.dndActive
 
     Connections {
         target: Config
         function onSettingsLoaded() {
             let n = Config.getSetting("notifications", { "dnd": false, "position": "top right" });
-            popupWindow.dndEnabled = Boolean(n && n.dnd);
             popupWindow.position = (n && n.position !== undefined) ? n.position : "top right";
             popupWindow.horizontalPosition = (n && n.horizontalPosition !== undefined) ? n.horizontalPosition : 95;
             popupWindow.verticalPosition = (n && n.verticalPosition !== undefined) ? n.verticalPosition : 5;
@@ -137,7 +137,7 @@ PanelWindow {
 
         Item {
             id: popupContainer
-            width: popupWindow.s(350)
+            width: popupWindow.effectivePopupWidth
             height: popupList.height
 
             x: popupWindow.isPreset ? (popupWindow.isCenter ? (popupWindow.width - width) / 2 : (popupWindow.isLeft ? 0 : (popupWindow.width - width))) : ((popupWindow.width - width) * (popupWindow.horizontalPosition / 100.0))
@@ -149,7 +149,7 @@ PanelWindow {
                 height: Math.min(popupWindow.height, contentHeight)
                 verticalLayoutDirection: (popupWindow.isPreset ? popupWindow.isBottom : (popupWindow.verticalPosition > 50)) ? ListView.BottomToTop : ListView.TopToBottom
                 model: NotificationManager.activePopupsModel
-                spacing: popupWindow.s(12)
+                spacing: popupWindow.s(8)
                 interactive: false
                 clip: false
                 boundsBehavior: Flickable.StopAtBounds
@@ -159,7 +159,7 @@ PanelWindow {
                         NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
                         NumberAnimation {
                             property: "x"
-                            from: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.s(350) * 0.35
+                            from: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.effectivePopupWidth * 0.35
                             to: 0
                             duration: 250
                             easing.type: Easing.OutCubic
@@ -179,7 +179,7 @@ PanelWindow {
                         NumberAnimation { property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.OutCubic }
                         NumberAnimation {
                             property: "x"
-                            to: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.s(350) * 0.35
+                            to: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.effectivePopupWidth * 0.35
                             duration: 200
                             easing.type: Easing.OutCubic
                         }
