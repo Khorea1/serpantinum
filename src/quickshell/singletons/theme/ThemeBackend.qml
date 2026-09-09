@@ -40,6 +40,9 @@ Item {
     property color yellow: "#f9e2af"
     property color maroon: "#eba0ac"
     property color teal: "#94e2d5"
+    property color accent: "#89b4fa"
+    property color subtle: "#181825"
+    property color highlight: "#f9e2af"
 
     property string configPath: Quickshell.env("QS_COLORS_JSON") ?? "~/.local/state/serpantinum/qs_colors.json"
     property string matugenConfigPath: (typeof Caching !== "undefined" && Caching.stateDir ? Caching.stateDir : ((Quickshell.env("HOME") ?? "") + "/.local/state/serpantinum")) + "/qs_matugen_colors.json"
@@ -292,6 +295,9 @@ Item {
         safeAssign("yellow",    c.yellow);
         safeAssign("maroon",    c.maroon);
         safeAssign("teal",      c.teal);
+        safeAssign("accent",    c.accent);
+        safeAssign("subtle",    c.subtle);
+        safeAssign("highlight", c.highlight);
     }
 
     FileView {

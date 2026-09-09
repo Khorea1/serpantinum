@@ -108,6 +108,7 @@ Item {
             surface_container_lowest: colorsObj.base,
             surface_container_low:    colorsObj.mantle,
             surface:                  colorsObj.crust,
+            surface_dim:              colorsObj.subtle,
             surface_container:        colorsObj.surface0,
             surface_container_high:   colorsObj.surface1,
             surface_container_highest:colorsObj.surface2,
@@ -115,7 +116,9 @@ Item {
             on_surface:               colorsObj.text,
             on_surface_variant:       colorsObj.subtext0,
             outline:                  colorsObj.subtext1,
+            outline_variant:          colorsObj.overlay2,
             inverse_surface:          colorsObj.overlay0,
+            inverse_on_surface:       colorsObj.overlay1,
 
             primary:             colorsObj.blue,
             primary_container:   colorsObj.sapphire,
@@ -126,10 +129,11 @@ Item {
             error:               colorsObj.red,
             error_container:     colorsObj.maroon,
 
-            primary_fixed:       colorsObj.sapphire,
+            primary_fixed:       colorsObj.mauve,
+            primary_fixed_dim:    colorsObj.accent,
             secondary_fixed:     colorsObj.yellow,
-            tertiary_fixed:      colorsObj.pink,
-            inverse_primary:     colorsObj.mauve
+            tertiary_fixed:      colorsObj.teal,
+            inverse_primary:     colorsObj.sapphire
         };
 
         let roles = ["primary", "secondary", "tertiary", "error"];
@@ -159,7 +163,7 @@ Item {
         let cleanPath = imagePath.startsWith("file://") ? imagePath.substring(7) : imagePath;
         let themeConfig = Config.getSetting("theme", {});
         let selectedMode = mode || themeConfig.mode || "dark";
-        let selectedType = schemeType || themeConfig.schemeType || "scheme-vibrant";
+        let selectedType = schemeType || themeConfig.schemeType || "scheme-smart";
 
         if (root._hasGeneratedSuccessfully
             && root._lastGeneratedReqType === "image"
