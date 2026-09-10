@@ -211,7 +211,7 @@ Item {
                     border.color: ThemeBackend.surface1
                     visible: NotificationManager.activePopupsModel && NotificationManager.activePopupsModel.count > 0
 
-                    Row {
+                    RowLayout {
                         id: activePopupsRow
                         anchors.centerIn: parent
                         spacing: root.s(6)
@@ -220,12 +220,12 @@ Item {
                             width: root.s(6)
                             height: root.s(6)
                             radius: root.s(3)
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             color: ThemeBackend.green
                         }
 
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             text: I18n.t("notifications.center.active_count", { count: NotificationManager.activePopupsModel.count })
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: root.s(10)
@@ -233,7 +233,7 @@ Item {
                         }
 
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             text: "󰅗"
                             font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
                             font.pixelSize: root.s(12)
@@ -255,13 +255,13 @@ Item {
                     radius: root.s(8)
                     color: NotificationManager.dndActive ? ThemeBackend.blue : ThemeBackend.surface1
 
-                    Row {
+                    RowLayout {
                         id: dndRow
                         anchors.centerIn: parent
                         spacing: root.s(4)
 
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             text: NotificationManager.dndActive ? "󰂛" : "󰂚"
                             font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
                             font.pixelSize: root.s(15)
@@ -269,7 +269,7 @@ Item {
                         }
 
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             visible: NotificationManager.dndSnoozed
                             text: root.formatDndRemaining(NotificationManager.dndRemainingMs)
                             font.family: ThemeBackend.fontFamily
@@ -278,7 +278,7 @@ Item {
                         }
 
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignVCenter
                             text: root.showDndMenu ? "󰅃" : "󰅀"
                             font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
                             font.pixelSize: root.s(11)
