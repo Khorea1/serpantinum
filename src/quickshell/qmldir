@@ -56,6 +56,7 @@ singleton ClipboardController 1.0 singletons/widgetcontrols/ClipboardController.
 singleton FloatingController 1.0 singletons/widgetcontrols/FloatingController.qml
 singleton LauncherController 1.0 singletons/widgetcontrols/LauncherController.qml
 singleton OsdController 1.0 singletons/widgetcontrols/OsdController.qml
+singleton PanelController 1.0 singletons/widgetcontrols/PanelController.qml
 singleton SideMusicController 1.0 singletons/widgetcontrols/SideMusicController.qml
 singleton TrayMenuController 1.0 singletons/widgetcontrols/TrayMenuController.qml
 singleton WidgetSync 1.0 singletons/widgetcontrols/WidgetSync.qml
