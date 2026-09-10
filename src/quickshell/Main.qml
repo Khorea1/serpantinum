@@ -64,6 +64,7 @@ PanelWindow {
     }
 
     IpcHandler {
+        id: mainIpc
         target: "main"
 
         function forceReload(): void {
@@ -173,6 +174,17 @@ PanelWindow {
                 };
                 Quickshell.execDetached(["bash", "-c", "echo '" + JSON.stringify(geo) + "' > " + Caching.runDir + "/tutorial_target.json"]);
             }
+        }
+    }
+
+    // In-process bridge: other windows (e.g. the notification popup's
+    // "open manager" button) call PanelController.toggle(...) instead of
+    // shelling out to `serpantinum msg`; forward it through the same
+    // handleCommand path the real IPC command uses.
+    Connections {
+        target: PanelController
+        function onRequestNonceChanged() {
+            mainIpc.handleCommand("toggle", PanelController.requestWidget, PanelController.requestArg);
         }
     }
 
@@ -451,6 +463,36 @@ PanelWindow {
 
         let result = Registry.getLayout(name, 0, 0, scrW, scrH, masterWindow.globalUiScale, bp);
         if (!result) return null;
+
+        // The Notification Center follows wherever the user has toast
+        // popups configured to appear (notifications.position), instead of
+        // always docking to a fixed edge — so opening it from the popup's
+        // own "open manager" button feels seamless/continuous.
+        if (name === "notifications") {
+            let notifCfg = (typeof Config !== "undefined" && Config.getSetting)
+                ? Config.getSetting("notifications", { position: "top right", horizontalPosition: 95 })
+                : { position: "top right", horizontalPosition: 95 };
+            let pos = notifCfg && notifCfg.position !== undefined ? notifCfg.position : "top right";
+            let side = "right";
+
+            if (pos === "custom") {
+                let hp = notifCfg && notifCfg.horizontalPosition !== undefined ? notifCfg.horizontalPosition : 95;
+                side = hp < 33 ? "left" : (hp > 66 ? "right" : "center");
+            } else if (pos.indexOf("left") !== -1) {
+                side = "left";
+            } else if (pos.indexOf("center") !== -1) {
+                side = "center";
+            } else {
+                side = "right";
+            }
+
+            let rx = 0;
+            if (side === "left") rx = 0;
+            else if (side === "center") rx = Math.floor((scrW - result.w) / 2);
+            else rx = scrW - result.w;
+
+            result = { w: result.w, h: result.h, rx: rx, ry: result.ry, comp: result.comp };
+        }
 
         let scale = masterWindow.globalUiScale || 1.0;
         let isFixed = (name === "guide" || name === "wallpaper" || name === "notifications" || name === "system" || name === "hidden");

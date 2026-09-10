@@ -275,6 +275,72 @@ PanelWindow {
                 }
             }
         }
+
+        // ─── "Open notification center" pill ──────────────────────────
+        // Docked to whichever edge the toasts themselves are configured to
+        // appear at, so opening the full manager feels like a continuation
+        // of the popup stack rather than a disconnected action.
+        Rectangle {
+            id: openCenterPill
+            visible: NotificationManager.activePopupsModel.count > 0
+            opacity: pillArea.containsMouse ? 1.0 : 0.82
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+
+            readonly property bool dockBottom: popupWindow.isPreset ? popupWindow.isBottom : (popupWindow.verticalPosition > 50)
+            readonly property real gap: popupWindow.s(8)
+
+            width: pillRow.implicitWidth + popupWindow.s(16)
+            height: popupWindow.s(24)
+            radius: height / 2
+            color: Qt.rgba(ThemeBackend.surface0.r, ThemeBackend.surface0.g, ThemeBackend.surface0.b, 0.92)
+            border.width: 1
+            border.color: ThemeBackend.surface1
+
+            x: {
+                if (popupContainer.width <= 0) return popupContainer.x;
+                if (popupWindow.isPreset && popupWindow.isCenter) return popupContainer.x + (popupContainer.width - width) / 2;
+                if (!popupWindow.isPreset) {
+                    if (popupWindow.horizontalPosition < 33) return popupContainer.x;
+                    if (popupWindow.horizontalPosition > 66) return popupContainer.x + popupContainer.width - width;
+                    return popupContainer.x + (popupContainer.width - width) / 2;
+                }
+                return popupWindow.isLeft ? popupContainer.x : (popupContainer.x + popupContainer.width - width);
+            }
+            y: dockBottom ? (popupContainer.y - height - gap) : (popupContainer.y + popupContainer.height + gap)
+
+            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+            RowLayout {
+                id: pillRow
+                anchors.centerIn: parent
+                spacing: popupWindow.s(5)
+
+                Text {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "󰂚"
+                    font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                    font.pixelSize: popupWindow.s(12)
+                    color: ThemeBackend.subtext1
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: NotificationManager.activePopupsModel.count
+                    font.family: ThemeBackend.fontFamily
+                    font.pixelSize: popupWindow.s(10)
+                    color: ThemeBackend.subtext1
+                }
+            }
+
+            MouseArea {
+                id: pillArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: PanelController.toggle("notifications", "")
+            }
+        }
     }
 
     Connections {

@@ -18,6 +18,23 @@ Item {
     property string searchText: ""
     property string selectedApp: ""
     property int selectedTimeRange: -1 // -1 = all, 0 = today, 1 = yesterday, 2 = older
+
+    // Which screen edge this panel is currently docked to — mirrors the
+    // same rule Main.qml uses to place the panel, so the decorative "docked
+    // edge" border flattens the correct side instead of always the left.
+    readonly property string dockSide: {
+        var notifCfg = (typeof Config !== "undefined" && Config.getSetting)
+            ? Config.getSetting("notifications", { position: "top right", horizontalPosition: 95 })
+            : { position: "top right", horizontalPosition: 95 };
+        var pos = (notifCfg && notifCfg.position !== undefined) ? notifCfg.position : "top right";
+        if (pos === "custom") {
+            var hp = (notifCfg && notifCfg.horizontalPosition !== undefined) ? notifCfg.horizontalPosition : 95;
+            return hp < 33 ? "left" : (hp > 66 ? "right" : "center");
+        }
+        if (pos.indexOf("left") !== -1) return "left";
+        if (pos.indexOf("center") !== -1) return "center";
+        return "right";
+    }
     readonly property var timeRanges: [-1, 0, 1, 2]
     readonly property var timeRangeLabels: ["All", "Today", "Yesterday", "Older"]
 
@@ -174,11 +191,22 @@ Item {
         opacity: root.introContent
 
         Rectangle {
-            anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: root.s(16)
+            visible: root.dockSide !== "center"
+            anchors.left: root.dockSide === "left" ? parent.left : undefined
+            anchors.right: root.dockSide === "right" ? parent.right : undefined
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: root.s(16)
             color: sidebarPanel.color
             Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: sidebarPanel.border.color }
             Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: sidebarPanel.border.color }
-            Rectangle { anchors.left: parent.left; width: 1; height: parent.height; color: sidebarPanel.border.color }
+            Rectangle {
+                anchors.left: root.dockSide === "left" ? parent.left : undefined
+                anchors.right: root.dockSide === "right" ? parent.right : undefined
+                width: 1
+                height: parent.height
+                color: sidebarPanel.border.color
+            }
         }
 
         ColumnLayout {
