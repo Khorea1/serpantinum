@@ -31,6 +31,7 @@ Rectangle {
     property color accentColor: urgency === 2 ? ThemeBackend.red : ThemeBackend.blue
     property string fullSummary: ""
     property string fullBody: ""
+    property string fullHtmlBody: ""
     property string combinedBodyText: fullBody
     property int msgCount: 1
     readonly property bool canExpand: fullBody.length > 50 || fullBody.indexOf("\n") !== -1 || (delegateWrapper && delegateWrapper.actionArray && delegateWrapper.actionArray.length > 0)
@@ -45,6 +46,15 @@ Rectangle {
 
     property real timestamp: model && model.timestamp ? model.timestamp : Date.now()
     property string timeText: ""
+
+    // ─── Privacy mode ──────────────────────────────────────────────────
+    property bool privacyMode: {
+        let cfg = (typeof Config !== "undefined" && Config.getSetting)
+            ? Config.getSetting("notifications", { privacyMode: false })
+            : { privacyMode: false };
+        return Boolean(cfg.privacyMode);
+    }
+    property bool descriptionExpanded: false
 
     property bool readState: model && typeof model.read !== "undefined" ? Boolean(model.read) : true
     function forceRead(r) { readState = r; }
@@ -342,7 +352,7 @@ Rectangle {
         anchors.topMargin: s(1.5) + Math.max(0, typeRoot.dragY * 0.4)
         anchors.bottomMargin: -(s(1.5) + Math.max(0, typeRoot.dragY * 0.4))
         radius: visualItem.radius
-        color: Qt.rgba(0, 0, 0, 0.12 + Math.min(0.06, Math.max(0, typeRoot.dragY / s(3.5)) * 0.06))
+        color: Qt.rgba(0, 0, 0, 0.08 + Math.min(0.04, Math.max(0, typeRoot.dragY / s(3.5)) * 0.04))
         scale: visualItem.scale
         opacity: visualItem.opacity
         transform: Translate {
@@ -367,8 +377,8 @@ Rectangle {
     }
 
     readonly property real availableTopWidth: Math.max(0, cardContent.width - (typeRoot.showIcon ? s(50) : 0))
-    readonly property real expandBtnSpace: (typeRoot.canExpand ? s(28) + s(6) : 0)
-    readonly property real dotSpace: s(18)
+    readonly property real expandBtnSpace: (typeRoot.canExpand ? s(22) + s(6) : 0)
+    readonly property real dotSpace: s(14)
     readonly property bool timeOnNextRowCollapsed: (collapsedSummaryMetrics.width + dotSpace + timeMetrics.width + expandBtnSpace) > availableTopWidth
 
     readonly property var summaryWords: {
@@ -393,7 +403,7 @@ Rectangle {
         anchors.fill: parent
         radius: ThemeBackend.borderRadius
         clip: true
-        implicitHeight: cardContent.implicitHeight + s(20)
+        implicitHeight: cardContent.implicitHeight + s(14)
 
         property color baseColor: typeRoot.readState === false ? Qt.lighter(ThemeBackend.surface1, 1.05) : ThemeBackend.surface1
         color: (cardHover.pressed && !cardHover.draggingH && !cardHover.draggingV) ? Qt.darker(baseColor, 1.1) : (cardHover.containsMouse && !cardHover.draggingH && !cardHover.draggingV ? Qt.lighter(baseColor, 1.05) : baseColor)
@@ -433,71 +443,22 @@ Rectangle {
                 NumberAnimation { to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
             }
 
-            readonly property color deepRed: {
-                let h = ThemeBackend.red.hsvHue;
-                let sVal = Math.min(0.95, Math.max(0.80, ThemeBackend.red.hsvSaturation * 2.0));
-                let vVal = Math.min(0.85, ThemeBackend.red.hsvValue * 0.88);
-                return Qt.hsva(h, sVal, vVal, 1.0);
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: visualItem.radius + s(1)
+                radius: visualItem.radius
+                color: Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.7)
             }
 
             Rectangle {
                 anchors.fill: parent
-                radius: visualItem.radius
-                color: Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.025)
-            }
-
-            Rectangle {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: parent.height * 0.55
-                radius: visualItem.radius
+                anchors.topMargin: visualItem.radius
+                radius: 0
                 color: "transparent"
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.11) }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-            }
-
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: parent.height * 0.55
-                radius: visualItem.radius
-                color: "transparent"
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 1.0; color: Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.11) }
-                }
-            }
-
-            Rectangle {
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                width: parent.width * 0.35
-                radius: visualItem.radius
-                color: "transparent"
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.11) }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-            }
-
-            Rectangle {
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                width: parent.width * 0.35
-                radius: visualItem.radius
-                color: "transparent"
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 1.0; color: Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.11) }
-                }
+                border.width: s(1)
+                border.color: Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.15)
             }
         }
 
@@ -511,22 +472,22 @@ Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: s(10)
-            spacing: s(4)
+            anchors.margins: s(7)
+            spacing: s(3)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: typeRoot.showIcon ? s(10) : 0
+                spacing: typeRoot.showIcon ? s(8) : 0
                 Layout.alignment: Qt.AlignTop
 
                 Item {
                     Layout.alignment: Qt.AlignTop
-                    Layout.preferredWidth: typeRoot.showIcon ? s(40) : 0
-                    Layout.preferredHeight: typeRoot.showIcon ? s(40) : 0
+                    Layout.preferredWidth: typeRoot.showIcon ? s(32) : 0
+                    Layout.preferredHeight: typeRoot.showIcon ? s(32) : 0
                     visible: typeRoot.showIcon
 
-                    readonly property real boxRadius: s(10)
-                    readonly property real boxPadding: s(5)
+                    readonly property real boxRadius: s(8)
+                    readonly property real boxPadding: s(4)
 
                     Rectangle {
                         anchors.fill: parent
@@ -539,7 +500,7 @@ Rectangle {
                     Rectangle {
                         anchors.fill: parent
                         radius: parent.boxRadius
-                        color: typeRoot.urgency === 2 ? Qt.tint(ThemeBackend.surface2, Qt.rgba(urgencyGlow.deepRed.r, urgencyGlow.deepRed.g, urgencyGlow.deepRed.b, 0.12)) : ThemeBackend.surface2
+                        color: typeRoot.urgency === 2 ? Qt.tint(ThemeBackend.surface2, Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.10)) : ThemeBackend.surface2
 
                         Behavior on color { ColorAnimation { duration: 200 } }
                     }
@@ -564,7 +525,7 @@ Rectangle {
                         id: topHeaderRow
                         Layout.fillWidth: true
                         Layout.preferredHeight: {
-                            let singleH = s(28);
+                            let singleH = s(22);
                             if (typeRoot.timeOnNextRowCollapsed && typeRoot.expandProgress < 1.0) {
                                 let twoLineH = collapsedTwoLineContainer.implicitHeight + s(4);
                                 return Math.max(singleH, twoLineH) * (1.0 - typeRoot.expandProgress) + singleH * typeRoot.expandProgress;
@@ -581,15 +542,29 @@ Rectangle {
                             visible: opacity > 0.0
                         }
 
-                        Text {
-                            id: collapsedSummary
+                        // Unread accent dot
+                        Rectangle {
+                            id: unreadDot
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.max(0, Math.min(implicitWidth, parent.width - typeRoot.expandBtnSpace - timeMetrics.width - typeRoot.dotSpace))
+                            width: s(6)
+                            height: s(6)
+                            radius: s(3)
+                            color: typeRoot.accentColor
+                            visible: typeRoot.readState === false
+                            opacity: (!typeRoot.timeOnNextRowCollapsed) ? Math.max(0.0, 1.0 - typeRoot.expandProgress * 3.0) : 0.0
+                        }
+
+                        Text {
+                            id: collapsedSummary
+                            anchors.left: unreadDot.visible ? unreadDot.right : parent.left
+                            anchors.leftMargin: unreadDot.visible ? s(5) : 0
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.max(0, Math.min(implicitWidth, parent.width - typeRoot.expandBtnSpace - timeMetrics.width - typeRoot.dotSpace - (unreadDot.visible ? s(11) : 0)))
                             text: typeRoot.fullSummary
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Bold
-                            font.pixelSize: typeRoot.isPopup ? s(13) : s(12)
+                            font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                             color: ThemeBackend.text
                             elide: Text.ElideRight
                             maximumLineCount: 1
@@ -604,9 +579,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "•"
                             font.family: ThemeBackend.fontFamily
-                            font.pixelSize: s(10)
-                            color: ThemeBackend.subtext1
-                            opacity: (!typeRoot.timeOnNextRowCollapsed) ? Math.max(0.0, 1.0 - typeRoot.expandProgress * 3.0) : 0.0
+                            font.pixelSize: s(9)
                             visible: opacity > 0.0
                         }
 
@@ -615,7 +588,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             text: typeRoot.timeText
                             font.family: ThemeBackend.fontFamily
-                            font.pixelSize: s(11)
+                            font.pixelSize: s(10)
                             color: ThemeBackend.subtext1
 
                             readonly property real startX: collapsedSummary.width + s(12) + dotLabel.implicitWidth
@@ -641,7 +614,7 @@ Rectangle {
                                 text: typeRoot.summaryPrefix
                                 font.family: ThemeBackend.fontFamily
                                 font.weight: Font.Bold
-                                font.pixelSize: typeRoot.isPopup ? s(13) : s(12)
+                                font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                                 color: ThemeBackend.text
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
@@ -655,7 +628,7 @@ Rectangle {
                                     text: typeRoot.summaryLastWord
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.Bold
-                                    font.pixelSize: typeRoot.isPopup ? s(13) : s(12)
+                                    font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                                     color: ThemeBackend.text
                                     visible: typeRoot.summaryLastWord !== ""
                                 }
@@ -685,8 +658,8 @@ Rectangle {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             visible: typeRoot.canExpand
-                            size: s(28)
-                            cornerRadius: s(7)
+                            size: s(22)
+                            cornerRadius: s(5)
                             accentColor: ThemeBackend.surface2
                             iconColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.subtext1
                             autoToggle: false
@@ -712,13 +685,13 @@ Rectangle {
                             text: typeRoot.fullSummary
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Bold
-                            font.pixelSize: typeRoot.isPopup ? s(13) : s(12)
+                            font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                             color: ThemeBackend.text
                             wrapMode: Text.Wrap
                         }
                     }
 
-                    Item {
+                        Item {
                         Layout.fillWidth: true
                         Layout.topMargin: -s(1)
                         Layout.preferredHeight: {
@@ -730,6 +703,25 @@ Rectangle {
                         clip: true
                         visible: typeRoot.fullBody !== ""
 
+                        // Privacy mode overlay — masks body content when privacy enabled
+                        Rectangle {
+                            id: privacyMask
+                            anchors.fill: parent
+                            anchors.margins: -s(4)
+                            radius: s(6)
+                            color: ThemeBackend.surface1
+                            visible: typeRoot.privacyMode && !typeRoot.isHovered
+                            z: 10
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "•••••••••••"
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
+                                color: ThemeBackend.subtext1
+                            }
+                        }
+
                         Text {
                             id: collapsedBody
                             anchors.top: parent.top
@@ -738,7 +730,7 @@ Rectangle {
                             text: typeRoot.fullBody
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Normal
-                            font.pixelSize: typeRoot.isPopup ? s(12) : s(11)
+                            font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                             color: ThemeBackend.subtext0
                             elide: Text.ElideRight
                             maximumLineCount: 1
@@ -751,13 +743,13 @@ Rectangle {
                             anchors.top: parent.top
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            text: typeRoot.fullBody
+                            text: typeRoot.fullHtmlBody !== "" ? typeRoot.fullHtmlBody : typeRoot.fullBody
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Normal
-                            font.pixelSize: typeRoot.isPopup ? s(12) : s(11)
+                            font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
                             color: ThemeBackend.subtext0
                             wrapMode: Text.Wrap
-                            textFormat: Text.StyledText
+                            textFormat: typeRoot.fullHtmlBody !== "" ? Text.StyledText : Text.PlainText
                             opacity: Math.max(0.0, (typeRoot.expandProgress - 0.2) / 0.8)
                             visible: opacity > 0.001
                         }

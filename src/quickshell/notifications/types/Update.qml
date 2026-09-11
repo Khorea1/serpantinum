@@ -43,7 +43,7 @@ Notification {
                 anchors.centerIn: parent
                 text: "󰚰"
                 font.family: ThemeBackend.fontFamily
-                font.pixelSize: s(22)
+                font.pixelSize: s(16)
                 color: ThemeBackend.green
             }
         }

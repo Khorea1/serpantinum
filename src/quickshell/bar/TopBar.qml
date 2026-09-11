@@ -282,7 +282,6 @@ Item {
     property real screenMaxRight: isFill ? (contentWrapper.width - fillInset) : (barWindow ? (contentWrapper.width - barWindow.s(1) - distinctEdgePadding) : (contentWrapper.width - distinctEdgePadding))
 
     property real rawCNaturalX: {
-        if (layoutState === "settings") return screenMaxRight - rWidthTarget - crGap - cWidthTarget;
         if (layoutState === "sys") return screenMinLeft + lWidthTarget + lcGap;
         return (contentWrapper.width - cWidthTarget) / 2;
     }
@@ -301,9 +300,6 @@ Item {
 
     property real lFinalX: {
         if (lWidthTarget <= 0) return baseMinLeft;
-        if (layoutState === "settings") {
-            return Math.max(screenMinLeft, cFinalX - lcGap - lWidthTarget);
-        }
         let pushedX = Math.min(baseMinLeft, cFinalX - lcGap - lWidthTarget);
         return Math.max(screenMinLeft, pushedX);
     }

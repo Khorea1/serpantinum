@@ -19,6 +19,10 @@ Item {
     property string selectedApp: ""
     property int selectedTimeRange: -1 // -1 = all, 0 = today, 1 = yesterday, 2 = older
 
+    onVisibleChanged: {
+        NotificationManager.sysPanelOpen = visible;
+    }
+
     // Which screen edge this panel is currently docked to — mirrors the
     // same rule Main.qml uses to place the panel, so the decorative "docked
     // edge" border flattens the correct side instead of always the left.
@@ -643,24 +647,39 @@ Item {
                         height: root.s(24)
                         width: appChipLabel.implicitWidth + root.s(14)
                         radius: root.s(7)
-                        color: root.selectedApp === modelData.toLowerCase() ? ThemeBackend.blue : ThemeBackend.surface0
+
+                        readonly property string appName: {
+                            var d = modelData;
+                            if (!d) return "";
+                            if (typeof d === "string") return d.toLowerCase();
+                            if (d.name) return d.name.toString().toLowerCase();
+                            return "";
+                        }
+                        readonly property string appIcon: {
+                            var d = modelData;
+                            if (!d) return "";
+                            if (typeof d === "string") return "";
+                            return d.icon || "";
+                        }
+
+                        color: root.selectedApp === appName ? ThemeBackend.blue : ThemeBackend.surface0
                         border.width: 1
-                        border.color: root.selectedApp === modelData.toLowerCase() ? ThemeBackend.blue : ThemeBackend.surface1
+                        border.color: root.selectedApp === appName ? ThemeBackend.blue : ThemeBackend.surface1
 
                         Text {
                             id: appChipLabel
                             anchors.centerIn: parent
-                            text: modelData
+                            text: (modelData && modelData.name) ? modelData.name : (typeof modelData === "string" ? modelData : "")
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: root.s(10)
-                            color: root.selectedApp === modelData.toLowerCase() ? ThemeBackend.crust : ThemeBackend.subtext1
+                            color: root.selectedApp === appName ? ThemeBackend.crust : ThemeBackend.subtext1
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.selectedApp = (root.selectedApp === modelData.toLowerCase()) ? "" : modelData.toLowerCase();
+                                root.selectedApp = (root.selectedApp === appName) ? "" : appName;
                                 root.refreshFilteredEntries();
                             }
                         }
@@ -697,7 +716,7 @@ Item {
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.searchText !== "" ? "No matching notifications" : "No notifications"
+                        text: root.searchText !== "" ? I18n.t("notifications.center.empty_search") : I18n.t("notifications.center.empty")
                         font.family: ThemeBackend.fontFamily
                         font.pixelSize: root.s(13)
                         color: ThemeBackend.overlay0

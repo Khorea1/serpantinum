@@ -25,7 +25,7 @@ Notification {
                     if (ic.startsWith("file://") || ic.startsWith("image://") || ic.startsWith("http://") || ic.startsWith("https://")) return ic;
                     return ic.startsWith("/") ? "file://" + ic : "image://icon/" + ic;
                 }
-                sourceSize: Qt.size(48, 48)
+                sourceSize: Qt.size(32, 32)
                 fillMode: Image.PreserveAspectFit
                 visible: status === Image.Ready && source !== ""
             }
@@ -37,7 +37,7 @@ Notification {
                 visible: !notifIcon.visible
                 text: "󰋽"
                 font.family: ThemeBackend.fontFamily
-                font.pixelSize: s(22)
+                font.pixelSize: s(16)
                 color: ThemeBackend.subtext0
             }
         }

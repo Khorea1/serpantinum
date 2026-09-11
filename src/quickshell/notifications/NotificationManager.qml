@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../"
 import "../reusables"
+import "../reusables/markdown2html.js" as Markdown2Html
 
 Item {
     id: root
@@ -19,6 +20,7 @@ Item {
 
     // ─── Unread tracking ──────────────────────────────────────────────
     property var seenNotifications: []
+    readonly property bool hasUnread: unreadCount > 0
     readonly property int unreadCount: {
         const seen = seenNotifications;
         if (seen.length === 0) return historyList.length;
@@ -306,69 +308,56 @@ Item {
         onTriggered: root.performSaveHistory()
     }
 
-    Timer {
-        id: pruneHistoryTimer
-        interval: 60000
-        repeat: true
-        running: true
-        onTriggered: root.pruneHistory()
-    }
-
     function _makeHistoryEntryId(sourceId, timestamp) {
         historyEntryCounter += 1;
-        const safe = sourceId && sourceId !== "" ? sourceId : "notification";
-        return safe + "_" + (timestamp || Date.now()) + "_" + historyEntryCounter;
+        const safeSource = sourceId && sourceId !== "" ? sourceId : "notification";
+        return safeSource + "_" + (timestamp || Date.now()) + "_" + historyEntryCounter;
     }
 
     function addToHistory(notifData) {
         if (!notifData) return;
-        const data = {
-            id: _makeHistoryEntryId(notifData.uid, notifData.timestamp),
+        const entry = {
+            id: notifData.id || _makeHistoryEntryId(notifData.uid || "", notifData.timestamp || Date.now()),
             uid: notifData.uid,
             appName: notifData.appName || "",
             displayName: notifData.displayName || "",
             summary: notifData.summary || "",
             body: notifData.body || "",
-            image: notifData.image || "",
+            htmlBody: notifData.htmlBody || "",
             iconPath: notifData.iconPath || "",
-            urgency: typeof notifData.urgency === "number" ? notifData.urgency : 1,
+            image: notifData.image || "",
+            urgency: notifData.urgency !== undefined ? notifData.urgency : 1,
             timestamp: notifData.timestamp || Date.now(),
-            read: false
+            read: notifData.read !== undefined ? notifData.read : false
         };
-        let newList = [data, ...historyList];
-        const _hCfg = (typeof Config !== "undefined" && Config.getSetting) ? Config.getSetting("notifications", { maxCount: 200, maxAgeDays: 30 }) : {};
-        const maxCount = _hCfg.maxCount || 200;
+        let newList = [entry, ...historyList];
+        const maxCount = 500;
         if (newList.length > maxCount) newList = newList.slice(0, maxCount);
         historyList = newList;
         saveHistory();
     }
 
-    function saveHistory() { historySaveTimer.restart(); }
+    function saveHistory() {
+        historySaveTimer.restart();
+    }
 
     function performSaveHistory() {
         try {
             historyAdapter.notifications = historyList;
             historyFileView.writeAdapter();
         } catch (e) {
-            if (root.log) root.log.warn("save history failed:", e);
+            console.warn("NotificationManager: save history failed:", e);
         }
     }
 
     function loadHistory() {
         try {
-            const _lCfg = (typeof Config !== "undefined" && Config.getSetting) ? Config.getSetting("notifications", { maxAgeDays: 30 }) : {};
-            const maxAgeDays = _lCfg.maxAgeDays || 30;
-            const now = Date.now();
-            const maxAgeMs = maxAgeDays > 0 ? maxAgeDays * 24 * 60 * 60 * 1000 : 0;
             const loaded = [];
             const seenIds = {};
-            let needsRewrite = false;
             for (const item of historyAdapter.notifications || []) {
-                if (maxAgeMs > 0 && (now - item.timestamp) > maxAgeMs) continue;
                 let historyId = (item.id || "").toString();
                 if (!historyId || seenIds[historyId]) {
-                    historyId = _makeHistoryEntryId(item.uid, item.timestamp || now);
-                    needsRewrite = true;
+                    historyId = _makeHistoryEntryId(item.uid || "", item.timestamp || Date.now());
                 }
                 seenIds[historyId] = true;
                 loaded.push({
@@ -378,18 +367,18 @@ Item {
                     displayName: item.displayName || "",
                     summary: item.summary || "",
                     body: item.body || "",
-                    image: item.image || "",
+                    htmlBody: item.htmlBody || "",
                     iconPath: item.iconPath || "",
-                    urgency: typeof item.urgency === "number" ? item.urgency : 1,
+                    image: item.image || "",
+                    urgency: item.urgency !== undefined ? item.urgency : 1,
                     timestamp: item.timestamp || 0,
-                    read: item.read || false
+                    read: item.read !== undefined ? item.read : false
                 });
             }
             historyList = loaded;
             historyLoaded = true;
-            if (needsRewrite) saveHistory();
         } catch (e) {
-            if (root.log) root.log.warn("load history failed:", e);
+            console.warn("NotificationManager: load history failed:", e);
             historyLoaded = true;
         }
     }
@@ -483,6 +472,41 @@ Item {
         }
     }
 
+    // ─── Single-popup dismiss (called by auto-dismiss timer in delegate) ──
+    function removePopup(uid) {
+        // Remove from liveNotifs
+        delete liveNotifs[uid];
+        // Remove from active popups model
+        for (let i = popupsModel.count - 1; i >= 0; i--) {
+            let m = popupsModel.get(i);
+            if (m && (m.uid === uid || m.latestUid === uid)) {
+                popupsModel.remove(i, 1);
+                break;
+            }
+        }
+        // Remove from history model
+        for (let i = historyModel.count - 1; i >= 0; i--) {
+            let nData = historyModel.get(i);
+            if (nData && nData.uid === uid) {
+                historyModel.remove(i, 1);
+                break;
+            }
+        }
+        rebuildGroups();
+    }
+
+    function dismissNotification(uid) {
+        // Close the underlying notification object if it exists
+        let n = liveNotifs[uid];
+        if (n) {
+            try {
+                if (typeof n.dismiss === "function") n.dismiss();
+                else if (typeof n.close === "function") n.close();
+            } catch (e) {}
+        }
+        removePopup(uid);
+    }
+
     function dismissAllPopups() {
         const uids = [];
         for (let key in liveNotifs) { uids.push(Number(key)); }
@@ -507,352 +531,217 @@ Item {
             let n = liveNotifs[key];
             if (!n) { delete liveNotifs[key]; changed = true; continue; }
             if (typeof n.dismissed !== "undefined" && n.dismissed) {
-                delete liveNotifs[key]; changed = true;
-            } else if (typeof n.closed !== "undefined" && n.closed) {
-                delete liveNotifs[key]; changed = true;
+                delete liveNotifs[key]; changed = true; continue;
+            }
+            if (typeof n.expired !== "undefined" && n.expired) {
+                delete liveNotifs[key]; changed = true; continue;
             }
         }
         if (changed) rebuildGroups();
     }
 
-    // ─── Image persistence ────────────────────────────────────────────
-    function getImageCachePath(notifData) {
-        const ts = notifData.timestamp || Date.now();
-        const uid = notifData.uid || "0";
-        return imageCacheDir + "/notif_" + ts + "_" + uid + ".png";
+    // ─── Markdown body rendering (from DankMaterialShell) ──────────────
+    function _decodeEntities(s) {
+        if (!s) return "";
+        s = s.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)));
+        s = s.replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+        return s.replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, (match, name) => {
+            const entities = { "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": " " };
+            return entities[name.toLowerCase()] || match;
+        });
     }
 
-    function persistNotificationImage(notifData) {
-        if (!notifData || !notifData.image) return;
-        const imgUrl = notifData.image.toString();
-        if (!imgUrl || imgUrl === "" || imgUrl.startsWith("image://")) return;
-        const cachePath = getImageCachePath(notifData);
-        if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) {
-            Quickshell.execDetached(["bash", "-c",
-                "curl -sL '" + imgUrl.replace(/'/g, "'\\''") + "' -o '" + cachePath + "' 2>/dev/null || true"]);
-        } else if (imgUrl.startsWith("file://")) {
-            const src = imgUrl.replace("file://", "");
-            Quickshell.execDetached(["cp", "--", src, cachePath]);
-        }
-    }
-
-    // ─── Convenience helpers ──────────────────────────────────────────
-    function getHistoryCountForRange(range) {
-        if (range === -1) return historyList.length;
-        return historyList.filter(n => getHistoryTimeRange(n.timestamp) === range).length;
-    }
-
-    function markGroupNotificationsSeen(groupKey) {
-        const newSeen = seenNotifications.slice();
-        for (let i = 0; i < historyList.length; i++) {
-            const n = historyList[i];
-            let resolved = resolveApp(n);
-            let gKey = resolved.groupKey;
-            if (n.urgency === 2) gKey += "_crit_" + n.uid;
-            if (gKey === groupKey && newSeen.indexOf(n.id) === -1) {
-                newSeen.push(n.id);
+    function _resolveHtmlBody(body) {
+        if (!body) return "";
+        let result = body;
+        // Already HTML — leave as-is
+        if (/<\/?[a-z][\s\S]*>/i.test(body)) {
+            result = body;
+        } else {
+            // Decode URL-encoded content
+            let processed = body.replace(/\bhttps?%3A%2F%2F[^\s]+/gi, match => {
+                try { return decodeURIComponent(match); } catch (e) { return match; }
+            });
+            // Decode HTML entities, then convert markdown
+            if (/&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/.test(processed)) {
+                const decoded = _decodeEntities(processed);
+                if (/<\/?[a-z][\s\S]*>/i.test(decoded)) result = decoded;
+                else result = Markdown2Html.markdownToHtml(decoded);
+            } else {
+                result = Markdown2Html.markdownToHtml(processed);
             }
         }
-        seenNotifications = newSeen;
+        // Strip images — they're handled separately
+        return result.replace(/<img\b[^>]*>/gi, "");
     }
 
-    readonly property bool hasUnread: unreadCount > 0
+    function _getEffectiveBody(body, htmlBody) {
+        if (htmlBody && htmlBody.trim() !== "") return htmlBody;
+        if (body && body.trim() !== "") return _resolveHtmlBody(body);
+        return "";
+    }
 
-    function pruneHistory() {
-        const _pCfg = (typeof Config !== "undefined" && Config.getSetting) ? Config.getSetting("notifications", { maxAgeDays: 30 }) : {};
-        const maxAgeDays = _pCfg.maxAgeDays || 30;
-        if (maxAgeDays <= 0) return;
-        const now = Date.now();
-        const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
-        const pruned = historyList.filter(item => (now - item.timestamp) <= maxAgeMs);
-        if (pruned.length !== historyList.length) {
-            historyList = pruned;
-            saveHistory();
+    // ─── Notification groups ──────────────────────────────────────────
+    property var notificationGroups: []
+
+    function rebuildGroups() {
+        if (_isBatchUpdating) return;
+        const groups = [];
+        const seen = {};
+        for (let i = 0; i < historyModel.count; i++) {
+            const n = historyModel.get(i);
+            if (!n) continue;
+            const gk = n.groupKey || n.appName || "System";
+            if (!seen[gk]) {
+                seen[gk] = { groupKey: gk, appName: n.appName, displayName: n.displayName, items: [], unreadCount: 0 };
+                groups.push(seen[gk]);
+            }
+            seen[gk].items.push(n);
+            if (n.read === false) seen[gk].unreadCount++;
         }
+        notificationGroups = groups;
     }
 
-    function deleteHistory() { clearHistory(); }
+    function clearNotifications() {
+        historyModel.clear();
+        notificationGroups = [];
+    }
 
-    // ─── Search / filter (for NotificationCenter) ─────────────────────
+    function markAsRead(uid) {
+        for (let i = 0; i < historyModel.count; i++) {
+            const n = historyModel.get(i);
+            if (n && n.uid === uid) {
+                historyModel.setProperty(i, "read", true);
+                break;
+            }
+        }
+        // Also mark in persisted history
+        for (let j = 0; j < historyList.length; j++) {
+            if (historyList[j].uid === uid) {
+                historyList[j].read = true;
+                break;
+            }
+        }
+        saveHistory();
+        rebuildGroups();
+    }
+
+    // ─── App resolution ───────────────────────────────────────────────
+    function resolveApp(n) {
+        const uid = n._uid || "";
+        if (_resolveCache[uid]) return _resolveCache[uid];
+
+        let desktopEntry = "";
+        let displayName = n.appName || "System";
+        let icon = n.appIcon || "";
+
+        // Try DesktopEntries heuristic
+        if (typeof DesktopEntries !== "undefined" && n.desktopEntry) {
+            const entry = DesktopEntries.heuristicLookup(n.desktopEntry);
+            if (entry) {
+                desktopEntry = entry.filename || n.desktopEntry;
+                displayName = entry.name || displayName;
+                if (entry.icon) icon = entry.icon;
+            }
+        }
+
+        const result = { desktopEntry: desktopEntry, displayName: displayName, icon: icon, groupKey: desktopEntry || displayName || "System" };
+        _resolveCache[uid] = result;
+        return result;
+    }
+
+    // ─── Search & filter ──────────────────────────────────────────────
     property string searchFilter: ""
     property string appFilter: ""
 
-    function searchHistory(query) {
-        searchFilter = (query || "").trim().toLowerCase();
-    }
-
-    function filterByApp(appName) {
-        appFilter = (appName || "").trim().toLowerCase();
-    }
-
     function getFilteredHistory() {
         let list = historyList;
-        if (searchFilter !== "") {
-            list = list.filter(function(n) {
-                let s = (n.summary || "").toLowerCase();
-                let b = (n.body || "").toLowerCase();
-                let a = (n.appName || "").toLowerCase();
-                let d = (n.displayName || "").toLowerCase();
-                return s.indexOf(searchFilter) !== -1 || b.indexOf(searchFilter) !== -1 || a.indexOf(searchFilter) !== -1 || d.indexOf(searchFilter) !== -1;
-            });
+        if (searchFilter && searchFilter.length > 0) {
+            const q = searchFilter.toLowerCase();
+            list = list.filter(n =>
+                (n.summary && n.summary.toLowerCase().indexOf(q) !== -1) ||
+                (n.body && n.body.toLowerCase().indexOf(q) !== -1) ||
+                (n.displayName && n.displayName.toLowerCase().indexOf(q) !== -1) ||
+                (n.appName && n.appName.toLowerCase().indexOf(q) !== -1)
+            );
         }
-        if (appFilter !== "") {
-            list = list.filter(function(n) {
-                let a = (n.appName || "").toLowerCase();
-                let d = (n.displayName || "").toLowerCase();
-                return a.indexOf(appFilter) !== -1 || d.indexOf(appFilter) !== -1;
-            });
+        if (appFilter && appFilter.length > 0) {
+            const a = appFilter.toLowerCase();
+            list = list.filter(n =>
+                (n.displayName && n.displayName.toLowerCase().indexOf(a) !== -1) ||
+                (n.appName && n.appName.toLowerCase().indexOf(a) !== -1)
+            );
         }
         return list;
     }
 
+    function searchHistory(query) {
+        searchFilter = query || "";
+    }
+
+    function filterByApp(appName) {
+        appFilter = appName || "";
+    }
+
+    // ─── Time range helpers ───────────────────────────────────────────
     function getHistoryTimeRange(timestamp) {
+        if (!timestamp) return 2;
         var now = new Date();
-        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        var itemDate = new Date(timestamp);
-        var itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
-        var diffMs = today.getTime() - itemDay.getTime();
-        var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) return 0;  // today
-        if (diffDays === 1) return 1;  // yesterday
-        return 2;                      // older
+        var notifDate = new Date(timestamp);
+        var startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (notifDate >= startOfToday) return 0; // Today
+        var startOfYesterday = new Date(startOfToday.getTime() - 86400000);
+        if (notifDate >= startOfYesterday) return 1; // Yesterday
+        return 2; // Older
     }
 
     function getHistoryTimeRangeLabel(range) {
-        if (range === 0) return "Today";
-        if (range === 1) return "Yesterday";
-        return "Older";
+        switch (range) {
+            case 0: return "Today";
+            case 1: return "Yesterday";
+            case 2: return "Older";
+            default: return "All";
+        }
     }
 
     function getHistoryTimeRangeCount(range) {
-        var list = getFilteredHistory();
-        if (range === -1) return list.length;
-        return list.filter(function(n) { return getHistoryTimeRange(n.timestamp) === range; }).length;
+        if (range === -1) return historyList.length;
+        return historyList.filter(n => getHistoryTimeRange(n.timestamp) === range).length;
     }
 
     function getHistoryApps() {
-        var apps = {};
-        for (var i = 0; i < historyList.length; i++) {
-            var n = historyList[i];
-            var name = n.displayName || n.appName || "";
-            if (name && !apps[name]) apps[name] = true;
+        const apps = {};
+        for (const n of historyList) {
+            const key = n.displayName || n.appName || "System";
+            if (!apps[key]) apps[key] = { name: key, icon: n.iconPath || "", count: 0 };
+            apps[key].count++;
         }
-        return Object.keys(apps).sort();
+        return Object.values(apps).sort((a, b) => b.count - a.count);
     }
 
-    // ─── App launch (click-to-open) ──────────────────────────────────
+    // ─── App launch ───────────────────────────────────────────────────
     function launchApp(desktopEntry) {
         if (!desktopEntry) return;
-        var entry = null;
-        if (typeof desktopEntry === "string") {
-            entry = DesktopEntries.byId(desktopEntry);
-        } else {
-            entry = desktopEntry;
-        }
-        if (entry && entry.launch) {
-            entry.launch();
-        } else if (typeof desktopEntry === "string" && desktopEntry !== "") {
-            Quickshell.execDetached(["gtk-launch", desktopEntry]);
-        }
-    }
-
-    function invokeNotificationAction(uid, actionId) {
-        var n = liveNotifs[uid];
-        if (!n || !n.actions) return;
-        for (var i = 0; i < n.actions.length; i++) {
-            if (n.actions[i].identifier === actionId) {
-                n.actions[i].invoke();
+        if (typeof DesktopEntries !== "undefined") {
+            const entry = DesktopEntries.heuristicLookup(desktopEntry);
+            if (entry && entry.execute) {
+                Quickshell.execDetached(entry.execute);
                 return;
             }
         }
+        // Fallback: try to launch by desktop entry name
+        Quickshell.execDetached(["gtk-launch", desktopEntry]);
     }
 
-    // ─── App resolution (from current src) ────────────────────────────
-    function resolveApp(n) {
-        if (!n) return { groupKey: "system", displayName: "System", icon: "", desktopEntry: null };
-        let rawAppName = n.appName || "";
-        let appName = rawAppName.toLowerCase().trim();
-        appName = appName.replace(/\s*(canary|beta|nightly|-git|git|dev|development)\s*$/g, "");
-        let desktopEntry = (n.desktopEntry || "").trim();
-        let key = desktopEntry + "|" + appName;
-        if (_resolveCache[key] !== undefined) return _resolveCache[key];
-        let entry = null;
-        if (desktopEntry) entry = DesktopEntries.byId(desktopEntry);
-        if (!entry && appName) {
-            let alias = manualAliasTable[appName];
-            if (alias) entry = DesktopEntries.byId(alias);
-            else entry = DesktopEntries.heuristicLookup(rawAppName);
-        }
-        let resolved = {
-            groupKey: entry ? entry.id : (appName || "system"),
-            displayName: entry ? entry.name : (rawAppName || "System"),
-            icon: n.appIcon || (entry ? entry.icon : ""),
-            desktopEntry: entry
-        };
-        _resolveCache[key] = resolved;
-        return resolved;
-    }
-
-    // ─── Grouping (from current src, unchanged) ───────────────────────
-    function markGroupRead(groupKey) {
-        let changed = false;
-        for (let i = 0; i < historyModel.count; i++) {
-            let nData = historyModel.get(i);
-            if (!nData) continue;
-            let resolved = resolveApp(nData);
-            let gKey = resolved.groupKey;
-            if (nData.urgency === 2) gKey += "_crit_" + nData.uid;
-            if (gKey === groupKey && !nData.read) {
-                historyModel.setProperty(i, "read", true);
-                changed = true;
+    // ─── Notification actions ─────────────────────────────────────────
+    function invokeNotificationAction(uid, actionId) {
+        const n = liveNotifs[uid];
+        if (!n || !n.actions) return;
+        for (const action of n.actions) {
+            if (action.identifier === actionId) {
+                action.invoke();
+                return;
             }
-        }
-        if (changed) rebuildGroups();
-    }
-
-    function markAsRead(uid) {
-        let changed = false;
-        for (let i = 0; i < historyModel.count; i++) {
-            let nData = historyModel.get(i);
-            if (nData && nData.uid === uid && !nData.read) {
-                historyModel.setProperty(i, "read", true);
-                changed = true;
-                break;
-            }
-        }
-        if (changed) rebuildGroups();
-    }
-
-    function rebuildGroups() {
-        let groupedMap = {};
-        let newOrder = [];
-        for (let i = 0; i < historyModel.count; i++) {
-            let nData = historyModel.get(i);
-            if (!nData) continue;
-            let n = root.liveNotifs[nData.uid] || nData.notif;
-            let resolved = resolveApp(n || nData);
-            let gKey = resolved.groupKey;
-            if (nData.urgency === 2) gKey += "_crit_" + nData.uid;
-            if (!groupedMap[gKey]) {
-                groupedMap[gKey] = {
-                    groupKey: gKey, displayName: resolved.displayName, icon: resolved.icon,
-                    members: [], count: 0, unreadCount: 0,
-                    latestSummary: nData.summary, latestBody: nData.body,
-                    latestTimestamp: (n && n.timestamp) ? n.timestamp : (nData.timestamp || Date.now())
-                };
-                newOrder.push(gKey);
-            }
-            let ts = (n && n.timestamp) ? n.timestamp : (nData.timestamp || Date.now());
-            if (ts >= groupedMap[gKey].latestTimestamp) {
-                groupedMap[gKey].latestTimestamp = ts;
-                groupedMap[gKey].latestSummary = nData.summary;
-                groupedMap[gKey].latestBody = nData.body;
-            }
-            groupedMap[gKey].members.push({
-                appName: nData.appName, summary: nData.summary, body: nData.body,
-                iconPath: nData.iconPath, image: nData.image, imagePath: nData.imagePath,
-                actionsJson: nData.actionsJson, hasActions: nData.hasActions,
-                uid: nData.uid, notif: nData.notif, timestamp: ts,
-                urgency: nData.urgency, read: nData.read
-            });
-            groupedMap[gKey].count = groupedMap[gKey].members.length;
-            if (!nData.read) groupedMap[gKey].unreadCount++;
-        }
-        for (let i = groupedHistoryModel.count - 1; i >= 0; i--) {
-            let item = groupedHistoryModel.get(i);
-            if (!item || !groupedMap[item.groupKey]) groupedHistoryModel.remove(i, 1);
-        }
-        for (let i = 0; i < newOrder.length; i++) {
-            let gKey = newOrder[i];
-            let gData = groupedMap[gKey];
-            let itemsJsonStr = JSON.stringify(gData.members);
-            let existingIndex = -1;
-            for (let j = 0; j < groupedHistoryModel.count; j++) {
-                if (groupedHistoryModel.get(j)?.groupKey === gKey) { existingIndex = j; break; }
-            }
-            let modelEntry = {
-                groupKey: gKey, displayName: gData.displayName, icon: gData.icon,
-                count: gData.count, unreadCount: gData.unreadCount,
-                latestSummary: gData.latestSummary, latestBody: gData.latestBody,
-                latestTimestamp: gData.latestTimestamp, itemsJson: itemsJsonStr
-            };
-            if (existingIndex === -1) {
-                groupedHistoryModel.insert(i, modelEntry);
-            } else {
-                if (existingIndex !== i && existingIndex < groupedHistoryModel.count && i < groupedHistoryModel.count) {
-                    groupedHistoryModel.move(existingIndex, i, 1);
-                }
-                let item = groupedHistoryModel.get(i);
-                if (item) {
-                    for (const field of ["displayName","icon","count","unreadCount","latestSummary","latestBody","latestTimestamp","itemsJson"]) {
-                        if (item[field] !== modelEntry[field]) item[field] = modelEntry[field];
-                    }
-                }
-            }
-        }
-    }
-
-    Connections {
-        target: historyModel
-        function onCountChanged() {
-            if (!root._isBatchUpdating) root.rebuildGroups();
-        }
-    }
-
-    // ─── Public API (backward-compatible with all consumers) ──────────
-    function clearNotifications() {
-        root._isBatchUpdating = true;
-        for (let key in root.liveNotifs) {
-            let n = root.liveNotifs[key];
-            if (n) { try { if (typeof n.dismiss === "function") n.dismiss(); else if (typeof n.close === "function") n.close(); } catch (e) {} }
-        }
-        root.liveNotifs = {};
-        historyModel.clear();
-        popupsModel.clear();
-        groupedHistoryModel.clear();
-        root._isBatchUpdating = false;
-    }
-
-    function dismissNotification(uid) {
-        let n = root.liveNotifs[uid];
-        delete root.liveNotifs[uid];
-        if (n) { try { if (typeof n.dismiss === "function") n.dismiss(); else if (typeof n.close === "function") n.close(); } catch (e) {} }
-        for (let i = 0; i < historyModel.count; i++) {
-            let nData = historyModel.get(i);
-            if (nData && nData.uid === uid) { historyModel.remove(i, 1); break; }
-        }
-    }
-
-    function dismissGroup(groupKey) {
-        if (!historyModel || historyModel.count === 0) return;
-        root._isBatchUpdating = true;
-        for (let i = historyModel.count - 1; i >= 0; i--) {
-            let nData = historyModel.get(i);
-            if (!nData) continue;
-            let n = root.liveNotifs[nData.uid] || nData.notif;
-            let resolved = resolveApp(n || nData);
-            let gKey = resolved.groupKey;
-            if (nData.urgency === 2) gKey += "_crit_" + nData.uid;
-            if (gKey === groupKey) {
-                delete root.liveNotifs[nData.uid];
-                if (n) { try { if (typeof n.dismiss === "function") n.dismiss(); else if (typeof n.close === "function") n.close(); } catch (e) {} }
-                if (i < historyModel.count) historyModel.remove(i, 1);
-            }
-        }
-        root._isBatchUpdating = false;
-        rebuildGroups();
-    }
-
-    function removePopup(uid) {
-        if (!popupsModel || popupsModel.count === 0) return;
-        for (let i = popupsModel.count - 1; i >= 0; i--) {
-            let p = popupsModel.get(i);
-            if (!p) continue;
-            let matches = (p.uid === uid || p.latestUid === uid);
-            if (!matches && p.uidsJson) {
-                try { let uList = JSON.parse(p.uidsJson); if (Array.isArray(uList) && uList.indexOf(uid) !== -1) matches = true; } catch (e) {}
-            }
-            if (matches) { popupsModel.remove(i, 1); break; }
         }
     }
 
@@ -935,12 +824,13 @@ Item {
             let resolved = root.resolveApp(n);
             let summaryText = n.summary !== "" ? n.summary : "No Title";
             let bodyText = n.body !== "" ? n.body : "";
+            let htmlBodyText = root._resolveHtmlBody(bodyText);
             let imageVal = (n.image ? n.image.toString() : "") || (n.imagePath ? n.imagePath.toString() : "") || (n.appIcon ? n.appIcon.toString() : "");
 
             let notifData = {
                 appName: n.appName !== "" ? n.appName : "System",
                 displayName: resolved.displayName,
-                summary: summaryText, body: bodyText,
+                summary: summaryText, body: bodyText, htmlBody: htmlBodyText,
                 iconPath: n.appIcon !== "" ? n.appIcon : "",
                 image: imageVal, imagePath: imageVal,
                 actionsJson: JSON.stringify(extractedActions), hasActions: hasAct,
@@ -972,7 +862,7 @@ Item {
                     appName: resolved.displayName, displayName: resolved.displayName,
                     icon: resolved.icon || notifData.iconPath,
                     image: imageVal, imagePath: imageVal,
-                    summary: summaryText, body: bodyText,
+                    summary: summaryText, body: bodyText, htmlBody: htmlBodyText,
                     combinedBody: bodyText,
                     messagesJson: JSON.stringify(bodyText !== "" ? [bodyText] : []),
                     messagesCount: 1, iconPath: notifData.iconPath,

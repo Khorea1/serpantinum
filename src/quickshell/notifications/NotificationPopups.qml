@@ -107,7 +107,8 @@ PanelWindow {
     implicitWidth: effectivePopupWidth
 
     mask: Region {
-        item: popupContainer
+        Region { item: popupContainer }
+        Region { item: openCenterPill.visible ? openCenterPill : null }
     }
 
     // Sourced from NotificationManager so a timed DND snooze (not just the
