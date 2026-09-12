@@ -681,7 +681,9 @@
   },
   "notifications": {
     "center": {
-      "reserved": "Reservado para futuras actualizaciones"
+      "reserved": "Reservado para futuras actualizaciones",
+      "empty": "No hay notificaciones",
+      "empty_search": "No se encontraron notificaciones"
     },
     "types": {
       "default": {

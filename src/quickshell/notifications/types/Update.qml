@@ -35,7 +35,7 @@ Notification {
 
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: 0
                 color: Qt.alpha(ThemeBackend.green, 0.15)
             }
 
@@ -56,7 +56,8 @@ Notification {
             font.family: ThemeBackend.fontFamily
             font.weight: Font.Bold
             font.pixelSize: s(11)
-            color: ThemeBackend.subtext0
+            color: faceRoot.titleAccentColor
+            Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
             elide: Text.ElideRight
         }
     ]

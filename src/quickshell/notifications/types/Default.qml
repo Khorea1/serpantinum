@@ -19,6 +19,7 @@ Notification {
             Image {
                 id: notifIcon
                 anchors.fill: parent
+                asynchronous: true
                 source: {
                     let ic = model ? (model.icon || model.iconPath || "") : "";
                     if (!ic) return "";
@@ -27,7 +28,9 @@ Notification {
                 }
                 sourceSize: Qt.size(32, 32)
                 fillMode: Image.PreserveAspectFit
-                visible: status === Image.Ready && source !== ""
+                visible: opacity > 0.001
+                opacity: status === Image.Ready && source !== "" ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             }
 
             Text {
@@ -50,7 +53,8 @@ Notification {
             font.family: ThemeBackend.fontFamily
             font.weight: Font.Bold
             font.pixelSize: s(11)
-            color: ThemeBackend.subtext0
+            color: faceRoot.titleAccentColor
+            Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
             elide: Text.ElideRight
         }
     ]

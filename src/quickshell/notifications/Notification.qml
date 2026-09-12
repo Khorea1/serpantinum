@@ -18,7 +18,7 @@ Rectangle {
     property real expandProgress: expanded ? 1.0 : 0.0
     Behavior on expandProgress {
         enabled: !cardHover.draggingV
-        NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: 280; easing.type: Easing.InOutCubic }
     }
 
     property bool showIcon: true
@@ -29,6 +29,39 @@ Rectangle {
     readonly property bool isPopup: delegateWrapper && delegateWrapper.isPopupContext ? true : false
 
     property color accentColor: urgency === 2 ? ThemeBackend.red : ThemeBackend.blue
+
+    // ─── Matugen-driven title color ─────────────────────────────────────
+    // Picks a color from the current matugen palette, deterministically
+    // keyed by app name, so each app keeps a stable but distinct hue as
+    // the wallpaper (and therefore the palette) changes. Body text stays
+    // on the neutral subtext colors for legibility.
+    readonly property var matugenAccentPalette: [
+        ThemeBackend.mauve,
+        ThemeBackend.blue,
+        ThemeBackend.sapphire,
+        ThemeBackend.green,
+        ThemeBackend.peach,
+        ThemeBackend.pink,
+        ThemeBackend.yellow,
+        ThemeBackend.teal,
+        ThemeBackend.maroon
+    ]
+
+    function hashAppKey(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) {
+            h = (h * 31 + str.charCodeAt(i)) | 0;
+        }
+        return Math.abs(h);
+    }
+
+    readonly property string appKey: model ? (model.appName || model.displayName || "") : ""
+
+    readonly property color titleAccentColor: {
+        if (typeRoot.urgency === 2) return ThemeBackend.red;
+        if (typeRoot.appKey === "" || typeRoot.matugenAccentPalette.length === 0) return ThemeBackend.text;
+        return typeRoot.matugenAccentPalette[typeRoot.hashAppKey(typeRoot.appKey) % typeRoot.matugenAccentPalette.length];
+    }
     property string fullSummary: ""
     property string fullBody: ""
     property string fullHtmlBody: ""
@@ -158,9 +191,9 @@ Rectangle {
     function getActionIcon(idStr, textStr) {
         let i = (idStr || "").toLowerCase();
         let t = (textStr || "").toLowerCase();
-        if (i.includes("reply") || t.includes("reply")) return "󰗊";
+        if (i.includes("reply") || t.includes("reply")) return "󰑚";
         if (i.includes("open") || t.includes("open")) return "󰏔";
-        if (i.includes("close") || t.includes("close") || i.includes("dismiss") || t.includes("dismiss")) return "󰅖";
+        if (i.includes("close") || t.includes("close") || i.includes("dismiss") || t.includes("dismiss")) return "󰎟";
         if (i.includes("default")) return "󰍜";
         if (i.includes("accept") || t.includes("accept") || i.includes("join") || t.includes("join")) return "󰄬";
         if (i.includes("decline") || t.includes("decline")) return "󰅖";
@@ -192,8 +225,8 @@ Rectangle {
         property: "dragX"
         from: typeRoot.dragX
         to: 0
-        duration: 200
-        easing.type: Easing.OutCubic
+        duration: 240
+        easing.type: Easing.OutExpo
     }
 
     NumberAnimation {
@@ -202,8 +235,8 @@ Rectangle {
         property: "dragY"
         from: typeRoot.dragY
         to: 0
-        duration: 200
-        easing.type: Easing.OutCubic
+        duration: 240
+        easing.type: Easing.OutExpo
     }
 
     NumberAnimation {
@@ -211,8 +244,8 @@ Rectangle {
         target: typeRoot
         property: "dragX"
         from: typeRoot.dragX
-        duration: 200
-        easing.type: Easing.OutQuad
+        duration: 220
+        easing.type: Easing.OutCubic
         onFinished: {
             doClose();
         }
@@ -351,7 +384,7 @@ Rectangle {
         anchors.fill: parent
         anchors.topMargin: s(1.5) + Math.max(0, typeRoot.dragY * 0.4)
         anchors.bottomMargin: -(s(1.5) + Math.max(0, typeRoot.dragY * 0.4))
-        radius: visualItem.radius
+        radius: 0
         color: Qt.rgba(0, 0, 0, 0.08 + Math.min(0.04, Math.max(0, typeRoot.dragY / s(3.5)) * 0.04))
         scale: visualItem.scale
         opacity: visualItem.opacity
@@ -401,21 +434,21 @@ Rectangle {
     Rectangle {
         id: visualItem
         anchors.fill: parent
-        radius: ThemeBackend.borderRadius
+        radius: 0
         clip: true
         implicitHeight: cardContent.implicitHeight + s(14)
 
-        property color baseColor: typeRoot.readState === false ? Qt.lighter(ThemeBackend.surface1, 1.05) : ThemeBackend.surface1
-        color: (cardHover.pressed && !cardHover.draggingH && !cardHover.draggingV) ? Qt.darker(baseColor, 1.1) : (cardHover.containsMouse && !cardHover.draggingH && !cardHover.draggingV ? Qt.lighter(baseColor, 1.05) : baseColor)
+        property color baseColor: typeRoot.readState === false ? Qt.lighter(ThemeBackend.mantle, 1.15) : ThemeBackend.mantle
+        color: (cardHover.pressed && !cardHover.draggingH && !cardHover.draggingV) ? Qt.darker(baseColor, 1.1) : (cardHover.containsMouse && !cardHover.draggingH && !cardHover.draggingV ? Qt.lighter(baseColor, 1.08) : baseColor)
 
         scale: (cardHover.pressed && !cardHover.draggingH && !cardHover.draggingV) ? 0.98 : 1.0
 
         Behavior on implicitHeight {
             enabled: !cardHover.draggingV
-            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 280; easing.type: Easing.InOutCubic }
         }
-        Behavior on color { enabled: !cardHover.draggingH && !cardHover.draggingV; ColorAnimation { duration: 150 } }
-        Behavior on scale { enabled: !cardHover.draggingH && !cardHover.draggingV; NumberAnimation { duration: 150; easing.type: Easing.OutQuint } }
+        Behavior on color { enabled: !cardHover.draggingH && !cardHover.draggingV; ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !cardHover.draggingH && !cardHover.draggingV; NumberAnimation { duration: 180; easing.type: Easing.OutQuint } }
 
         transform: Translate {
             x: typeRoot.dragX
@@ -431,7 +464,7 @@ Rectangle {
 
             Behavior on opacity {
                 enabled: !pulseAnim.running
-                NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 280; easing.type: Easing.InOutCubic }
             }
 
             property real pulseFactor: 1.0
@@ -439,8 +472,8 @@ Rectangle {
                 id: pulseAnim
                 running: typeRoot.urgency === 2
                 loops: Animation.Infinite
-                NumberAnimation { to: 0.40; duration: 1800; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.40; duration: 2000; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 2000; easing.type: Easing.InOutSine }
             }
 
             Rectangle {
@@ -448,7 +481,7 @@ Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 height: visualItem.radius + s(1)
-                radius: visualItem.radius
+                radius: 0
                 color: Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.7)
             }
 
@@ -486,21 +519,21 @@ Rectangle {
                     Layout.preferredHeight: typeRoot.showIcon ? s(32) : 0
                     visible: typeRoot.showIcon
 
-                    readonly property real boxRadius: s(8)
+                    readonly property real boxRadius: 0
                     readonly property real boxPadding: s(4)
 
                     Rectangle {
                         anchors.fill: parent
                         anchors.topMargin: s(1.5)
                         anchors.bottomMargin: -s(1.5)
-                        radius: parent.boxRadius
+                        radius: 0
                         color: Qt.rgba(0, 0, 0, 0.12)
                     }
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: parent.boxRadius
-                        color: typeRoot.urgency === 2 ? Qt.tint(ThemeBackend.surface2, Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.10)) : ThemeBackend.surface2
+                        radius: 0
+                        color: typeRoot.urgency === 2 ? Qt.tint(ThemeBackend.surface1, Qt.rgba(ThemeBackend.red.r, ThemeBackend.red.g, ThemeBackend.red.b, 0.10)) : ThemeBackend.surface1
 
                         Behavior on color { ColorAnimation { duration: 200 } }
                     }
@@ -509,7 +542,7 @@ Rectangle {
                         id: iconContainer
                         anchors.fill: parent
                         anchors.margins: parent.boxPadding
-                        radius: Math.max(0, parent.boxRadius - parent.boxPadding)
+                        radius: 0
                         color: "transparent"
                         clip: true
                     }
@@ -549,7 +582,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: s(6)
                             height: s(6)
-                            radius: s(3)
+                            radius: 0
                             color: typeRoot.accentColor
                             visible: typeRoot.readState === false
                             opacity: (!typeRoot.timeOnNextRowCollapsed) ? Math.max(0.0, 1.0 - typeRoot.expandProgress * 3.0) : 0.0
@@ -565,7 +598,8 @@ Rectangle {
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Bold
                             font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
-                            color: ThemeBackend.text
+                            color: typeRoot.titleAccentColor
+                            Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                             elide: Text.ElideRight
                             maximumLineCount: 1
                             opacity: (!typeRoot.timeOnNextRowCollapsed) ? Math.max(0.0, 1.0 - typeRoot.expandProgress * 3.0) : 0.0
@@ -615,7 +649,8 @@ Rectangle {
                                 font.family: ThemeBackend.fontFamily
                                 font.weight: Font.Bold
                                 font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
-                                color: ThemeBackend.text
+                                color: typeRoot.titleAccentColor
+                                Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                             }
@@ -629,7 +664,8 @@ Rectangle {
                                     font.family: ThemeBackend.fontFamily
                                     font.weight: Font.Bold
                                     font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
-                                    color: ThemeBackend.text
+                                    color: typeRoot.titleAccentColor
+                                    Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                     visible: typeRoot.summaryLastWord !== ""
                                 }
 
@@ -659,8 +695,8 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: typeRoot.canExpand
                             size: s(22)
-                            cornerRadius: s(5)
-                            accentColor: ThemeBackend.surface2
+                            cornerRadius: 0
+                            accentColor: ThemeBackend.surface1
                             iconColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.subtext1
                             autoToggle: false
                             flipped: typeRoot.expandProgress > 0.5
@@ -686,7 +722,8 @@ Rectangle {
                             font.family: ThemeBackend.fontFamily
                             font.weight: Font.Bold
                             font.pixelSize: typeRoot.isPopup ? s(11) : s(10)
-                            color: ThemeBackend.text
+                            color: typeRoot.titleAccentColor
+                            Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                             wrapMode: Text.Wrap
                         }
                     }
@@ -708,7 +745,7 @@ Rectangle {
                             id: privacyMask
                             anchors.fill: parent
                             anchors.margins: -s(4)
-                            radius: s(6)
+                            radius: 0
                             color: ThemeBackend.surface1
                             visible: typeRoot.privacyMode && !typeRoot.isHovered
                             z: 10
@@ -797,7 +834,7 @@ Rectangle {
                                     readonly property bool isPrimary: index === 0
                                     Layout.minimumWidth: s(84)
                                     Layout.preferredHeight: s(28)
-                                    cornerRadius: s(6)
+                                    cornerRadius: 0
                                     horizontalPadding: s(12)
                                     buttonText: modelData.text || I18n.t("notifications.types.default.action")
                                     textFontSize: typeRoot.isPopup ? s(12) : s(11)

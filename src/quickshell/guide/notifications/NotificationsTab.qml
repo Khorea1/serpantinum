@@ -445,7 +445,7 @@ Item {
                                     font.family: ThemeBackend.fontFamily
                                     font.pixelSize: rootObj.s(11)
                                     font.bold: true
-                                    color: "#ffffff"
+                                    color: ThemeBackend.text
                                 }
                             }
 
@@ -537,7 +537,7 @@ Item {
                                     horizontalPadding: rootObj.s(6)
                                     textFontSize: rootObj.s(11)
                                     accentColor: ThemeBackend.surface0
-                                    textColor: "#ffffff"
+                                    textColor: ThemeBackend.text
                                     buttonText: "X: " + notificationsTabRoot.horizontalPosition + "%  Y: " + notificationsTabRoot.verticalPosition + "%"
                                 }
 

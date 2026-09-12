@@ -90,9 +90,11 @@ PanelWindow {
                     LauncherController.hide();
                 } else if (cmd === "open") {
                     ClipboardController.hide();
+                    PickWindowController.hide();
                     LauncherController.show();
                 } else {
                     ClipboardController.hide();
+                    PickWindowController.hide();
                     LauncherController.toggle();
                 }
                 return;
@@ -103,10 +105,27 @@ PanelWindow {
                     ClipboardController.hide();
                 } else if (cmd === "open") {
                     LauncherController.hide();
+                    PickWindowController.hide();
                     ClipboardController.show();
                 } else {
                     LauncherController.hide();
+                    PickWindowController.hide();
                     ClipboardController.toggle();
+                }
+                return;
+            }
+
+            if (cmd === "pickwindow" || targetWidget === "pickwindow" || cmd === "windows" || targetWidget === "windows") {
+                if (cmd === "close") {
+                    PickWindowController.hide();
+                } else if (cmd === "open") {
+                    LauncherController.hide();
+                    ClipboardController.hide();
+                    PickWindowController.show();
+                } else {
+                    LauncherController.hide();
+                    ClipboardController.hide();
+                    PickWindowController.toggle();
                 }
                 return;
             }

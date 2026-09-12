@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Qt.labs.folderlistmodel
 import Quickshell
 import "../"
+import "RofiKeyNav.js" as RofiKeyNav
 
 Popup {
     id: pickerRoot
@@ -120,6 +121,32 @@ Popup {
                 }
             } else if (pickerRoot.selectedFilePath !== "") {
                 pickerRoot.confirmSelection();
+            }
+        }
+    }
+
+    function isRowVisible(idx) {
+        if (idx < 0 || idx >= folderModel.count) return false;
+        let st = searchInput.text ? searchInput.text.toLowerCase().trim() : "";
+        if (st === "") return true;
+        let fn = folderModel.get(idx, "fileName");
+        return fn ? fn.toLowerCase().indexOf(st) !== -1 : false;
+    }
+
+    function moveSelectionDown() {
+        for (let i = listView.currentIndex + 1; i < folderModel.count; i++) {
+            if (pickerRoot.isRowVisible(i)) {
+                listView.currentIndex = i;
+                return;
+            }
+        }
+    }
+
+    function moveSelectionUp() {
+        for (let i = listView.currentIndex - 1; i >= 0; i--) {
+            if (pickerRoot.isRowVisible(i)) {
+                listView.currentIndex = i;
+                return;
             }
         }
     }
@@ -572,6 +599,27 @@ Popup {
                             searchDebounceTimer.restart();
                         }
                         onAccepted: pickerRoot.confirmSelection()
+
+                        Keys.onDownPressed: function(event) {
+                            pickerRoot.moveSelectionDown();
+                            event.accepted = true;
+                        }
+                        Keys.onUpPressed: function(event) {
+                            pickerRoot.moveSelectionUp();
+                            event.accepted = true;
+                        }
+                        // rofi-style secondary navigation keybindings (shared with
+                        // every other selection widget via RofiKeyNav.js).
+                        // NOTE: listens on Input's `keyPressed` signal, not
+                        // Keys.onPressed on this wrapper — same Ctrl+K caveat
+                        // as Launcher/Clipboard (see RofiKeyNav.js).
+                        // row-up:   "Up,Control+k"
+                        // row-down: "Down,Control+j"
+                        onKeyPressed: function(event) {
+                            if (RofiKeyNav.handlePressed(event, pickerRoot.moveSelectionDown, pickerRoot.moveSelectionUp)) {
+                                event.accepted = true;
+                            }
+                        }
                     }
                 }
 

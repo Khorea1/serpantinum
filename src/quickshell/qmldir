@@ -5,6 +5,7 @@ Bar 1.0 bar/Bar.qml
 Floating 1.0 quickactions/Floating.qml
 Clipboard 1.0 clipboard/Clipboard.qml
 Launcher 1.0 launcher/Launcher.qml
+PickWindow 1.0 pickwindow/PickWindow.qml
 ScreenshotOverlay 1.0 screenshot/ScreenshotOverlay.qml
 WallpaperEngine 1.0 wallpaper/WallpaperEngine.qml
 Idle 1.0 idle/Idle.qml
@@ -57,6 +58,7 @@ singleton FloatingController 1.0 singletons/widgetcontrols/FloatingController.qm
 singleton LauncherController 1.0 singletons/widgetcontrols/LauncherController.qml
 singleton OsdController 1.0 singletons/widgetcontrols/OsdController.qml
 singleton PanelController 1.0 singletons/widgetcontrols/PanelController.qml
+singleton PickWindowController 1.0 singletons/widgetcontrols/PickWindowController.qml
 singleton SideMusicController 1.0 singletons/widgetcontrols/SideMusicController.qml
 singleton TrayMenuController 1.0 singletons/widgetcontrols/TrayMenuController.qml
 singleton WidgetSync 1.0 singletons/widgetcontrols/WidgetSync.qml

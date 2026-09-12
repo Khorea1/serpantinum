@@ -10,6 +10,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "../"
 import "../reusables"
+import "../reusables/RofiKeyNav.js" as RofiKeyNav
 
 PanelWindow {
     id: clipboardWindow
@@ -956,21 +957,43 @@ PanelWindow {
                         }
                         onCleared: filterClips("")
 
-                        Keys.onDownPressed: function(event) {
+                        function moveSelectionDown() {
                             clipboardWindow.isKeyboardNav = true;
                             keyboardNavTimer.restart();
                             if (clipList.currentIndex < clipBoxModel.count - 1) {
                                 clipList.currentIndex++;
                             }
-                            event.accepted = true;
                         }
-                        Keys.onUpPressed: function(event) {
+
+                        function moveSelectionUp() {
                             clipboardWindow.isKeyboardNav = true;
                             keyboardNavTimer.restart();
                             if (clipList.currentIndex > 0) {
                                 clipList.currentIndex--;
                             }
+                        }
+
+                        Keys.onDownPressed: function(event) {
+                            moveSelectionDown();
                             event.accepted = true;
+                        }
+                        Keys.onUpPressed: function(event) {
+                            moveSelectionUp();
+                            event.accepted = true;
+                        }
+                        // rofi-style secondary navigation keybindings (shared with
+                        // every other selection widget via RofiKeyNav.js).
+                        // NOTE: listens on Input's `keyPressed` signal (fired from
+                        // innerInput's own Keys.onPressed), not Keys.onPressed on
+                        // this wrapper — TextInput's built-in Ctrl+K "delete to
+                        // end of line" shortcut on Linux would otherwise swallow
+                        // the event before it bubbles up here.
+                        // row-up:   "Up,Control+k"
+                        // row-down: "Down,Control+j"
+                        onKeyPressed: function(event) {
+                            if (RofiKeyNav.handlePressed(event, moveSelectionDown, moveSelectionUp)) {
+                                event.accepted = true;
+                            }
                         }
                         Keys.onTabPressed: function(event) {
                             clipboardWindow.toggleExpandCurrent();

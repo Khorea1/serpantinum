@@ -17,8 +17,8 @@ Item {
     }
 
     property var rootContext: null
-    property real cornerRadius: Math.min(ThemeBackend.borderRadius, root.s(20))
-    property real cardRadius: Math.min(ThemeBackend.borderRadius, root.s(14))
+    property real cornerRadius: 0
+    property real cardRadius: 0
     property color baseColor: Qt.darker(ThemeBackend.surface0, 1.04)
     property color borderColor: "transparent"
     property real borderWidth: 0
@@ -113,7 +113,7 @@ Item {
         anchors.fill: parent
         anchors.topMargin: root.s(2)
         anchors.bottomMargin: -root.s(2)
-        radius: root.cornerRadius
+        radius: 0
         color: root.shadowColor
         visible: root.hasShadow
     }
@@ -121,7 +121,7 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        radius: root.cornerRadius
+        radius: 0
         color: root.baseColor
         border.color: root.borderColor
         border.width: root.borderWidth
@@ -154,7 +154,7 @@ Item {
                 Layout.preferredWidth: root.s(80)
                 Layout.preferredHeight: root.s(32)
                 horizontalPadding: root.s(10)
-                cornerRadius: root.s(10)
+                cornerRadius: 0
                 buttonText: I18n.t("syspanel.notifications.clear")
                 textFontSize: root.s(11)
                 buttonIcon: "󰅖"
@@ -174,7 +174,7 @@ Item {
                 Layout.preferredWidth: root.s(86)
                 Layout.preferredHeight: root.s(32)
                 horizontalPadding: root.s(10)
-                cornerRadius: root.s(10)
+                cornerRadius: 0
                 buttonText: root.dndEnabled ? I18n.t("syspanel.notifications.silent") : I18n.t("syspanel.notifications.mute")
                 textFontSize: root.s(11)
                 buttonIcon: root.dndEnabled ? "󰂛" : "󰂚"
@@ -213,8 +213,8 @@ Item {
                         id: pushyImg
                         anchors.fill: parent
                         size: root.emptyGraphicSize
-                        cornerRadius: root.s(0)
-                        imageRadius: root.s(0)
+                        cornerRadius: 0
+                        imageRadius: 0
                         source: Caching.serpantinumDir ? ("file://" + Caching.serpantinumDir + "/assets/pushy.gif") : Qt.resolvedUrl("../../assets/pushy.gif")
                         isGif: true
                         playing: true
@@ -256,15 +256,18 @@ Item {
                     active: notifList.moving || notifList.movingVertically
                     width: root.s(4)
                     policy: ScrollBar.AsNeeded
-                    contentItem: Rectangle { implicitWidth: root.s(4); radius: root.s(2); color: ThemeBackend.surface2 }
+                    contentItem: Rectangle { implicitWidth: root.s(4); radius: 0; color: ThemeBackend.surface2 }
                 }
 
                 add: Transition {
-                    NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 250; easing.type: Easing.OutQuint }
-                    NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutQuint }
+                    NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 280; easing.type: Easing.OutQuint }
+                    NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 240; easing.type: Easing.OutQuint }
                 }
                 remove: Transition {
-                    NumberAnimation { property: "opacity"; to: 0.0; duration: 200; easing.type: Easing.OutQuint }
+                    NumberAnimation { property: "opacity"; to: 0.0; duration: 200; easing.type: Easing.OutCubic }
+                }
+                displaced: Transition {
+                    NumberAnimation { properties: "x,y"; duration: 260; easing.type: Easing.OutCubic }
                 }
 
                 delegate: Item {
@@ -329,7 +332,7 @@ Item {
                     property real groupExpandProgress: isExpanded ? 1.0 : 0.0
                     Behavior on groupExpandProgress {
                         enabled: !groupHeaderMa.draggingV
-                        NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: 280; easing.type: Easing.InOutCubic }
                     }
 
                     property real dragX: 0
@@ -342,8 +345,8 @@ Item {
                         target: groupWrapper
                         property: "dragX"
                         to: notifList.width * 1.2
-                        duration: 220
-                        easing.type: Easing.OutQuad
+                        duration: 240
+                        easing.type: Easing.OutCubic
                     }
                     Timer {
                         id: clearSlideTimer
@@ -367,8 +370,8 @@ Item {
                         property: "dragX"
                         from: groupWrapper.dragX
                         to: 0
-                        duration: 200
-                        easing.type: Easing.OutCubic
+                        duration: 240
+                        easing.type: Easing.OutExpo
                     }
 
                     NumberAnimation {
@@ -377,8 +380,8 @@ Item {
                         property: "dragY"
                         from: groupWrapper.dragY
                         to: 0
-                        duration: 200
-                        easing.type: Easing.OutCubic
+                        duration: 240
+                        easing.type: Easing.OutExpo
                     }
 
                     NumberAnimation {
@@ -387,8 +390,8 @@ Item {
                         property: "dragX"
                         from: groupWrapper.dragX
                         to: 0
-                        duration: 200
-                        easing.type: Easing.OutQuad
+                        duration: 220
+                        easing.type: Easing.OutCubic
                         onFinished: NotificationManager.dismissGroup(groupKey)
                     }
 
@@ -452,7 +455,7 @@ Item {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         implicitHeight: groupCol.implicitHeight
-                        Behavior on implicitHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                        Behavior on implicitHeight { NumberAnimation { duration: 280; easing.type: Easing.InOutCubic } }
 
                         ColumnLayout {
                             id: groupCol
@@ -472,7 +475,7 @@ Item {
                                     anchors.fill: groupHeaderCard
                                     anchors.topMargin: root.s(1.5)
                                     anchors.bottomMargin: -root.s(1.5)
-                                    radius: root.cardRadius
+                                    radius: 0
                                     color: Qt.rgba(0, 0, 0, 0.15)
                                     z: -2
                                     opacity: Math.max(0.0, 1.0 - groupWrapper.groupExpandProgress * 2.0)
@@ -488,7 +491,7 @@ Item {
                                     anchors.rightMargin: root.s(4)
                                     anchors.topMargin: root.s(4)
                                     height: groupHeaderCard.height
-                                    radius: root.cardRadius
+                                    radius: 0
                                     color: Qt.darker(ThemeBackend.surface1, 1.08)
                                     z: -1
                                     opacity: Math.max(0.0, 1.0 - groupWrapper.groupExpandProgress * 2.0)
@@ -499,7 +502,7 @@ Item {
                                     anchors.fill: groupHeaderCard
                                     anchors.topMargin: Math.max(0, groupWrapper.dragY * 0.4)
                                     anchors.bottomMargin: -Math.max(0, groupWrapper.dragY * 0.4)
-                                    radius: root.cardRadius
+                                    radius: 0
                                     color: Qt.rgba(0, 0, 0, Math.min(0.18, Math.max(0, groupWrapper.dragY / root.s(3.5)) * 0.18))
                                     visible: groupWrapper.dragY > 0
                                     z: -1
@@ -508,12 +511,12 @@ Item {
                                 Rectangle {
                                     id: groupHeaderCard
                                     anchors.fill: parent
-                                    radius: root.cardRadius
+                                    radius: 0
                                     property color baseColor: (typeof unreadCount !== "undefined" && unreadCount > 0) ? Qt.lighter(ThemeBackend.surface1, 1.05) : ThemeBackend.surface1
                                     color: (groupHeaderMa.pressed && !groupHeaderMa.draggingH && !groupHeaderMa.draggingV) ? Qt.darker(baseColor, 1.1) : (groupHeaderMa.containsMouse && !groupHeaderMa.draggingH && !groupHeaderMa.draggingV ? Qt.lighter(baseColor, 1.05) : baseColor)
                                     scale: (groupHeaderMa.pressed && !groupHeaderMa.draggingH && !groupHeaderMa.draggingV) ? 0.98 : 1.0
-                                    Behavior on color { enabled: !groupHeaderMa.draggingH && !groupHeaderMa.draggingV; ColorAnimation { duration: 150 } }
-                                    Behavior on scale { enabled: !groupHeaderMa.draggingH && !groupHeaderMa.draggingV; NumberAnimation { duration: 150; easing.type: Easing.OutQuint } }
+                                    Behavior on color { enabled: !groupHeaderMa.draggingH && !groupHeaderMa.draggingV; ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                    Behavior on scale { enabled: !groupHeaderMa.draggingH && !groupHeaderMa.draggingV; NumberAnimation { duration: 180; easing.type: Easing.OutQuint } }
                                     clip: true
 
                                     MouseArea {
@@ -629,14 +632,14 @@ Item {
 
                                             Rectangle {
                                                 anchors.fill: parent
-                                                radius: root.s(10)
+                                                radius: 0
                                                 color: ThemeBackend.surface2
                                             }
 
                                             Rectangle {
                                                 anchors.fill: parent
                                                 anchors.margins: root.s(5)
-                                                radius: root.s(5)
+                                                radius: 0
                                                 color: "transparent"
                                                 clip: true
 
@@ -786,7 +789,7 @@ Item {
 
                                                 Rectangle {
                                                     anchors.fill: parent
-                                                    radius: root.s(8)
+                                                    radius: 0
                                                     color: ThemeBackend.surface2
                                                 }
 
@@ -803,7 +806,7 @@ Item {
                                                 Rectangle {
                                                     width: root.s(8)
                                                     height: root.s(8)
-                                                    radius: root.s(4)
+                                                    radius: 0
                                                     color: ThemeBackend.red
                                                     anchors.top: parent.top
                                                     anchors.right: parent.right
@@ -818,7 +821,7 @@ Item {
                                                 Layout.preferredWidth: size
                                                 Layout.preferredHeight: size
                                                 size: root.s(30)
-                                                cornerRadius: root.s(8)
+                                                cornerRadius: 0
                                                 accentColor: ThemeBackend.surface2
                                                 iconColor: isHoveredOrHighlighted ? ThemeBackend.text : ThemeBackend.subtext1
                                                 autoToggle: false
@@ -862,7 +865,7 @@ Item {
                                             anchors.bottom: parent.bottom
                                             anchors.bottomMargin: root.s(8)
                                             width: Math.max(1, root.s(2))
-                                            radius: root.s(1)
+                                            radius: 0
                                             color: Qt.rgba(ThemeBackend.surface2.r, ThemeBackend.surface2.g, ThemeBackend.surface2.b, 0.7)
                                         }
                                     }

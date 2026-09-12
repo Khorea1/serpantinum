@@ -75,6 +75,16 @@ Item {
     signal cleared()
     signal clicked()
     signal triggered()
+    // Emitted from innerInput's own Keys.onPressed, i.e. BEFORE QML's key
+    // handling priority reaches "Item specific key handling" (step 4 of
+    // https://doc.qt.io/qt-6/qml-qtquick-keys.html#detailed-description).
+    // This matters because QQuickTextInput has built-in Linux/X11 editing
+    // shortcuts (e.g. Ctrl+K = QKeySequence::DeleteEndOfLine) that would
+    // otherwise consume the event before it ever bubbles up to a
+    // Keys.onPressed set on this Input wrapper. Listen to this signal
+    // (instead of Keys.onPressed on the wrapper) for any modifier
+    // combination that might collide with TextInput's native shortcuts.
+    signal keyPressed(var event)
 
     function copyToClipboard(str) {
         if (!str || str.length === 0) return;
@@ -444,6 +454,10 @@ Item {
                 onSelectionEndChanged: root.updateScroll()
 
                 Keys.onPressed: function(event) {
+                    root.keyPressed(event);
+                    if (event.accepted) {
+                        return;
+                    }
                     if (event.matches(StandardKey.Copy) || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_C)) {
                         if (innerInput.selectedText.length > 0) {
                             root.copyToClipboard(innerInput.selectedText);

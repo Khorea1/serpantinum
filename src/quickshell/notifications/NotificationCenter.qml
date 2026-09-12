@@ -21,6 +21,7 @@ Item {
 
     onVisibleChanged: {
         NotificationManager.sysPanelOpen = visible;
+        if (visible) focusTimer.start();
     }
 
     // Which screen edge this panel is currently docked to — mirrors the
@@ -69,7 +70,7 @@ Item {
         interval: 50
         running: true
         repeat: false
-        onTriggered: root.forceActiveFocus()
+        onTriggered: searchInput.forceActiveFocus()
     }
 
     Component.onCompleted: {
@@ -156,8 +157,8 @@ Item {
             target: root
             property: "introContent"
             to: 1.0
-            duration: 400
-            easing.type: Easing.OutQuart
+            duration: 420
+            easing.type: Easing.OutExpo
         }
     }
 
@@ -168,8 +169,8 @@ Item {
                 target: root
                 property: "introContent"
                 to: 0.0
-                duration: 300
-                easing.type: Easing.InQuart
+                duration: 280
+                easing.type: Easing.InOutCubic
             }
         }
         ScriptAction {
@@ -188,7 +189,7 @@ Item {
         id: sidebarPanel
         anchors.fill: parent
         color: Qt.rgba(ThemeBackend.base.r, ThemeBackend.base.g, ThemeBackend.base.b, 0.97)
-        radius: ThemeBackend.borderRadius
+        radius: 0
         border.width: 1
         border.color: Qt.rgba(ThemeBackend.surface1.r, ThemeBackend.surface1.g, ThemeBackend.surface1.b, 0.9)
         clip: true
@@ -237,7 +238,7 @@ Item {
                 Rectangle {
                     Layout.preferredHeight: root.s(26)
                     Layout.preferredWidth: activePopupsRow.implicitWidth + root.s(16)
-                    radius: root.s(8)
+                    radius: 0
                     color: ThemeBackend.surface0
                     border.width: 1
                     border.color: ThemeBackend.surface1
@@ -251,7 +252,7 @@ Item {
                         Rectangle {
                             width: root.s(6)
                             height: root.s(6)
-                            radius: root.s(3)
+                            radius: 0
                             Layout.alignment: Qt.AlignVCenter
                             color: ThemeBackend.green
                         }
@@ -284,7 +285,7 @@ Item {
                 Rectangle {
                     Layout.preferredHeight: root.s(30)
                     Layout.preferredWidth: dndRow.implicitWidth + root.s(18)
-                    radius: root.s(8)
+                    radius: 0
                     color: NotificationManager.dndActive ? ThemeBackend.blue : ThemeBackend.surface1
 
                     RowLayout {
@@ -329,7 +330,7 @@ Item {
                 Rectangle {
                     Layout.preferredHeight: root.s(22)
                     Layout.preferredWidth: Math.max(unreadBadgeText.implicitWidth + root.s(12), root.s(22))
-                    radius: root.s(8)
+                    radius: 0
                     color: NotificationManager.hasUnread ? ThemeBackend.blue : "transparent"
                     visible: NotificationManager.hasUnread
 
@@ -348,8 +349,8 @@ Item {
                 ClickButton {
                     Layout.preferredWidth: root.s(36)
                     Layout.preferredHeight: root.s(30)
-                    cornerRadius: root.s(8)
-                    buttonIcon: "󰗐"
+                    cornerRadius: 0
+                    buttonIcon: "󰑇"
                     iconFontSize: root.s(16)
                     accentColor: ThemeBackend.surface1
                     textColor: ThemeBackend.subtext1
@@ -371,8 +372,8 @@ Item {
                 ClickButton {
                     Layout.preferredWidth: root.s(36)
                     Layout.preferredHeight: root.s(30)
-                    cornerRadius: root.s(8)
-                    buttonIcon: "󰅖"
+                    cornerRadius: 0
+                    buttonIcon: "󰎟"
                     iconFontSize: root.s(16)
                     accentColor: ThemeBackend.surface1
                     textColor: ThemeBackend.subtext1
@@ -389,8 +390,8 @@ Item {
                 ClickButton {
                     Layout.preferredWidth: root.s(36)
                     Layout.preferredHeight: root.s(30)
-                    cornerRadius: root.s(8)
-                    buttonIcon: "󰋖"
+                    cornerRadius: 0
+                    buttonIcon: "󰖭"
                     iconFontSize: root.s(16)
                     accentColor: ThemeBackend.surface1
                     textColor: ThemeBackend.subtext1
@@ -404,14 +405,14 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.showDndMenu ? (dndMenuColumn.implicitHeight + root.s(16)) : 0
                 clip: true
-                radius: root.s(10)
+                radius: 0
                 color: ThemeBackend.surface0
                 border.width: root.showDndMenu ? 1 : 0
                 border.color: ThemeBackend.surface1
                 visible: height > 0
 
                 Behavior on Layout.preferredHeight {
-                    NumberAnimation { duration: 180; easing.type: Easing.OutQuart }
+                    NumberAnimation { duration: 220; easing.type: Easing.InOutCubic }
                 }
 
                 ColumnLayout {
@@ -445,7 +446,7 @@ Item {
                             ClickButton {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: root.s(28)
-                                cornerRadius: root.s(8)
+                                cornerRadius: 0
                                 buttonText: modelData.label
                                 textFontSize: root.s(10)
                                 accentColor: ThemeBackend.surface1
@@ -465,7 +466,7 @@ Item {
                         ClickButton {
                             Layout.fillWidth: true
                             Layout.preferredHeight: root.s(28)
-                            cornerRadius: root.s(8)
+                            cornerRadius: 0
                             buttonText: NotificationManager.dndPermanent
                                 ? I18n.t("notifications.center.dnd.disable_permanent")
                                 : I18n.t("notifications.center.dnd.enable_permanent")
@@ -481,7 +482,7 @@ Item {
                         ClickButton {
                             Layout.preferredWidth: root.s(70)
                             Layout.preferredHeight: root.s(28)
-                            cornerRadius: root.s(8)
+                            cornerRadius: 0
                             buttonText: I18n.t("notifications.center.dnd.off")
                             textFontSize: root.s(10)
                             accentColor: ThemeBackend.surface1
@@ -500,7 +501,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.s(36)
-                radius: root.s(10)
+                radius: 0
                 color: ThemeBackend.surface0
                 border.width: 1
                 border.color: searchInput.activeFocus ? ThemeBackend.blue : ThemeBackend.surface1
@@ -576,7 +577,7 @@ Item {
                     Rectangle {
                         Layout.preferredHeight: root.s(26)
                         Layout.preferredWidth: timeChipLabel.implicitWidth + root.s(16)
-                        radius: root.s(8)
+                        radius: 0
                         color: root.selectedTimeRange === root.timeRanges[index]
                             ? ThemeBackend.blue : ThemeBackend.surface0
                         border.width: 1
@@ -616,7 +617,7 @@ Item {
                 Rectangle {
                     height: root.s(24)
                     width: allLabel.implicitWidth + root.s(14)
-                    radius: root.s(7)
+                    radius: 0
                     color: root.selectedApp === "" ? ThemeBackend.blue : ThemeBackend.surface0
                     border.width: 1
                     border.color: root.selectedApp === "" ? ThemeBackend.blue : ThemeBackend.surface1
@@ -646,7 +647,7 @@ Item {
                     Rectangle {
                         height: root.s(24)
                         width: appChipLabel.implicitWidth + root.s(14)
-                        radius: root.s(7)
+                        radius: 0
 
                         readonly property string appName: {
                             var d = modelData;
@@ -700,26 +701,38 @@ Item {
                 Layout.fillHeight: true
                 clip: true
 
-                // Empty state
-                ColumnLayout {
+                // Empty state — pusheen GIF (same as system panel)
+                Item {
                     anchors.centerIn: parent
-                    spacing: root.s(8)
                     visible: root.groupedEntries.length === 0
+                    width: root.s(160)
+                    height: emptyCol.implicitHeight
 
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "󰂚"
-                        font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
-                        font.pixelSize: root.s(48)
-                        color: ThemeBackend.surface2
-                    }
+                    ColumnLayout {
+                        id: emptyCol
+                        anchors.centerIn: parent
+                        spacing: root.s(12)
 
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: root.searchText !== "" ? I18n.t("notifications.center.empty_search") : I18n.t("notifications.center.empty")
-                        font.family: ThemeBackend.fontFamily
-                        font.pixelSize: root.s(13)
-                        color: ThemeBackend.overlay0
+                        ImageBox {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: root.s(120)
+                            Layout.preferredHeight: root.s(120)
+                            source: Caching.serpantinumDir ? ("file://" + Caching.serpantinumDir + "/assets/pushy2.gif") : Qt.resolvedUrl("../../assets/pushy2.gif")
+                            isGif: true
+                            playing: true
+                            fillMode: Image.PreserveAspectFit
+                            cornerRadius: 0
+                            imageRadius: 0
+                            interactive: false
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: root.searchText !== "" ? I18n.t("notifications.center.empty_search") : I18n.t("notifications.center.empty")
+                            font.family: ThemeBackend.fontFamily
+                            font.pixelSize: root.s(13)
+                            color: ThemeBackend.overlay0
+                        }
                     }
                 }
 
@@ -736,14 +749,18 @@ Item {
                         active: notifList.moving || notifList.movingVertically
                         width: root.s(4)
                         policy: ScrollBar.AsNeeded
-                        contentItem: Rectangle { implicitWidth: root.s(4); radius: root.s(2); color: ThemeBackend.surface2 }
+                        contentItem: Rectangle { implicitWidth: root.s(4); radius: 0; color: ThemeBackend.surface2 }
                     }
 
                     add: Transition {
-                        NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutQuint }
+                        NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 240; easing.type: Easing.OutQuint }
+                        NumberAnimation { property: "scale"; from: 0.97; to: 1.0; duration: 240; easing.type: Easing.OutQuint }
                     }
                     remove: Transition {
-                        NumberAnimation { property: "opacity"; to: 0.0; duration: 150; easing.type: Easing.OutQuint }
+                        NumberAnimation { property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.OutCubic }
+                    }
+                    displaced: Transition {
+                        NumberAnimation { properties: "x,y"; duration: 260; easing.type: Easing.OutCubic }
                     }
 
                     model: root.groupedEntries
@@ -771,7 +788,7 @@ Item {
                                 Rectangle {
                                     Layout.preferredWidth: root.s(24)
                                     Layout.preferredHeight: root.s(24)
-                                    radius: root.s(6)
+                                    radius: 0
                                     color: ThemeBackend.surface0
 
                                     Image {
@@ -807,7 +824,7 @@ Item {
                                 Rectangle {
                                     Layout.preferredWidth: root.s(18)
                                     Layout.preferredHeight: root.s(18)
-                                    radius: root.s(9)
+                                    radius: 0
                                     color: ThemeBackend.blue
                                     visible: groupDelegate.groupData.unreadCount > 0
 
@@ -834,7 +851,7 @@ Item {
                                 Rectangle {
                                     Layout.preferredWidth: root.s(22)
                                     Layout.preferredHeight: root.s(22)
-                                    radius: root.s(6)
+                                    radius: 0
                                     color: groupDismissArea.containsMouse ? ThemeBackend.surface1 : "transparent"
 
                                     Text {
@@ -866,7 +883,7 @@ Item {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: notifContent.implicitHeight + root.s(12)
-                                    radius: root.s(8)
+                                    radius: 0
                                     color: notifArea.containsMouse ? ThemeBackend.surface0 : "transparent"
 
                                     ColumnLayout {
@@ -886,7 +903,7 @@ Item {
                                             Rectangle {
                                                 Layout.preferredWidth: root.s(6)
                                                 Layout.preferredHeight: root.s(6)
-                                                radius: root.s(3)
+                                                radius: 0
                                                 color: modelData.read ? "transparent" : ThemeBackend.blue
                                                 visible: !modelData.read
                                             }
@@ -937,7 +954,7 @@ Item {
                                         Rectangle {
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: modelData.urgency === 2 ? root.s(2) : 0
-                                            radius: root.s(1)
+                                            radius: 0
                                             color: ThemeBackend.red
                                             visible: modelData.urgency === 2
                                         }
@@ -998,12 +1015,19 @@ Item {
                                         anchors.margins: root.s(6)
                                         width: root.s(18)
                                         height: root.s(18)
-                                        radius: root.s(5)
+                                        radius: 0
                                         opacity: notifArea.containsMouse || itemDismissArea.containsMouse ? 1.0 : 0.0
+                                        scale: itemDismissArea.containsMouse ? 1.08 : 1.0
                                         color: itemDismissArea.containsMouse ? ThemeBackend.surface1 : "transparent"
 
                                         Behavior on opacity {
-                                            NumberAnimation { duration: 120 }
+                                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                                        }
+                                        Behavior on scale {
+                                            NumberAnimation { duration: 180; easing.type: Easing.OutQuint }
+                                        }
+                                        Behavior on color {
+                                            ColorAnimation { duration: 180 }
                                         }
 
                                         Text {

@@ -637,7 +637,9 @@
   },
   "notifications": {
     "center": {
-      "reserved": "Dành cho các bản cập nhật trong tương lai"
+      "reserved": "Dành cho các bản cập nhật trong tương lai",
+      "empty": "Không có thông báo",
+      "empty_search": "Không tìm thấy thông báo"
     },
     "types": {
       "default": {

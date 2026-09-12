@@ -639,6 +639,8 @@
     "center": {
       "reserved": "Reserved for future updates",
       "active_count": "{count} active",
+      "empty": "No notifications",
+      "empty_search": "No notifications found",
       "dismiss_all_active": "Dismiss all active popups",
       "dnd": {
         "on_permanent": "Do Not Disturb is on",

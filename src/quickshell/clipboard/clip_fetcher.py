@@ -131,13 +131,14 @@ def get_cliphist():
     limit = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 12 
     
     try:
-        result = subprocess.run(["cliphist", "list"], capture_output=True, text=True)
+        result = subprocess.run(["cliphist", "list"], capture_output=True, text=True, errors='ignore')
         all_lines = result.stdout.splitlines()
         lines = all_lines[offset:offset+limit]
         
         if offset == 0:
             threading.Thread(target=cleanup_cache, args=(all_lines, cache_dir), daemon=True).start()
-    except Exception:
+    except Exception as e:
+        print(f"clip_fetcher: falha ao rodar cliphist list: {e}", file=sys.stderr)
         print("[]")
         return
 

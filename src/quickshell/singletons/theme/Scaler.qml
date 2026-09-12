@@ -24,6 +24,6 @@ Item {
     property real baseScale: uiScale
 
     function s(val) {
-        return val;
+        return Math.round(val * uiScale);
     }
 }

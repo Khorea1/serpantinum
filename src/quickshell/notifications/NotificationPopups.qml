@@ -157,48 +157,48 @@ PanelWindow {
 
                 add: Transition {
                     ParallelAnimation {
-                        NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+                        NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 260; easing.type: Easing.OutQuint }
                         NumberAnimation {
                             property: "x"
                             from: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.effectivePopupWidth * 0.35
                             to: 0
-                            duration: 250
-                            easing.type: Easing.OutCubic
+                            duration: 300
+                            easing.type: Easing.OutExpo
                         }
                         NumberAnimation {
                             property: "y"
                             from: (popupWindow.isPreset ? (popupWindow.isCenter ? (popupWindow.isBottom ? popupWindow.s(24) : -popupWindow.s(24)) : 0) : ((popupWindow.verticalPosition > 50) ? popupWindow.s(24) : -popupWindow.s(24)))
                             to: 0
-                            duration: 250
-                            easing.type: Easing.OutCubic
+                            duration: 300
+                            easing.type: Easing.OutExpo
                         }
                     }
                 }
 
                 remove: Transition {
                     ParallelAnimation {
-                        NumberAnimation { property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.OutCubic }
+                        NumberAnimation { property: "opacity"; to: 0.0; duration: 200; easing.type: Easing.OutCubic }
                         NumberAnimation {
                             property: "x"
                             to: (popupWindow.isPreset ? (popupWindow.isCenter ? 0 : (popupWindow.isLeft ? -1 : 1)) : (popupWindow.horizontalPosition < 33 ? -1 : (popupWindow.horizontalPosition > 66 ? 1 : 0))) * popupWindow.effectivePopupWidth * 0.35
-                            duration: 200
-                            easing.type: Easing.OutCubic
+                            duration: 220
+                            easing.type: Easing.InOutCubic
                         }
                         NumberAnimation {
                             property: "y"
                             to: (popupWindow.isPreset ? (popupWindow.isCenter ? (popupWindow.isBottom ? popupWindow.s(24) : -popupWindow.s(24)) : 0) : ((popupWindow.verticalPosition > 50) ? popupWindow.s(24) : -popupWindow.s(24)))
-                            duration: 200
-                            easing.type: Easing.OutCubic
+                            duration: 220
+                            easing.type: Easing.InOutCubic
                         }
                     }
                 }
 
                 displaced: Transition {
-                    NumberAnimation { property: "y"; duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { property: "y"; duration: 260; easing.type: Easing.InOutCubic }
                 }
 
                 removeDisplaced: Transition {
-                    NumberAnimation { property: "y"; duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { property: "y"; duration: 260; easing.type: Easing.InOutCubic }
                 }
 
                 delegate: Item {
@@ -285,17 +285,19 @@ PanelWindow {
             id: openCenterPill
             visible: NotificationManager.activePopupsModel.count > 0
             opacity: pillArea.containsMouse ? 1.0 : 0.82
-            Behavior on opacity { NumberAnimation { duration: 120 } }
+            scale: pillArea.containsMouse ? 1.04 : 1.0
+            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutQuint } }
 
             readonly property bool dockBottom: popupWindow.isPreset ? popupWindow.isBottom : (popupWindow.verticalPosition > 50)
             readonly property real gap: popupWindow.s(8)
 
             width: pillRow.implicitWidth + popupWindow.s(16)
             height: popupWindow.s(24)
-            radius: height / 2
-            color: Qt.rgba(ThemeBackend.surface0.r, ThemeBackend.surface0.g, ThemeBackend.surface0.b, 0.92)
+            radius: 0
+            color: Qt.rgba(ThemeBackend.mantle.r, ThemeBackend.mantle.g, ThemeBackend.mantle.b, 0.92)
             border.width: 1
-            border.color: ThemeBackend.surface1
+            border.color: ThemeBackend.surface0
 
             x: {
                 if (popupContainer.width <= 0) return popupContainer.x;
@@ -309,8 +311,8 @@ PanelWindow {
             }
             y: dockBottom ? (popupContainer.y - height - gap) : (popupContainer.y + popupContainer.height + gap)
 
-            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.InOutCubic } }
+            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.InOutCubic } }
 
             RowLayout {
                 id: pillRow

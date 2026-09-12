@@ -637,7 +637,9 @@
   },
   "notifications": {
     "center": {
-      "reserved": "향후 업데이트를 위해 예약된 공간입니다"
+      "reserved": "향후 업데이트를 위해 예약된 공간입니다",
+      "empty": "알림 없음",
+      "empty_search": "검색된 알림 없음"
     },
     "types": {
       "default": {

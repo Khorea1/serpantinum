@@ -57,7 +57,7 @@ Notification {
             Rectangle {
                 id: bgMask
                 anchors.fill: parent
-                radius: ThemeBackend.borderRadius
+                radius: 0
                 color: "black"
                 visible: false
             }
@@ -82,12 +82,13 @@ Notification {
                 source: rawBgImg
                 maskSource: bgMask
                 maskEnabled: true
-                opacity: 0.22
+                opacity: rawBgImg.status === Image.Ready ? 0.22 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
             }
 
             Rectangle {
                 anchors.fill: parent
-                radius: ThemeBackend.borderRadius
+                radius: 0
                 gradient: Gradient {
                     orientation: Gradient.Vertical
                     GradientStop { position: 0.0; color: Qt.alpha(ThemeBackend.surface0, 0.45) }
@@ -114,7 +115,8 @@ Notification {
             font.family: ThemeBackend.fontFamily
             font.weight: Font.Bold
             font.pixelSize: s(11)
-            color: ThemeBackend.subtext0
+            color: faceRoot.titleAccentColor
+            Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
             elide: Text.ElideRight
         }
     ]

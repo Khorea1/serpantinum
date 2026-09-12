@@ -17,7 +17,8 @@ ShellRoot {
     Lock {}
 
     Launcher {}
-    Clipboard {}    
+    Clipboard {}
+    PickWindow {}
 
     Polkit {}
     PopoutManager {}

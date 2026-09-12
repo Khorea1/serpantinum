@@ -20,8 +20,18 @@ Item {
         }
         return dir;
     }
+
+    // Config do usuário tem prioridade sobre o config "de fábrica" do Serpantinum.
+    // A existência do arquivo só pode ser checada em runtime (shell), não em
+    // binding QML, então a escolha real acontece dentro do script bash gerado
+    // por _startImageGenerate/_startStaticGenerate — estas properties aqui
+    // servem só de referência/exibição.
+    property string userMatugenDir: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/matugen"
+
     property string configPath: matugenBaseDir + "/config.toml"
     property string configPathStatic: matugenBaseDir + "/config-static.toml"
+    property string userConfigPath: userMatugenDir + "/config.toml"
+    property string userConfigPathStatic: userMatugenDir + "/config-static.toml"
 
     property var _pendingRequest: null
     property string _currentReqType: ""
@@ -204,14 +214,16 @@ Item {
         root._currentSchemeType = selectedType;
         root._currentStaticJson = "";
 
+        let script =
+            "CONFIG='" + root.userConfigPath.replace(/'/g, "'\\''") + "'; " +
+            "[ -f \"$CONFIG\" ] || CONFIG='" + root.configPath.replace(/'/g, "'\\''") + "'; " +
+            "cd \"$(dirname \"$CONFIG\")\" && " +
+            "matugen image '" + cleanPath.replace(/'/g, "'\\''") + "' " +
+            "-c \"$CONFIG\" -m " + selectedMode + " -t " + selectedType + " " +
+            "--source-color-index 0";
+
         matugenProcess.reqType = "image";
-        matugenProcess.command = [
-            "matugen", "image", cleanPath,
-            "-c", root.configPath,
-            "-m", selectedMode,
-            "-t", selectedType,
-            "--source-color-index", "0"
-        ];
+        matugenProcess.command = ["bash", "-c", script];
         root.generationStarted();
         matugenProcess.running = true;
     }
@@ -266,11 +278,13 @@ Item {
         let script =
             "STATE_DIR=\"$HOME/.local/state/serpantinum\"; " +
             "TMP_MD3=\"/tmp/matugen_synthetic_colors.json\"; " +
+            "CONFIG_STATIC='" + root.userConfigPathStatic.replace(/'/g, "'\\''") + "'; " +
+            "[ -f \"$CONFIG_STATIC\" ] || CONFIG_STATIC='" + root.configPathStatic.replace(/'/g, "'\\''") + "'; " +
             "mkdir -p \"$STATE_DIR\" && " +
             "echo '" + rawJson.replace(/'/g, "'\\''") + "' > \"$STATE_DIR/qs_colors.json\" && " +
             "echo '" + md3Json.replace(/'/g, "'\\''") + "' > \"$TMP_MD3\" && " +
-            "cd \"" + root.matugenBaseDir + "\" && " +
-            "matugen -c \"" + root.configPathStatic + "\" json \"$TMP_MD3\"";
+            "cd \"$(dirname \"$CONFIG_STATIC\")\" && " +
+            "matugen -c \"$CONFIG_STATIC\" json \"$TMP_MD3\"";
 
         matugenProcess.reqType = "static";
         matugenProcess.command = ["bash", "-c", script];

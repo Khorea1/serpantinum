@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import "../"
+import "RofiKeyNav.js" as RofiKeyNav
 
 Item {
     id: root
@@ -44,6 +45,9 @@ Item {
     property var filteredOptions: options
     property bool isEditing: false
     property string searchText: ""
+    // Index (into filteredOptions) the user has browsed to with the keyboard.
+    // -1 means "no keyboard browsing yet" -> Enter falls back to the top match.
+    property int highlightIndex: -1
 
     property real flashOpacity: 0.0
     property real popScale: 1.0
@@ -179,10 +183,39 @@ Item {
         }
     }
 
+    function moveHighlightDown() {
+        if (root.filteredOptions.length === 0) return;
+        root.highlightIndex = Math.min(root.filteredOptions.length - 1, root.highlightIndex + 1);
+        listView.positionViewAtIndex(root.highlightIndex, ListView.Contain);
+    }
+
+    function moveHighlightUp() {
+        if (root.filteredOptions.length === 0) return;
+        root.highlightIndex = Math.max(0, root.highlightIndex - 1);
+        listView.positionViewAtIndex(root.highlightIndex, ListView.Contain);
+    }
+
+    function commitHighlighted() {
+        let idx = (root.highlightIndex >= 0 && root.highlightIndex < root.filteredOptions.length) ? root.highlightIndex : 0;
+        if (root.filteredOptions.length === 0) return;
+        let selectedVal = root.filteredOptions[idx];
+        let actualIndex = root.options.indexOf(selectedVal);
+        if (actualIndex !== -1) {
+            if (root.currentIndex !== actualIndex) {
+                root.currentIndex = actualIndex;
+                root.valueChanged(actualIndex, selectedVal);
+            }
+            root.selected(actualIndex, selectedVal);
+        }
+        popup.close();
+        root.stopEditing();
+    }
+
     function startEditing() {
         if (!root.enabled) return;
         root.isEditing = true;
         root.searchText = "";
+        root.highlightIndex = -1;
         innerInput.text = "";
         charModel.clear();
         root.scrollOffset = 0;
@@ -206,6 +239,7 @@ Item {
     }
 
     function filterData() {
+        root.highlightIndex = -1;
         if (root.searchText === "") {
             root.filteredOptions = root.options.slice();
         } else {
@@ -505,6 +539,24 @@ Item {
                             root.stopEditing();
                         }
 
+                        Keys.onDownPressed: function(event) {
+                            root.moveHighlightDown();
+                            event.accepted = true;
+                        }
+                        Keys.onUpPressed: function(event) {
+                            root.moveHighlightUp();
+                            event.accepted = true;
+                        }
+                        // rofi-style secondary navigation keybindings (shared with
+                        // every other selection widget via RofiKeyNav.js):
+                        // row-up:   "Up,Control+k"
+                        // row-down: "Down,Control+j"
+                        Keys.onPressed: function(event) {
+                            if (RofiKeyNav.handlePressed(event, root.moveHighlightDown, root.moveHighlightUp)) {
+                                event.accepted = true;
+                            }
+                        }
+
                         onAccepted: {
                             let textVal = innerInput.text.trim();
                             let home = (typeof Quickshell !== "undefined" && Quickshell.env("HOME")) ? Quickshell.env("HOME") : "";
@@ -514,15 +566,7 @@ Item {
                             }
 
                             if (root.filteredOptions.length > 0) {
-                                let actualValue = root.filteredOptions[0];
-                                let actualIndex = root.options.indexOf(actualValue);
-                                if (actualIndex !== -1) {
-                                    if (root.currentIndex !== actualIndex) {
-                                        root.currentIndex = actualIndex;
-                                        root.valueChanged(actualIndex, actualValue);
-                                    }
-                                    root.selected(actualIndex, actualValue);
-                                }
+                                root.commitHighlighted();
                             } else if (root.isPathSelector && textVal !== "") {
                                 let opts = root.options.slice();
                                 let idx = opts.indexOf(expandedVal);
@@ -536,9 +580,9 @@ Item {
                                     root.valueChanged(idx, expandedVal);
                                 }
                                 root.selected(idx, expandedVal);
+                                popup.close();
+                                root.stopEditing();
                             }
-                            popup.close();
-                            root.stopEditing();
                         }
                     }
                 }
@@ -721,7 +765,11 @@ Item {
                 }
                 Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuint } }
 
-                color: root.currentIndex === realIndex ? root.accentColor : (itemMa.pressed ? Qt.darker(root.hoverColor, 1.1) : (itemMa.containsMouse ? root.hoverColor : "transparent"))
+                color: root.currentIndex === realIndex ? root.accentColor
+                       : (index === root.highlightIndex ? root.hoverColor
+                       : (itemMa.pressed ? Qt.darker(root.hoverColor, 1.1) : (itemMa.containsMouse ? root.hoverColor : "transparent")))
+                border.width: (index === root.highlightIndex && root.currentIndex !== realIndex) ? 1 : 0
+                border.color: root.accentColor
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 scale: itemMa.pressed ? 0.96 : (itemMa.containsMouse ? 1.02 : 1.0)

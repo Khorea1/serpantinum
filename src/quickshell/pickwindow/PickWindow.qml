@@ -9,17 +9,16 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "../"
 import "../reusables"
-import "../WindowRegistry.js" as WindowRegistry
 import "../reusables/RofiKeyNav.js" as RofiKeyNav
 
 PanelWindow {
-    id: launcherWindow
+    id: pickWindowRoot
 
-    screen: LauncherController.screen
+    screen: PickWindowController.screen
 
-    WlrLayershell.namespace: "qs-applauncher"
+    WlrLayershell.namespace: "qs-pickwindow"
     WlrLayershell.layer: WlrLayer.Overlay
-    focusable: launcherWindow.isVisible
+    focusable: pickWindowRoot.isVisible
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
 
@@ -36,93 +35,46 @@ PanelWindow {
         return (typeof Scaler !== "undefined" && Scaler.s) ? Scaler.s(val) : val;
     }
 
-    function closeLauncher() {
-        LauncherController.hide();
+    function closePickWindow() {
+        PickWindowController.hide();
     }
 
-    property bool isVisible: LauncherController.isVisible
+    property bool isVisible: PickWindowController.isVisible
     property int configRevision: 0
-    property bool appsLoaded: false
+    property bool windowsLoaded: false
 
     Component.onCompleted: {
-        loadApps();
-        appsLoaded = true;
         executeFilter("");
     }
 
     Connections {
         target: (typeof Config !== "undefined") ? Config : null
         function onSettingsLoaded() {
-            LauncherController.hide();
-            launcherWindow.configRevision++;
+            PickWindowController.hide();
+            pickWindowRoot.configRevision++;
         }
     }
 
-    Connections {
-        target: (typeof I18n !== "undefined") ? I18n : null
-        function onLanguageChanged() {
-            if (launcherWindow.isVisible) {
-                launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
-            } else {
-                launcherWindow.appsLoaded = false;
-            }
-        }
-    }
-
-    Connections {
-        target: (typeof DesktopEntries !== "undefined" && DesktopEntries.applications) ? DesktopEntries.applications : null
-        function onValuesChanged() {
-            if (launcherWindow.isVisible) {
-                launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
-            } else {
-                launcherWindow.appsLoaded = false;
-            }
-        }
-        function onCountChanged() {
-            if (launcherWindow.isVisible) {
-                launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
-            } else {
-                launcherWindow.appsLoaded = false;
-            }
-        }
-    }
-
-    property var defaultLauncherSettings: ({
-        "position": "top",
-        "width": 600,
-        "itemCount": 6,
-        "terminalCommand": "kitty -e",
-        "smartRanking": true
+    property var defaultPickWindowSettings: ({
+        "position": "center",
+        "width": 640,
+        "itemCount": 8
     })
 
-    property var rawLauncherSettings: {
+    property var rawPickWindowSettings: {
         let dummy = configRevision;
-        if (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.launcher) {
-            return Config.rawSettings.launcher;
+        if (typeof Config !== "undefined" && Config.rawSettings && Config.rawSettings.pickwindow) {
+            return Config.rawSettings.pickwindow;
         }
         if (typeof Config !== "undefined" && typeof Config.getSetting === "function") {
-            return Config.getSetting("launcher", defaultLauncherSettings);
+            return Config.getSetting("pickwindow", defaultPickWindowSettings);
         }
-        return defaultLauncherSettings;
+        return defaultPickWindowSettings;
     }
 
-    property string launcherPosition: (rawLauncherSettings && rawLauncherSettings.position !== undefined) ? rawLauncherSettings.position : "top"
-    property real customWidth: (rawLauncherSettings && rawLauncherSettings.width !== undefined && !isNaN(rawLauncherSettings.width) && rawLauncherSettings.width > 0) ? rawLauncherSettings.width : 600
-    property int customItemCount: (rawLauncherSettings && rawLauncherSettings.itemCount !== undefined && !isNaN(rawLauncherSettings.itemCount) && rawLauncherSettings.itemCount > 0) ? rawLauncherSettings.itemCount : 6
-    property string terminalCommand: (rawLauncherSettings && rawLauncherSettings.terminalCommand !== undefined) ? rawLauncherSettings.terminalCommand : "kitty -e"
-    property bool smartRanking: (rawLauncherSettings && rawLauncherSettings.smartRanking !== undefined) ? rawLauncherSettings.smartRanking : true
-
-    onSmartRankingChanged: {
-        if (launcherWindow.isVisible) {
-            loadApps();
-            executeFilter(searchInput.text);
-        } else {
-            launcherWindow.appsLoaded = false;
-        }
-    }
+    property string pickWindowPosition: (rawPickWindowSettings && rawPickWindowSettings.position !== undefined) ? rawPickWindowSettings.position : "center"
+    property real customWidth: (rawPickWindowSettings && rawPickWindowSettings.width !== undefined && !isNaN(rawPickWindowSettings.width) && rawPickWindowSettings.width > 0) ? rawPickWindowSettings.width : 640
+    property int customItemCount: (rawPickWindowSettings && rawPickWindowSettings.itemCount !== undefined && !isNaN(rawPickWindowSettings.itemCount) && rawPickWindowSettings.itemCount > 0) ? rawPickWindowSettings.itemCount : 8
 
     property var rawBarSettings: {
         let dummy = configRevision;
@@ -163,7 +115,7 @@ PanelWindow {
             if (typeof ToplevelManager !== "undefined" && ToplevelManager.activeToplevel && ToplevelManager.activeToplevel.fullscreen) {
                 let atl = ToplevelManager.activeToplevel;
                 if (atl.screens && atl.screens.length > 0) {
-                    return atl.screens.indexOf(launcherWindow.screen) !== -1;
+                    return atl.screens.indexOf(pickWindowRoot.screen) !== -1;
                 }
                 return true;
             }
@@ -190,40 +142,40 @@ PanelWindow {
     }
 
     property bool isBarSolid: (barStyle === "solid" || barStyle === "fill") && Math.round(barOpacity * 100) >= 100
-    property bool barMatchesLauncher: isBarSolid && (attachEdge === barPosition) && !isBarEffectivelyHidden
+    property bool barMatchesPicker: isBarSolid && (attachEdge === barPosition) && !isBarEffectivelyHidden
 
-    property string attachEdge: launcherPosition
+    property string attachEdge: pickWindowPosition
     property bool isSideAttached: attachEdge === "left" || attachEdge === "right"
     property bool isCentered: attachEdge === "center"
 
     onAttachEdgeChanged: {
-        LauncherController.hide();
+        PickWindowController.hide();
     }
 
     onBarStyleChanged: {
-        LauncherController.hide();
+        PickWindowController.hide();
     }
 
     onBarPositionChanged: {
-        LauncherController.hide();
+        PickWindowController.hide();
     }
 
     property real cornerRadius: ThemeBackend.borderRadius <= 16 ? ThemeBackend.borderRadius * 2 : Math.min(32, 32 - 16 * Math.exp(-(ThemeBackend.borderRadius - 16) / 12))
     property real outerCornerRadius: cornerRadius
 
-    property real baseLauncherWidth: s(customWidth)
+    property real basePickerWidth: s(customWidth)
     property real collapsedCenterHeight: s(64)
 
-    property real targetLauncherHeight: {
-        let count = Math.min(appModel.count, customItemCount);
+    property real targetPickerHeight: {
+        let count = Math.min(windowModel.count, customItemCount);
         if (count <= 0) {
             return s(64);
         }
         return s(70) + (count * s(48));
     }
 
-    property real animatedLauncherHeight: targetLauncherHeight
-    Behavior on animatedLauncherHeight {
+    property real animatedPickerHeight: targetPickerHeight
+    Behavior on animatedPickerHeight {
         NumberAnimation {
             duration: 300
             easing.type: Easing.OutCubic
@@ -232,8 +184,9 @@ PanelWindow {
 
     visible: isVisible || container.animProgress > 0.001
 
-    property var allApps: []
-    property var usageRanks: ({ "focus": {}, "launch": {}, "context": {} })
+    property var allWindows: []
+    property var rawWindowData: []
+    property string compositor: ""
     property bool isKeyboardNav: false
     property string pendingQuery: ""
 
@@ -244,17 +197,21 @@ PanelWindow {
         }
     }
 
+    // Fetches the current list of open windows (Hyprland or niri, whichever
+    // is running) as JSON: { compositor: "hyprland"|"niri", windows: [...] }
     Process {
-        id: rankFetcher
+        id: windowFetcher
         running: false
-        command: Caching.qsDir ? ["python3", Caching.qsDir + "/launcher/app_rank.py", "--rank"] : []
+        command: Caching.qsDir ? ["python3", Caching.qsDir + "/pickwindow/window_fetch.py"] : []
 
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
                     if (this.text && this.text.trim().length > 0) {
-                        launcherWindow.usageRanks = JSON.parse(this.text);
-                        launcherWindow.loadApps();
+                        let data = JSON.parse(this.text);
+                        pickWindowRoot.compositor = data.compositor || "";
+                        pickWindowRoot.rawWindowData = data.windows || [];
+                        pickWindowRoot.loadWindows();
                         executeFilter(searchInput.text);
                     }
                 } catch(e) {}
@@ -267,7 +224,7 @@ PanelWindow {
         interval: 30
         repeat: false
         onTriggered: {
-            launcherWindow.grabInputFocus();
+            pickWindowRoot.grabInputFocus();
         }
     }
 
@@ -276,7 +233,7 @@ PanelWindow {
         interval: 120
         repeat: false
         onTriggered: {
-            launcherWindow.grabInputFocus();
+            pickWindowRoot.grabInputFocus();
         }
     }
 
@@ -285,7 +242,7 @@ PanelWindow {
         interval: 250
         repeat: false
         onTriggered: {
-            launcherWindow.grabInputFocus();
+            pickWindowRoot.grabInputFocus();
         }
     }
 
@@ -294,7 +251,7 @@ PanelWindow {
         interval: 500
         repeat: false
         onTriggered: {
-            launcherWindow.isKeyboardNav = false;
+            pickWindowRoot.isKeyboardNav = false;
         }
     }
 
@@ -303,16 +260,27 @@ PanelWindow {
         interval: 80
         repeat: false
         onTriggered: {
-            executeFilter(launcherWindow.pendingQuery);
+            executeFilter(pickWindowRoot.pendingQuery);
+        }
+    }
+
+    // Keeps the list fresh while the picker stays open (a window may be
+    // closed by its app while the user is still browsing).
+    Timer {
+        id: refreshTimer
+        interval: 1500
+        repeat: true
+        running: pickWindowRoot.isVisible
+        onTriggered: {
+            windowFetcher.running = false;
+            windowFetcher.running = true;
         }
     }
 
     onIsVisibleChanged: {
         if (isVisible) {
-            if (!launcherWindow.appsLoaded) {
-                launcherWindow.loadApps();
-                launcherWindow.appsLoaded = true;
-            }
+            windowFetcher.running = false;
+            windowFetcher.running = true;
             if (searchInput.text !== "") {
                 searchInput.clear();
                 filterDebounceTimer.stop();
@@ -320,11 +288,7 @@ PanelWindow {
             } else {
                 filterDebounceTimer.stop();
             }
-            if (launcherWindow.smartRanking) {
-                rankFetcher.running = false;
-                rankFetcher.running = true;
-            }
-            launcherWindow.grabInputFocus();
+            pickWindowRoot.grabInputFocus();
             focusTimer.restart();
             focusRetryTimer.restart();
             focusFinalTimer.restart();
@@ -337,141 +301,68 @@ PanelWindow {
         }
     }
 
-    function evaluateMath(expr) {
-        if (!expr) return null;
-        let trimmed = expr.trim();
-        if (trimmed.length === 0 || trimmed.startsWith(">")) return null;
-
-        let parsed = trimmed
-            .replace(/×/g, "*")
-            .replace(/÷/g, "/")
-            .replace(/\bpi\b/gi, "Math.PI")
-            .replace(/\be\b/gi, "Math.E")
-            .replace(/\bsqrt\b/gi, "Math.sqrt")
-            .replace(/\bsin\b/gi, "Math.sin")
-            .replace(/\bcos\b/gi, "Math.cos")
-            .replace(/\btan\b/gi, "Math.tan")
-            .replace(/\babs\b/gi, "Math.abs")
-            .replace(/\blog\b/gi, "Math.log")
-            .replace(/\bpow\b/gi, "Math.pow")
-            .replace(/\^/g, "**");
-
-        let testStr = parsed.replace(/Math\.(PI|E|sqrt|sin|cos|tan|abs|log|pow)/g, "");
-        if (!/^[\d\s\+\-\*\/\%\(\)\.\,]+$/.test(testStr)) {
-            return null;
-        }
-
-        if (!/[\+\-\*\/\%\^]/.test(trimmed) && !/\b(sqrt|sin|cos|tan|abs|log|pow|pi|e)\b/i.test(trimmed)) {
-            return null;
-        }
-
-        try {
-            let res = Function('"use strict"; return (' + parsed + ')')();
-            if (typeof res === "number" && !isNaN(res) && isFinite(res)) {
-                return Number(Math.round(res * 1e12) / 1e12).toString();
-            }
-        } catch (e) {
-            return null;
-        }
-        return null;
-    }
-
-    function loadApps() {
-        let arr = [];
+    // Best-effort match of a window's class/app-id to an installed desktop
+    // entry, so we can reuse its icon (same heuristic as the launcher: try
+    // StartupWMClass, then the desktop file id, then the display name).
+    function resolveIcon(cls) {
+        if (!cls) return "";
+        let target = cls.toLowerCase();
 
         if (typeof DesktopEntries !== "undefined" && DesktopEntries.applications && DesktopEntries.applications.values) {
             let entries = DesktopEntries.applications.values;
             for (let i = 0; i < entries.length; i++) {
                 let e = entries[i];
-                if (e.noDisplay) continue;
-
-                let score = 0;
-                if (launcherWindow.smartRanking) {
-                    let wmclassLower = (e.startupClass || "").toLowerCase();
-                    let baseName = e.id.toLowerCase().replace(".desktop", "");
-                    let appNameLower = (e.name || "").toLowerCase();
-
-                    let f_score = usageRanks.focus[wmclassLower] || 0;
-                    if (f_score === 0) f_score = usageRanks.focus[baseName] || 0;
-                    if (f_score === 0) f_score = usageRanks.focus[appNameLower] || 0;
-
-                    let l_score = usageRanks.launch[e.name] || 0;
-
-                    let c_score = (usageRanks.context && usageRanks.context[wmclassLower]) || 0;
-                    if (c_score === 0) c_score = (usageRanks.context && usageRanks.context[baseName]) || 0;
-                    if (c_score === 0) c_score = (usageRanks.context && usageRanks.context[appNameLower]) || 0;
-
-                    score = f_score + l_score + (0.5 * c_score);
+                let wmclass = (e.startupClass || "").toLowerCase();
+                let baseName = (e.id || "").toLowerCase().replace(".desktop", "");
+                let appNameLower = (e.name || "").toLowerCase();
+                if (wmclass === target || baseName === target || appNameLower === target) {
+                    return e.icon || target;
                 }
-
-                arr.push({
-                    name: e.name,
-                    description: e.comment || "",
-                    desktop_id: e.id,
-                    icon: e.icon || "",
-                    fontIcon: "",
-                    score: score,
-                    isCommand: false,
-                    command: "",
-                    isCalc: false,
-                    calcResult: "",
-                    isWidget: false,
-                    widgetTarget: ""
-                });
             }
         }
 
-        let widgetList = (typeof WindowRegistry !== "undefined" && WindowRegistry.getWidgetLauncherEntries)
-            ? WindowRegistry.getWidgetLauncherEntries(typeof I18n !== "undefined" ? I18n : null)
-            : [];
+        // Fall back to the icon theme entry that (very often) shares the
+        // app's own class/app-id, e.g. "firefox", "code", "spotify".
+        return target;
+    }
 
-        for (let j = 0; j < widgetList.length; j++) {
-            let w = widgetList[j];
-            let wScore = 0;
-            if (launcherWindow.smartRanking) {
-                wScore = (usageRanks.launch && (usageRanks.launch[w.id] || usageRanks.launch[w.name] || usageRanks.launch["qs-widget-" + w.id])) || 0;
-            }
+    function loadWindows() {
+        let arr = [];
+
+        for (let i = 0; i < rawWindowData.length; i++) {
+            let w = rawWindowData[i];
+            if (!w) continue;
+
+            let cls = w["class"] || "";
+            let title = w.title || cls || "";
+            if (!title) continue;
+
+            let workspace = w.workspace !== undefined && w.workspace !== null ? String(w.workspace) : "";
+            let desc = cls;
+            if (workspace !== "") desc = desc !== "" ? (desc + "  ·  " + workspace) : workspace;
+            if (w.focused) desc = desc !== "" ? (desc + "  ·  current") : "current";
+
             arr.push({
-                name: w.name,
-                description: w.description || "",
-                desktop_id: "qs-widget-" + w.id,
-                icon: w.icon || "",
-                fontIcon: w.fontIcon || "",
-                score: wScore,
-                isCommand: false,
-                command: "",
-                isCalc: false,
-                calcResult: "",
-                isWidget: true,
-                widgetTarget: w.id
+                name: title,
+                description: desc,
+                icon: pickWindowRoot.resolveIcon(cls),
+                fontIcon: "",
+                windowId: w.id || "",
+                className: cls,
+                focused: !!w.focused,
+                score: 0
             });
         }
 
-        arr.sort(function(a, b) {
-            if (launcherWindow.smartRanking && a.score !== b.score) {
-                return b.score - a.score;
-            }
-            return a.name.localeCompare(b.name);
-        });
-
-        let unique = {};
-        let finalArr = [];
-        for (let i = 0; i < arr.length; i++) {
-            if (!unique[arr[i].name]) {
-                unique[arr[i].name] = true;
-                finalArr.push(arr[i]);
-            }
-        }
-
-        launcherWindow.allApps = finalArr;
+        pickWindowRoot.allWindows = arr;
     }
 
     ListModel {
-        id: appModel
+        id: windowModel
     }
 
-    function filterApps(query) {
-        launcherWindow.pendingQuery = query;
+    function filterWindows(query) {
+        pickWindowRoot.pendingQuery = query;
         filterDebounceTimer.restart();
     }
 
@@ -489,127 +380,60 @@ PanelWindow {
 
     function getItemKey(item) {
         if (!item) return "";
-        if (item.isCommand) return "cmd:" + item.command;
-        if (item.isCalc) return "calc:" + item.calcResult;
-        if (item.isWidget) return "widget:" + (item.widgetTarget || item.name);
-        return item.desktop_id ? ("desktop:" + item.desktop_id) : ("name:" + item.name);
+        return item.windowId ? ("win:" + item.windowId) : ("name:" + item.name);
     }
 
     function executeFilter(query) {
-        launcherWindow.isKeyboardNav = false;
+        pickWindowRoot.isKeyboardNav = false;
         if (keyboardNavTimer.running) keyboardNavTimer.stop();
 
-        let rawTrimmed = query.trim();
         let q = query.toLowerCase().trim();
         let filtered = [];
 
-        if (rawTrimmed.startsWith(">")) {
-            let cmd = rawTrimmed.substring(1).trim();
-            if (cmd.length > 0) {
-                filtered.push({
-                    name: "> " + cmd,
-                    description: typeof I18n !== "undefined" ? I18n.t("applauncher.command_run", { cmd: cmd }) : ("Execute command: " + cmd),
-                    desktop_id: "",
-                    icon: "",
-                    fontIcon: "󰆍",
-                    score: 10000000,
-                    isCommand: true,
-                    command: cmd,
-                    isCalc: false,
-                    calcResult: "",
-                    isWidget: false,
-                    widgetTarget: ""
-                });
-            } else {
-                filtered.push({
-                    name: "> ...",
-                    description: typeof I18n !== "undefined" ? I18n.t("applauncher.command_hint") : "Type a command to execute",
-                    desktop_id: "",
-                    icon: "",
-                    fontIcon: "󰆍",
-                    score: 10000000,
-                    isCommand: false,
-                    command: "",
-                    isCalc: false,
-                    calcResult: "",
-                    isWidget: false,
-                    widgetTarget: ""
-                });
-            }
-        }
-
-        let mathResult = evaluateMath(rawTrimmed);
-        if (mathResult !== null) {
-            filtered.push({
-                name: rawTrimmed + " = " + mathResult,
-                description: typeof I18n !== "undefined" ? I18n.t("applauncher.calc_result") : "Calculation result (Enter to copy)",
-                desktop_id: "",
-                icon: "",
-                fontIcon: "󰃬",
-                score: 9000000,
-                isCommand: false,
-                command: "",
-                isCalc: true,
-                calcResult: mathResult,
-                isWidget: false,
-                widgetTarget: ""
-            });
-        }
-
-        for (let i = 0; i < allApps.length; i++) {
-            let app = allApps[i];
-            let nameLower = app.name ? app.name.toLowerCase() : "";
-            let descLower = app.description ? app.description.toLowerCase() : "";
+        for (let i = 0; i < allWindows.length; i++) {
+            let win = allWindows[i];
+            let nameLower = win.name ? win.name.toLowerCase() : "";
+            let descLower = win.description ? win.description.toLowerCase() : "";
 
             let matchQuality = 0;
             let matches = false;
 
             if (q.length === 0) {
                 matches = true;
-            } else if (!rawTrimmed.startsWith(">")) {
-                if (nameLower === q) {
-                    matchQuality = 100000;
-                    matches = true;
-                } else if (nameLower.startsWith(q)) {
-                    matchQuality = 50000;
-                    matches = true;
-                } else if (nameLower.includes(q)) {
-                    matchQuality = 10000;
-                    matches = true;
-                } else if (descLower.includes(q)) {
-                    matchQuality = 5000;
-                    matches = true;
-                } else if (isSubsequence(q, nameLower)) {
-                    matchQuality = 1000;
-                    matches = true;
-                }
+            } else if (nameLower === q) {
+                matchQuality = 100000;
+                matches = true;
+            } else if (nameLower.startsWith(q)) {
+                matchQuality = 50000;
+                matches = true;
+            } else if (nameLower.includes(q)) {
+                matchQuality = 10000;
+                matches = true;
+            } else if (descLower.includes(q)) {
+                matchQuality = 5000;
+                matches = true;
+            } else if (isSubsequence(q, nameLower)) {
+                matchQuality = 1000;
+                matches = true;
             }
 
             if (matches) {
-                let appCopy = {
-                    name: app.name,
-                    description: app.description,
-                    desktop_id: app.desktop_id,
-                    icon: app.icon,
-                    fontIcon: app.fontIcon || "",
-                    score: app.score + matchQuality,
-                    isCommand: false,
-                    command: "",
-                    isCalc: false,
-                    calcResult: "",
-                    isWidget: app.isWidget || false,
-                    widgetTarget: app.widgetTarget || ""
-                };
-                filtered.push(appCopy);
+                filtered.push({
+                    name: win.name,
+                    description: win.description,
+                    icon: win.icon,
+                    fontIcon: win.fontIcon || "",
+                    windowId: win.windowId,
+                    className: win.className,
+                    focused: win.focused,
+                    score: win.score + matchQuality
+                });
             }
         }
 
         if (q.length > 0) {
             filtered.sort(function(a, b) {
-                if (a.score !== b.score) {
-                    return b.score - a.score;
-                }
-                return a.name.localeCompare(b.name);
+                return b.score - a.score;
             });
         }
 
@@ -618,10 +442,10 @@ PanelWindow {
             newKeys[getItemKey(filtered[i])] = true;
         }
 
-        for (let i = appModel.count - 1; i >= 0; i--) {
-            let key = getItemKey(appModel.get(i));
+        for (let i = windowModel.count - 1; i >= 0; i--) {
+            let key = getItemKey(windowModel.get(i));
             if (!newKeys[key]) {
-                appModel.remove(i);
+                windowModel.remove(i);
             }
         }
 
@@ -629,128 +453,101 @@ PanelWindow {
             let item = filtered[i];
             let targetKey = getItemKey(item);
 
-            if (i < appModel.count) {
-                let currentKey = getItemKey(appModel.get(i));
+            if (i < windowModel.count) {
+                let currentKey = getItemKey(windowModel.get(i));
                 if (currentKey === targetKey) {
-                    appModel.set(i, item);
+                    windowModel.set(i, item);
                 } else {
                     let foundIndex = -1;
-                    for (let j = i + 1; j < appModel.count; j++) {
-                        if (getItemKey(appModel.get(j)) === targetKey) {
+                    for (let j = i + 1; j < windowModel.count; j++) {
+                        if (getItemKey(windowModel.get(j)) === targetKey) {
                             foundIndex = j;
                             break;
                         }
                     }
                     if (foundIndex !== -1) {
-                        appModel.move(foundIndex, i, 1);
-                        appModel.set(i, item);
+                        windowModel.move(foundIndex, i, 1);
+                        windowModel.set(i, item);
                     } else {
-                        appModel.insert(i, item);
+                        windowModel.insert(i, item);
                     }
                 }
             } else {
-                appModel.append(item);
+                windowModel.append(item);
             }
         }
 
-        while (appModel.count > filtered.length) {
-            appModel.remove(appModel.count - 1);
+        while (windowModel.count > filtered.length) {
+            windowModel.remove(windowModel.count - 1);
         }
 
-        if (appModel.count > 0) {
-            appList.currentIndex = 0;
+        if (windowModel.count > 0) {
+            pickList.currentIndex = 0;
         } else {
-            appList.currentIndex = -1;
+            pickList.currentIndex = -1;
         }
     }
 
     function activateIndex(index) {
-        if (index < 0 || index >= appModel.count) return;
-        let item = appModel.get(index);
-        if (!item) return;
+        if (index < 0 || index >= windowModel.count) return;
+        let item = windowModel.get(index);
+        if (!item || !item.windowId) return;
 
-        if (item.isCommand) {
-            if (item.command && item.command.trim().length > 0) {
-                let term = launcherWindow.terminalCommand ? launcherWindow.terminalCommand.trim() : "";
-                let fullCmd = term !== "" ? (term + " " + item.command) : item.command;
-                Quickshell.execDetached(["bash", "-c", fullCmd]);
-            }
-            closeLauncher();
-            return;
-        }
-
-        if (item.isCalc) {
-            Quickshell.execDetached(["wl-copy", "--", item.calcResult]);
-            closeLauncher();
-            return;
-        }
-
-        if (item.isWidget) {
-            launchWidget(item.name, item.widgetTarget);
-            return;
-        }
-
-        launchApp(item.name, item.desktop_id);
+        focusWindow(item.windowId);
     }
 
-    function launchWidget(widgetName, widgetTarget) {
-        if (Caching.qsDir) {
-            Quickshell.execDetached(["bash", Caching.qsDir + "/../scripts/qs_manager.sh", "open", widgetTarget]);
+    function focusWindow(windowId) {
+        if (!windowId) return;
+
+        if (pickWindowRoot.compositor === "niri") {
+            Quickshell.execDetached(["niri", "msg", "action", "focus-window", "--id", String(windowId)]);
         } else {
-            Quickshell.execDetached(["qs_manager", "open", widgetTarget]);
+            // Standard hyprctl dispatcher: works regardless of any extra
+            // shell-side "hl.dsp.*" syntax used elsewhere in this config.
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "address:" + windowId]);
         }
-        closeLauncher();
-    }
 
-    function launchApp(appName, desktopId) {
-        let entry = DesktopEntries.byId(desktopId);
-        if (entry) {
-            entry.execute();
-        }
-        if (Caching.qsDir) {
-            Quickshell.execDetached(["python3", Caching.qsDir + "/launcher/app_rank.py", "--log-launch", "--name", appName]);
-        }
-        closeLauncher();
+        closePickWindow();
     }
 
     Item {
         id: topBarHole
 
-        property int barThickness: launcherWindow.barHeight
-        property string bp: launcherWindow.barPosition
-        property bool activeBar: !launcherWindow.isBarEffectivelyHidden
+        property int barThickness: pickWindowRoot.barHeight
+        property string bp: pickWindowRoot.barPosition
+        property bool activeBar: !pickWindowRoot.isBarEffectivelyHidden
 
         x: {
             if (!activeBar) return 0;
             if (bp === "left") return 0;
-            if (bp === "right") return launcherWindow.width - barThickness;
+            if (bp === "right") return pickWindowRoot.width - barThickness;
             return 0;
         }
 
         y: {
             if (!activeBar) return 0;
             if (bp === "top") return 0;
-            if (bp === "bottom") return launcherWindow.height - barThickness;
+            if (bp === "bottom") return pickWindowRoot.height - barThickness;
             return 0;
         }
 
         width: {
             if (!activeBar) return 0;
             if (bp === "left" || bp === "right") return barThickness;
-            return launcherWindow.width;
+            return pickWindowRoot.width;
         }
 
         height: {
             if (!activeBar) return 0;
             if (bp === "top" || bp === "bottom") return barThickness;
-            return launcherWindow.height;
+            return pickWindowRoot.height;
         }
     }
 
     MouseArea {
         anchors.fill: parent
-        enabled: launcherWindow.isVisible
-        onClicked: closeLauncher()
+        enabled: pickWindowRoot.isVisible
+        onClicked: closePickWindow()
     }
 
     Item {
@@ -760,63 +557,63 @@ PanelWindow {
             anchors.fill: parent
         }
 
-        property real animProgress: launcherWindow.isVisible ? 1.0 : 0.0
+        property real animProgress: pickWindowRoot.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: launcherWindow.isVisible ? (launcherWindow.isCentered ? 320 : 220) : (launcherWindow.isCentered ? 200 : 150)
-                easing.type: launcherWindow.isVisible ? Easing.OutBack : Easing.InQuad
+                duration: pickWindowRoot.isVisible ? (pickWindowRoot.isCentered ? 320 : 220) : (pickWindowRoot.isCentered ? 200 : 150)
+                easing.type: pickWindowRoot.isVisible ? Easing.OutBack : Easing.InQuad
                 easing.overshoot: 1.15
             }
         }
 
-        property real dynamicCornerRadius: Math.max(0, Math.min(launcherWindow.outerCornerRadius, (launcherWindow.isSideAttached ? width : height) * 0.5))
+        property real dynamicCornerRadius: Math.max(0, Math.min(pickWindowRoot.outerCornerRadius, (pickWindowRoot.isSideAttached ? width : height) * 0.5))
 
         x: {
-            if (launcherWindow.attachEdge === "left") {
-                return launcherWindow.barMatchesLauncher ? launcherWindow.barHeight : 0;
+            if (pickWindowRoot.attachEdge === "left") {
+                return pickWindowRoot.barMatchesPicker ? pickWindowRoot.barHeight : 0;
             }
-            if (launcherWindow.attachEdge === "right") {
-                let offset = launcherWindow.barMatchesLauncher ? launcherWindow.barHeight : 0;
-                return (launcherWindow.width - offset) - width;
+            if (pickWindowRoot.attachEdge === "right") {
+                let offset = pickWindowRoot.barMatchesPicker ? pickWindowRoot.barHeight : 0;
+                return (pickWindowRoot.width - offset) - width;
             }
-            return Math.floor((launcherWindow.width - width) / 2);
+            return Math.floor((pickWindowRoot.width - width) / 2);
         }
 
         y: {
-            if (launcherWindow.attachEdge === "top") {
-                return launcherWindow.barMatchesLauncher ? launcherWindow.barHeight : 0;
+            if (pickWindowRoot.attachEdge === "top") {
+                return pickWindowRoot.barMatchesPicker ? pickWindowRoot.barHeight : 0;
             }
-            if (launcherWindow.attachEdge === "bottom") {
-                let offset = launcherWindow.barMatchesLauncher ? launcherWindow.barHeight : 0;
-                return (launcherWindow.height - offset) - height;
+            if (pickWindowRoot.attachEdge === "bottom") {
+                let offset = pickWindowRoot.barMatchesPicker ? pickWindowRoot.barHeight : 0;
+                return (pickWindowRoot.height - offset) - height;
             }
-            return Math.floor((launcherWindow.height - height) / 2);
+            return Math.floor((pickWindowRoot.height - height) / 2);
         }
 
-        width: launcherWindow.isSideAttached
-               ? (launcherWindow.baseLauncherWidth * animProgress)
-               : launcherWindow.baseLauncherWidth
+        width: pickWindowRoot.isSideAttached
+               ? (pickWindowRoot.basePickerWidth * animProgress)
+               : pickWindowRoot.basePickerWidth
 
         height: {
-            if (launcherWindow.isCentered) {
-                let baseH = launcherWindow.collapsedCenterHeight;
-                let targetH = Math.max(baseH, launcherWindow.animatedLauncherHeight);
+            if (pickWindowRoot.isCentered) {
+                let baseH = pickWindowRoot.collapsedCenterHeight;
+                let targetH = Math.max(baseH, pickWindowRoot.animatedPickerHeight);
                 return baseH + (targetH - baseH) * animProgress;
             }
-            if (!launcherWindow.isSideAttached) {
-                return launcherWindow.animatedLauncherHeight * animProgress;
+            if (!pickWindowRoot.isSideAttached) {
+                return pickWindowRoot.animatedPickerHeight * animProgress;
             }
-            return launcherWindow.animatedLauncherHeight;
+            return pickWindowRoot.animatedPickerHeight;
         }
 
-        opacity: launcherWindow.isCentered
+        opacity: pickWindowRoot.isCentered
                  ? Math.max(0.0, Math.min(1.0, animProgress * 1.5))
-                 : ((launcherWindow.isVisible || animProgress > 0.001) ? 1.0 : 0.0)
+                 : ((pickWindowRoot.isVisible || animProgress > 0.001) ? 1.0 : 0.0)
 
         transformOrigin: Item.Center
 
         Shape {
-            visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "top" && container.dynamicCornerRadius > 0.5
             x: -container.dynamicCornerRadius
             y: 0
             width: container.dynamicCornerRadius
@@ -840,7 +637,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "top" && container.dynamicCornerRadius > 0.5
             x: parent.width
             y: 0
             width: container.dynamicCornerRadius
@@ -864,7 +661,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
             x: -container.dynamicCornerRadius
             y: parent.height - container.dynamicCornerRadius
             width: container.dynamicCornerRadius
@@ -888,7 +685,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
             x: parent.width
             y: parent.height - container.dynamicCornerRadius
             width: container.dynamicCornerRadius
@@ -912,7 +709,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "left" && container.dynamicCornerRadius > 0.5
             x: 0
             y: -container.dynamicCornerRadius
             width: container.dynamicCornerRadius
@@ -936,7 +733,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "left" && container.dynamicCornerRadius > 0.5
             x: 0
             y: parent.height
             width: container.dynamicCornerRadius
@@ -960,7 +757,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "right" && container.dynamicCornerRadius > 0.5
             x: parent.width - container.dynamicCornerRadius
             y: -container.dynamicCornerRadius
             width: container.dynamicCornerRadius
@@ -984,7 +781,7 @@ PanelWindow {
         }
 
         Shape {
-            visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+            visible: pickWindowRoot.attachEdge === "right" && container.dynamicCornerRadius > 0.5
             x: parent.width - container.dynamicCornerRadius
             y: parent.height
             width: container.dynamicCornerRadius
@@ -1012,12 +809,12 @@ PanelWindow {
             anchors.fill: parent
             radius: container.dynamicCornerRadius
             color: ThemeBackend.base
-            border.width: launcherWindow.isCentered ? 1 : 0
-            border.color: launcherWindow.isCentered ? Qt.alpha(ThemeBackend.surface2, 0.6) : "transparent"
+            border.width: pickWindowRoot.isCentered ? 1 : 0
+            border.color: pickWindowRoot.isCentered ? Qt.alpha(ThemeBackend.surface2, 0.6) : "transparent"
             clip: true
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "top" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: 0
                 width: container.dynamicCornerRadius
@@ -1026,7 +823,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "top" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: 0
                 width: container.dynamicCornerRadius
@@ -1035,7 +832,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
@@ -1044,7 +841,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
@@ -1053,7 +850,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "left" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: 0
                 width: container.dynamicCornerRadius
@@ -1062,7 +859,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "left" && container.dynamicCornerRadius > 0.5
                 x: 0
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
@@ -1071,7 +868,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "right" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: 0
                 width: container.dynamicCornerRadius
@@ -1080,7 +877,7 @@ PanelWindow {
             }
 
             Rectangle {
-                visible: launcherWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
+                visible: pickWindowRoot.attachEdge === "right" && container.dynamicCornerRadius > 0.5
                 x: parent.width - container.dynamicCornerRadius
                 y: parent.height - container.dynamicCornerRadius
                 width: container.dynamicCornerRadius
@@ -1091,11 +888,11 @@ PanelWindow {
             Item {
                 id: contentContainer
                 anchors.fill: parent
-                anchors.margins: launcherWindow.s(14)
+                anchors.margins: pickWindowRoot.s(14)
                 visible: width > 0 && height > 0
                 clip: true
 
-                readonly property bool isSearchAtBottom: launcherWindow.attachEdge === "bottom"
+                readonly property bool isSearchAtBottom: pickWindowRoot.attachEdge === "bottom"
 
                 Input {
                     id: searchInput
@@ -1104,7 +901,7 @@ PanelWindow {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     y: contentContainer.isSearchAtBottom ? Math.max(0, parent.height - height) : 0
-                    height: launcherWindow.s(36)
+                    height: pickWindowRoot.s(36)
 
                     baseColor: ThemeBackend.surface0
                     accentColor: ThemeBackend.mauve
@@ -1112,30 +909,30 @@ PanelWindow {
                     subTextColor: ThemeBackend.subtext0
                     borderColor: Qt.alpha(ThemeBackend.surface2, 0.6)
                     cornerRadius: ThemeBackend.borderRadius
-                    fontPixelSize: launcherWindow.s(12)
+                    fontPixelSize: pickWindowRoot.s(12)
                     charSpacing: 1
 
-                    placeholderText: typeof I18n !== "undefined" ? I18n.t("applauncher.placeholder", "Start with > for a command...") : "Start with > for a command..."
+                    placeholderText: "Search open windows..."
                     showClearButton: true
 
                     onTextEdited: function(newText) {
-                        filterApps(newText);
+                        filterWindows(newText);
                     }
-                    onCleared: filterApps("")
+                    onCleared: filterWindows("")
 
                     function moveSelectionDown() {
-                        launcherWindow.isKeyboardNav = true;
+                        pickWindowRoot.isKeyboardNav = true;
                         keyboardNavTimer.restart();
-                        if (appList.currentIndex < appModel.count - 1) {
-                            appList.currentIndex++;
+                        if (pickList.currentIndex < windowModel.count - 1) {
+                            pickList.currentIndex++;
                         }
                     }
 
                     function moveSelectionUp() {
-                        launcherWindow.isKeyboardNav = true;
+                        pickWindowRoot.isKeyboardNav = true;
                         keyboardNavTimer.restart();
-                        if (appList.currentIndex > 0) {
-                            appList.currentIndex--;
+                        if (pickList.currentIndex > 0) {
+                            pickList.currentIndex--;
                         }
                     }
 
@@ -1148,11 +945,11 @@ PanelWindow {
                         event.accepted = true;
                     }
                     Keys.onReturnPressed: function(event) {
-                        activateIndex(appList.currentIndex);
+                        activateIndex(pickList.currentIndex);
                         event.accepted = true;
                     }
                     Keys.onEscapePressed: function(event) {
-                        closeLauncher();
+                        closePickWindow();
                         event.accepted = true;
                     }
                     // rofi-style secondary navigation keybindings (shared with
@@ -1177,11 +974,11 @@ PanelWindow {
                     z: 1
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    y: contentContainer.isSearchAtBottom ? 0 : (searchInput.height + launcherWindow.s(10))
-                    height: Math.max(0, parent.height - searchInput.height - launcherWindow.s(10))
+                    y: contentContainer.isSearchAtBottom ? 0 : (searchInput.height + pickWindowRoot.s(10))
+                    height: Math.max(0, parent.height - searchInput.height - pickWindowRoot.s(10))
                     clip: true
 
-                    opacity: launcherWindow.isCentered
+                    opacity: pickWindowRoot.isCentered
                              ? Math.max(0.0, Math.min(1.0, (container.animProgress - 0.2) / 0.8))
                              : 1.0
 
@@ -1238,17 +1035,17 @@ PanelWindow {
                     }
 
                     ListView {
-                        id: appList
+                        id: pickList
                         anchors.fill: parent
                         clip: true
-                        model: appModel
-                        spacing: launcherWindow.s(4)
+                        model: windowModel
+                        spacing: pickWindowRoot.s(4)
                         currentIndex: 0
                         boundsBehavior: Flickable.StopAtBounds
 
                         highlightFollowsCurrentItem: false
 
-                        property bool transitionsEnabled: launcherWindow.isVisible && container.animProgress > 0.98
+                        property bool transitionsEnabled: pickWindowRoot.isVisible && container.animProgress > 0.98
 
                         add: transitionsEnabled ? listAddTrans : null
                         remove: transitionsEnabled ? listRemoveTrans : null
@@ -1264,10 +1061,10 @@ PanelWindow {
 
                         Rectangle {
                             id: morphHighlight
-                            parent: appList.contentItem
+                            parent: pickList.contentItem
                             z: 0
                             visible: opacity > 0.001
-                            opacity: (appList.count > 0 && appList.currentIndex >= 0 && appList.currentItem !== null) ? 1.0 : 0.0
+                            opacity: (pickList.count > 0 && pickList.currentIndex >= 0 && pickList.currentItem !== null) ? 1.0 : 0.0
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: 170
@@ -1275,16 +1072,16 @@ PanelWindow {
                                 }
                             }
                             x: 0
-                            width: appList.width
-                            height: launcherWindow.s(44)
+                            width: pickList.width
+                            height: pickWindowRoot.s(44)
                             radius: ThemeBackend.borderRadius
                             color: ThemeBackend.mauve
 
-                            property real targetY: (appList.currentIndex >= 0 && appList.currentItem) ? appList.currentItem.y : 0
+                            property real targetY: (pickList.currentIndex >= 0 && pickList.currentItem) ? pickList.currentItem.y : 0
                             y: targetY
 
                             Behavior on y {
-                                enabled: appList.transitionsEnabled
+                                enabled: pickList.transitionsEnabled
                                 NumberAnimation {
                                     duration: 260
                                     easing.type: Easing.OutCubic
@@ -1295,11 +1092,11 @@ PanelWindow {
                         delegate: Item {
                             id: delegateRoot
                             width: ListView.view ? ListView.view.width : 0
-                            height: launcherWindow.s(44)
+                            height: pickWindowRoot.s(44)
                             clip: true
                             z: 1
 
-                            property bool isSelected: index === appList.currentIndex
+                            property bool isSelected: index === pickList.currentIndex
 
                             Item {
                                 id: delegateContent
@@ -1318,10 +1115,10 @@ PanelWindow {
 
                                 RowLayout {
                                     anchors.fill: parent
-                                    anchors.margins: launcherWindow.s(6)
-                                    anchors.leftMargin: launcherWindow.s(10) + (delegateRoot.isSelected ? launcherWindow.s(2) : 0)
-                                    anchors.rightMargin: launcherWindow.s(10)
-                                    spacing: launcherWindow.s(10)
+                                    anchors.margins: pickWindowRoot.s(6)
+                                    anchors.leftMargin: pickWindowRoot.s(10) + (delegateRoot.isSelected ? pickWindowRoot.s(2) : 0)
+                                    anchors.rightMargin: pickWindowRoot.s(10)
+                                    spacing: pickWindowRoot.s(10)
 
                                     Behavior on anchors.leftMargin {
                                         NumberAnimation { duration: 220; easing.type: Easing.OutBack; easing.overshoot: 1.15 }
@@ -1329,17 +1126,17 @@ PanelWindow {
 
                                     Item {
                                         id: delegateIconArea
-                                        Layout.preferredWidth: launcherWindow.s(32)
-                                        Layout.preferredHeight: launcherWindow.s(32)
+                                        Layout.preferredWidth: pickWindowRoot.s(32)
+                                        Layout.preferredHeight: pickWindowRoot.s(32)
                                         Layout.alignment: Qt.AlignVCenter
 
-                                        readonly property real boxRadius: launcherWindow.s(8)
-                                        readonly property real boxPadding: launcherWindow.s(4)
+                                        readonly property real boxRadius: pickWindowRoot.s(8)
+                                        readonly property real boxPadding: pickWindowRoot.s(4)
 
                                         Rectangle {
                                             anchors.fill: parent
-                                            anchors.topMargin: launcherWindow.s(1.5)
-                                            anchors.bottomMargin: -launcherWindow.s(1.5)
+                                            anchors.topMargin: pickWindowRoot.s(1.5)
+                                            anchors.bottomMargin: -pickWindowRoot.s(1.5)
                                             radius: parent.boxRadius
                                             color: Qt.rgba(0, 0, 0, 0.12)
                                         }
@@ -1394,12 +1191,10 @@ PanelWindow {
                                                 visible: !delegateIcon.visible
                                                 text: {
                                                     if (model.fontIcon && model.fontIcon !== "") return model.fontIcon;
-                                                    if (model.isCalc) return "󰃬";
-                                                    if (model.isCommand) return "󰆍";
-                                                    return "󰵆";
+                                                    return model.focused ? "󰖯" : "󰖲";
                                                 }
                                                 font.family: ThemeBackend.fontFamily
-                                                font.pixelSize: launcherWindow.s(16)
+                                                font.pixelSize: pickWindowRoot.s(16)
                                                 color: delegateRoot.isSelected ? ThemeBackend.mauve : ThemeBackend.subtext0
                                                 verticalAlignment: Text.AlignVCenter
                                                 horizontalAlignment: Text.AlignHCenter
@@ -1412,14 +1207,14 @@ PanelWindow {
                                     ColumnLayout {
                                         Layout.fillWidth: true
                                         Layout.alignment: Qt.AlignVCenter
-                                        spacing: launcherWindow.s(1)
+                                        spacing: pickWindowRoot.s(1)
 
                                         Text {
                                             id: delegateText
                                             Layout.fillWidth: true
                                             text: model.name
                                             font.family: ThemeBackend.fontFamily
-                                            font.pixelSize: launcherWindow.s(12)
+                                            font.pixelSize: pickWindowRoot.s(12)
                                             font.weight: delegateRoot.isSelected ? Font.Bold : Font.Medium
                                             color: delegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.text
                                             elide: Text.ElideRight
@@ -1434,7 +1229,7 @@ PanelWindow {
                                             visible: model.description !== undefined && model.description !== null && model.description !== ""
                                             text: model.description || ""
                                             font.family: ThemeBackend.fontFamily
-                                            font.pixelSize: launcherWindow.s(10)
+                                            font.pixelSize: pickWindowRoot.s(10)
                                             font.weight: Font.Normal
                                             color: delegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.subtext0
                                             opacity: delegateRoot.isSelected ? 0.9 : 0.85
@@ -1452,7 +1247,7 @@ PanelWindow {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        appList.currentIndex = index;
+                                        pickList.currentIndex = index;
                                         activateIndex(index);
                                     }
                                 }
