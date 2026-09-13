@@ -91,10 +91,12 @@ PanelWindow {
                 } else if (cmd === "open") {
                     ClipboardController.hide();
                     PickWindowController.hide();
+                    EmojiController.hide();
                     LauncherController.show();
                 } else {
                     ClipboardController.hide();
                     PickWindowController.hide();
+                    EmojiController.hide();
                     LauncherController.toggle();
                 }
                 return;
@@ -106,10 +108,12 @@ PanelWindow {
                 } else if (cmd === "open") {
                     LauncherController.hide();
                     PickWindowController.hide();
+                    EmojiController.hide();
                     ClipboardController.show();
                 } else {
                     LauncherController.hide();
                     PickWindowController.hide();
+                    EmojiController.hide();
                     ClipboardController.toggle();
                 }
                 return;
@@ -121,11 +125,32 @@ PanelWindow {
                 } else if (cmd === "open") {
                     LauncherController.hide();
                     ClipboardController.hide();
+                    EmojiController.hide();
                     PickWindowController.show();
                 } else {
                     LauncherController.hide();
                     ClipboardController.hide();
+                    EmojiController.hide();
                     PickWindowController.toggle();
+                }
+                return;
+            }
+
+            // emoji / nerd font / kaomoji picker
+            // `arg` optionally selects the starting tab: "emoji" | "nerd" | "kao"
+            if (cmd === "emoji" || targetWidget === "emoji" || cmd === "emojis" || targetWidget === "emojis") {
+                if (cmd === "close") {
+                    EmojiController.hide();
+                } else if (cmd === "open") {
+                    LauncherController.hide();
+                    ClipboardController.hide();
+                    PickWindowController.hide();
+                    EmojiController.show(undefined, arg);
+                } else {
+                    LauncherController.hide();
+                    ClipboardController.hide();
+                    PickWindowController.hide();
+                    EmojiController.toggle(undefined, arg);
                 }
                 return;
             }

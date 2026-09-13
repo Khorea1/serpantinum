@@ -615,6 +615,17 @@
     "recent": "Recientes",
     "pinned": "Fijados"
   },
+  "emoji": {
+    "tabEmoji": "Emoji",
+    "tabNerd": "Nerd Font",
+    "tabKaomoji": "Kaomoji",
+    "search": "Buscar por nombre, etiqueta o unicode",
+    "keepOpen": "Mantener abierto",
+    "escapeMode": "Código \\u",
+    "frequent": "Usados con frecuencia",
+    "empty": "No se encontró nada",
+    "hint": "Enter/clic: copiar · clic derecho: copiar y mantener abierto"
+  },
   "lock": {
     "status": {
       "locked": "Bloqueado",

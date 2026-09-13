@@ -570,6 +570,17 @@
     "recent": "Recenti",
     "pinned": "Fissati"
   },
+  "emoji": {
+    "tabEmoji": "Emoji",
+    "tabNerd": "Nerd Font",
+    "tabKaomoji": "Kaomoji",
+    "search": "Cerca per nome, tag o unicode",
+    "keepOpen": "Mantieni aperto",
+    "escapeMode": "Codice \\u",
+    "frequent": "Usati di frequente",
+    "empty": "Nessun risultato",
+    "hint": "Invio/clic: copia · clic destro: copia e mantieni aperto"
+  },
   "lock": {
     "status": {
       "locked": "Bloccato",

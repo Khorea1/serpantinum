@@ -4,6 +4,7 @@ Main 1.0 Main.qml
 Bar 1.0 bar/Bar.qml
 Floating 1.0 quickactions/Floating.qml
 Clipboard 1.0 clipboard/Clipboard.qml
+Emoji 1.0 emoji/Emoji.qml
 Launcher 1.0 launcher/Launcher.qml
 PickWindow 1.0 pickwindow/PickWindow.qml
 ScreenshotOverlay 1.0 screenshot/ScreenshotOverlay.qml
@@ -54,6 +55,7 @@ singleton SysData 1.0 singletons/info/SysData.qml
 singleton SystemInfo 1.0 singletons/info/SystemInfo.qml
 
 singleton ClipboardController 1.0 singletons/widgetcontrols/ClipboardController.qml
+singleton EmojiController 1.0 singletons/widgetcontrols/EmojiController.qml
 singleton FloatingController 1.0 singletons/widgetcontrols/FloatingController.qml
 singleton LauncherController 1.0 singletons/widgetcontrols/LauncherController.qml
 singleton OsdController 1.0 singletons/widgetcontrols/OsdController.qml

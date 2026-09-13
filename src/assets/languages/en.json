@@ -571,6 +571,17 @@
     "recent": "Recent",
     "pinned": "Pinned"
   },
+  "emoji": {
+    "tabEmoji": "Emoji",
+    "tabNerd": "Nerd Font",
+    "tabKaomoji": "Kaomoji",
+    "search": "Search by name, tag or unicode",
+    "keepOpen": "Keep open",
+    "escapeMode": "\\u code",
+    "frequent": "Frequently used",
+    "empty": "Nothing found",
+    "hint": "Enter/click: copy · right-click: copy & keep open"
+  },
   "lock": {
     "status": {
       "locked": "Locked",
