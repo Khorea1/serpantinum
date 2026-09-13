@@ -580,7 +580,7 @@
     "escapeMode": "\\u code",
     "frequent": "Frequently used",
     "empty": "Nothing found",
-    "hint": "Enter/click: copy · right-click: copy & keep open"
+    "hint": "Arrows: select · Tab: switch mode · Enter/click: copy"
   },
   "lock": {
     "status": {

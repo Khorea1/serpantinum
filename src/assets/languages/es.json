@@ -624,7 +624,7 @@
     "escapeMode": "Código \\u",
     "frequent": "Usados con frecuencia",
     "empty": "No se encontró nada",
-    "hint": "Enter/clic: copiar · clic derecho: copiar y mantener abierto"
+    "hint": "Flechas: seleccionar · Tab: cambiar modo · Enter/clic: copiar"
   },
   "lock": {
     "status": {

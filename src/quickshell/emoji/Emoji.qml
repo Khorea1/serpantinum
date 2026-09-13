@@ -96,6 +96,8 @@ PanelWindow {
     property bool keepOpenChecked: false
     property bool nerdEscapeMode: false
 
+    readonly property var tabOrder: ["emoji", "nerd", "kao"]
+
     property bool wantEmoji: true
     property bool wantNerd: false
     property bool wantKao: false
@@ -147,6 +149,12 @@ PanelWindow {
         emojiWindow.rebuildCategories();
         emojiWindow.rebuildResults();
         emojiWindow.rebuildShelf();
+    }
+
+    function cycleTab(delta) {
+        let current = emojiWindow.tabOrder.indexOf(emojiWindow.activeTab);
+        let next = (current + delta + emojiWindow.tabOrder.length) % emojiWindow.tabOrder.length;
+        emojiWindow.setActiveTab(emojiWindow.tabOrder[next]);
     }
 
     // ───────────────────── History (frecency store) ─────────────────────
@@ -477,6 +485,7 @@ PanelWindow {
         if (next < 0) next = 0;
         if (next >= emojiWindow.resultsModel.length) next = emojiWindow.resultsModel.length - 1;
         emojiWindow.selIndex = next;
+        emojiWindow.hoveredIndex = -1;
         if (emojiWindow.activeTab === "kao") {
             pickerList.positionViewAtIndex(next, ListView.Contain);
         } else {
@@ -671,9 +680,19 @@ PanelWindow {
 
                             Keys.onDownPressed: function(event) { emojiWindow.moveSelection(emojiWindow.effRowStep); event.accepted = true; }
                             Keys.onUpPressed: function(event) { emojiWindow.moveSelection(-emojiWindow.effRowStep); event.accepted = true; }
-                            Keys.onTabPressed: function(event) { emojiWindow.moveSelection(1); event.accepted = true; }
-                            Keys.onBacktabPressed: function(event) { emojiWindow.moveSelection(-1); event.accepted = true; }
+                            Keys.onTabPressed: function(event) { emojiWindow.cycleTab(1); event.accepted = true; }
+                            Keys.onBacktabPressed: function(event) { emojiWindow.cycleTab(-1); event.accepted = true; }
                             onKeyPressed: function(event) {
+                                if (event.key === Qt.Key_Left) {
+                                    emojiWindow.moveSelection(-1);
+                                    event.accepted = true;
+                                    return;
+                                }
+                                if (event.key === Qt.Key_Right) {
+                                    emojiWindow.moveSelection(1);
+                                    event.accepted = true;
+                                    return;
+                                }
                                 if (RofiKeyNav.handlePressed(event, function() { emojiWindow.moveSelection(emojiWindow.effRowStep); }, function() { emojiWindow.moveSelection(-emojiWindow.effRowStep); })) {
                                     event.accepted = true;
                                 }
@@ -1033,7 +1052,7 @@ PanelWindow {
                             elide: Text.ElideRight
                         }
                         Text {
-                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "Enter/click: copy \u00b7 right-click: copy & keep open") : "Enter/click: copy \u00b7 right-click: copy & keep open"
+                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "Arrows: select \u00b7 Tab: switch mode \u00b7 Enter/click: copy") : "Arrows: select \u00b7 Tab: switch mode \u00b7 Enter/click: copy"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: emojiWindow.s(9.5)
                             color: ThemeBackend.overlay1
