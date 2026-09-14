@@ -417,6 +417,20 @@ PanelWindow {
         emojiWindow.rebuildResults();
     }
 
+    function cycleCategory(delta) {
+        if (emojiWindow.categoriesModel.length <= 1) return;
+        let idx = -1;
+        for (let i = 0; i < emojiWindow.categoriesModel.length; i++) {
+            if (emojiWindow.categoriesModel[i].code === emojiWindow.activeCategory) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < 0) idx = 0;
+        let next = (idx + delta + emojiWindow.categoriesModel.length) % emojiWindow.categoriesModel.length;
+        emojiWindow.setCategory(emojiWindow.categoriesModel[next].code);
+    }
+
     // ───────────────────────── Item description ─────────────────────────
     function toUnicodeEscape(hex) {
         try {
@@ -471,8 +485,55 @@ PanelWindow {
         emojiWindow.copyDescribed(emojiWindow.describeItem(emojiWindow.resultsModel[idx]), keepOpen);
     }
 
+    function handleActivateKey(event) {
+        if (event.modifiers & Qt.ControlModifier) {
+            emojiWindow.typeIndex(emojiWindow.selIndex);
+        } else {
+            emojiWindow.activateIndex(emojiWindow.selIndex, emojiWindow.keepOpenChecked);
+        }
+        event.accepted = true;
+    }
+
     function activateShelf(item, keepOpen) {
         emojiWindow.copyDescribed(emojiWindow.describeItem(item), keepOpen);
+    }
+
+    // ───────────────────── Direct typing (Ctrl+Enter / Ctrl+click) ─────────────────────
+    // Instead of going through the clipboard, this types the glyph straight into
+    // whatever window regains keyboard focus once the picker closes. Wayland has
+    // no xdotool-equivalent that works everywhere, so we shell out to `wtype`
+    // (the wlroots/virtual-keyboard analogue), same convention as wl-copy above.
+    Timer {
+        id: typeDispatchTimer
+        interval: 120 // give the compositor time to hand focus back before typing
+        repeat: false
+        property string pendingText: ""
+        onTriggered: {
+            if (typeDispatchTimer.pendingText.length > 0) {
+                Quickshell.execDetached(["wtype", "--", typeDispatchTimer.pendingText]);
+                typeDispatchTimer.pendingText = "";
+            }
+        }
+    }
+
+    function typeDescribed(desc) {
+        if (!desc || !desc.copyText) return;
+        if (typeof Sounds !== "undefined") Sounds.playSfx("system/quick_click.wav");
+        emojiWindow.recordUsage(desc.key);
+        typeDispatchTimer.pendingText = desc.copyText;
+        // Typing only makes sense once focus has left the picker, so this
+        // always closes -- unlike copy, "keep open" doesn't apply here.
+        emojiWindow.closeEmoji();
+        typeDispatchTimer.restart();
+    }
+
+    function typeIndex(idx) {
+        if (idx < 0 || idx >= emojiWindow.resultsModel.length) return;
+        emojiWindow.typeDescribed(emojiWindow.describeItem(emojiWindow.resultsModel[idx]));
+    }
+
+    function typeShelf(item) {
+        emojiWindow.typeDescribed(emojiWindow.describeItem(item));
     }
 
     // ───────────────────────── Keyboard navigation ─────────────────────────
@@ -683,6 +744,25 @@ PanelWindow {
                             Keys.onTabPressed: function(event) { emojiWindow.cycleTab(1); event.accepted = true; }
                             Keys.onBacktabPressed: function(event) { emojiWindow.cycleTab(-1); event.accepted = true; }
                             onKeyPressed: function(event) {
+                                // Ctrl+H / Ctrl+L: cycle subcategories (Smileys/People/...,
+                                // devicons/codicons/..., Happy/Sad/...), vim-style and
+                                // consistent with the existing Ctrl+J/K row nav below.
+                                // Handled here (Input's early keyPressed signal) rather than
+                                // an outer Keys.onPressed because QQuickTextInput treats
+                                // Ctrl+H as a native backspace shortcut and would otherwise
+                                // consume it first.
+                                if (event.modifiers & Qt.ControlModifier) {
+                                    if (event.key === Qt.Key_L) {
+                                        emojiWindow.cycleCategory(1);
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    if (event.key === Qt.Key_H) {
+                                        emojiWindow.cycleCategory(-1);
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                }
                                 if (event.key === Qt.Key_Left) {
                                     emojiWindow.moveSelection(-1);
                                     event.accepted = true;
@@ -697,10 +777,8 @@ PanelWindow {
                                     event.accepted = true;
                                 }
                             }
-                            Keys.onReturnPressed: function(event) {
-                                emojiWindow.activateIndex(emojiWindow.selIndex, emojiWindow.keepOpenChecked);
-                                event.accepted = true;
-                            }
+                            Keys.onReturnPressed: function(event) { emojiWindow.handleActivateKey(event); }
+                            Keys.onEnterPressed: function(event) { emojiWindow.handleActivateKey(event); }
                             Keys.onEscapePressed: function(event) {
                                 emojiWindow.closeEmoji();
                                 event.accepted = true;
@@ -851,6 +929,10 @@ PanelWindow {
                                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: (mouse) => {
+                                        if (mouse.modifiers & Qt.ControlModifier) {
+                                            emojiWindow.typeShelf(modelData);
+                                            return;
+                                        }
                                         let keepOpen = mouse.button === Qt.RightButton ? true : emojiWindow.keepOpenChecked;
                                         emojiWindow.activateShelf(modelData, keepOpen);
                                     }
@@ -935,6 +1017,10 @@ PanelWindow {
                                         }
                                         onClicked: (mouse) => {
                                             emojiWindow.selIndex = gridDelegate.index;
+                                            if (mouse.modifiers & Qt.ControlModifier) {
+                                                emojiWindow.typeIndex(gridDelegate.index);
+                                                return;
+                                            }
                                             let keepOpen = mouse.button === Qt.RightButton ? true : emojiWindow.keepOpenChecked;
                                             emojiWindow.activateIndex(gridDelegate.index, keepOpen);
                                         }
@@ -1016,6 +1102,10 @@ PanelWindow {
                                         }
                                         onClicked: (mouse) => {
                                             emojiWindow.selIndex = listDelegate.index;
+                                            if (mouse.modifiers & Qt.ControlModifier) {
+                                                emojiWindow.typeIndex(listDelegate.index);
+                                                return;
+                                            }
                                             let keepOpen = mouse.button === Qt.RightButton ? true : emojiWindow.keepOpenChecked;
                                             emojiWindow.activateIndex(listDelegate.index, keepOpen);
                                         }
@@ -1052,7 +1142,7 @@ PanelWindow {
                             elide: Text.ElideRight
                         }
                         Text {
-                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "Arrows: select \u00b7 Tab: switch mode \u00b7 Enter/click: copy") : "Arrows: select \u00b7 Tab: switch mode \u00b7 Enter/click: copy"
+                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "Arrows: select \u00b7 Ctrl+H/L: category \u00b7 Tab: mode \u00b7 Enter: copy \u00b7 Ctrl+Enter: type") : "Arrows: select \u00b7 Ctrl+H/L: category \u00b7 Tab: mode \u00b7 Enter: copy \u00b7 Ctrl+Enter: type"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: emojiWindow.s(9.5)
                             color: ThemeBackend.overlay1

@@ -579,7 +579,7 @@
     "escapeMode": "Codice \\u",
     "frequent": "Usati di frequente",
     "empty": "Nessun risultato",
-    "hint": "Frecce: seleziona · Tab: cambia modalità · Invio/clic: copia"
+    "hint": "Frecce: seleziona · Ctrl+H/L: categoria · Tab: modalità · Invio: copia · Ctrl+Invio: digita"
   },
   "lock": {
     "status": {

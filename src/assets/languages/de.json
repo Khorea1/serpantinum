@@ -624,7 +624,7 @@
     "escapeMode": "\\u-Code",
     "frequent": "Häufig verwendet",
     "empty": "Nichts gefunden",
-    "hint": "Pfeiltasten: auswählen · Tab: Modus wechseln · Enter/Klick: kopieren"
+    "hint": "Pfeiltasten: auswählen · Ctrl+H/L: Kategorie · Tab: Modus · Enter: kopieren · Ctrl+Enter: eingeben"
   },
   "lock": {
     "status": {

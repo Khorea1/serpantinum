@@ -47,6 +47,7 @@
 , wl-clipboard
 , wl-gammarelay-rs
 , wmctrl
+, wtype
 , xdg-desktop-portal-gtk
 , zbar
 , quickshell
@@ -102,6 +103,7 @@ let
     wl-clipboard
     wl-gammarelay-rs
     wmctrl
+    wtype
     xdg-desktop-portal-gtk
     zbar
     quickshell
