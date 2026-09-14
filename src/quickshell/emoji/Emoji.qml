@@ -486,7 +486,7 @@ PanelWindow {
     }
 
     function handleActivateKey(event) {
-        if (event.modifiers & Qt.ControlModifier) {
+        if (event.modifiers & Qt.AltModifier) {
             emojiWindow.typeIndex(emojiWindow.selIndex);
         } else {
             emojiWindow.activateIndex(emojiWindow.selIndex, emojiWindow.keepOpenChecked);
@@ -760,7 +760,7 @@ PanelWindow {
                                 // an outer Keys.onPressed because QQuickTextInput treats
                                 // Ctrl+H as a native backspace shortcut and would otherwise
                                 // consume it first.
-                                if (event.modifiers & Qt.ControlModifier) {
+                                if (event.modifiers & Qt.AltModifier) {
                                     if (event.key === Qt.Key_L) {
                                         emojiWindow.cycleCategory(1);
                                         event.accepted = true;
@@ -938,7 +938,7 @@ PanelWindow {
                                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: (mouse) => {
-                                        if (mouse.modifiers & Qt.ControlModifier) {
+                                        if (mouse.modifiers & Qt.AltModifier) {
                                             emojiWindow.typeShelf(modelData);
                                             return;
                                         }
@@ -1026,7 +1026,7 @@ PanelWindow {
                                         }
                                         onClicked: (mouse) => {
                                             emojiWindow.selIndex = gridDelegate.index;
-                                            if (mouse.modifiers & Qt.ControlModifier) {
+                                            if (mouse.modifiers & Qt.AltModifier) {
                                                 emojiWindow.typeIndex(gridDelegate.index);
                                                 return;
                                             }
@@ -1111,7 +1111,7 @@ PanelWindow {
                                         }
                                         onClicked: (mouse) => {
                                             emojiWindow.selIndex = listDelegate.index;
-                                            if (mouse.modifiers & Qt.ControlModifier) {
+                                            if (mouse.modifiers & Qt.AltModifier) {
                                                 emojiWindow.typeIndex(listDelegate.index);
                                                 return;
                                             }
