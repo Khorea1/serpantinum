@@ -567,6 +567,15 @@ PanelWindow {
         if (isVisible) {
             searchInput.clear();
             emojiWindow.searchText = "";
+            // nerdEscapeMode is a QML property, not a FileView-backed setting: it
+            // survives across opens because this window is only hidden, never
+            // destroyed. Left as-is, toggling it on once (e.g. to grab a "\uXXXX"
+            // literal for a config file) silently makes every later devicon copy
+            // return an escape sequence instead of the actual glyph, which is
+            // exactly the "copies \u1234 instead of the icon" bug reported for
+            // Nerd Font/devicon entries. Reset it on every open so the default
+            // action is always "copy the glyph as-is".
+            emojiWindow.nerdEscapeMode = false;
             emojiWindow.rebuildCategories();
             emojiWindow.rebuildResults();
             emojiWindow.rebuildShelf();
