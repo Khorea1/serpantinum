@@ -38,7 +38,11 @@
       "about": "정보",
       "display_widgets": "위젯",
       "display_general": "일반",
-      "osd": "OSD"
+      "osd": "OSD",
+      "dock": "도크",
+      "bar_general": "일반",
+      "bar_modules": "모듈",
+      "bar_side_modules": "사이드 모듈"
     },
     "launcher": {
       "position": {
@@ -96,7 +100,9 @@
       "empty_graphic": {
         "title": "빈 알림 센터 애니메이션",
         "desc": "알림 센터가 비어 있을 때 잠자는 고양이 그래픽을 표시합니다"
-      }
+      },
+      "test": "알림 테스트",
+      "test_desc": "이것은 테스트 알림입니다"
     },
     "idle": {
       "enabled": {
@@ -256,14 +262,32 @@
         "hide_bar": {
           "title": "편집기에서 바 숨기기",
           "desc": "편집기 모드에서 위젯을 수정할 때 자동으로 바를 숨깁니다"
-        }
+        },
+        "hide_presets": "프리셋 숨기기",
+        "choose_preset": "프리셋 선택",
+        "presets": {
+          "title": "위젯 프리셋"
+        },
+        "save_preset": {
+          "title": "프리셋 저장"
+        },
+        "preset_name_placeholder": "프리셋 이름 입력..."
       }
     },
     "bar": {
       "modules": {
         "vis": "비주얼라이저 (cava)",
         "actions": "동작",
-        "workspaces": "작업 공간",
+        "workspaces": {
+          "style": {
+            "name": {
+              "pills": "알약",
+              "numbers": "숫자",
+              "pacman": "팩맨"
+            }
+          },
+          "name": "작업 공간"
+        },
         "media": "미디어",
         "tray": "트레이",
         "keyboard": "키보드",
@@ -273,7 +297,16 @@
         "battery": "배터리",
         "focus": "포커스",
         "sysmon": "시스템 모니터",
-        "timedate": "시간/날짜",
+        "timedate": {
+          "name": "시간 및 날짜",
+          "style": {
+            "name": {
+              "classic": "클래식",
+              "material": "머티리얼",
+              "badge": "도트 매트릭스"
+            }
+          }
+        },
         "info": "녹화/타이머",
         "weather": "날씨"
       },
@@ -333,6 +366,12 @@
       "distinct_pills": {
         "title": "위젯에 모듈식의 컴팩트한 스타일 사용",
         "desc": "바 모듈에 테두리를 추가하고 크기를 줄여 모듈식 디자인에 맞는 간결한 모양을 제공합니다"
+      },
+      "timedate": {
+        "show_date": {
+          "title": "날짜 표시",
+          "desc": "시계 옆에 날짜 텍스트를 표시합니다"
+        }
       }
     },
     "theme": {
@@ -510,6 +549,94 @@
     },
     "position": {
       "custom": "사용자 지정"
+    },
+    "dock": {
+      "enabled": {
+        "title": "도크 활성화",
+        "desc": "플로팅 애플리케이션 도크 활성화"
+      },
+      "position": {
+        "title": "도크 위치",
+        "desc": "도크를 고정할 화면 가장자리 선택",
+        "bottom": "하단",
+        "top": "상단",
+        "left": "왼쪽",
+        "right": "오른쪽"
+      },
+      "elements": {
+        "title": "요소 수",
+        "desc": "도크에 표시되는 앱 바로가기 총 개수"
+      },
+      "size": {
+        "title": "요소 크기",
+        "desc": "개별 버튼의 픽셀 크기"
+      },
+      "autohide": {
+        "title": "자동 숨김",
+        "desc": "화면 가장자리에 마우스가 없을 때 도크 숨김"
+      },
+      "timeout": {
+        "title": "자동 숨김 지연 시간",
+        "desc": "마우스가 떠난 후 숨겨지기까지의 지연 시간"
+      },
+      "floating": {
+        "title": "플로팅 독",
+        "desc": "모서리를 둥글게 하여 화면 가장자리에서 독 분리"
+      },
+      "transparency": {
+        "title": "독 투명도",
+        "desc": "독 배경 불투명도 조절"
+      },
+      "apps": {
+        "title": "독 애플리케이션",
+        "singular": "개 앱",
+        "plural": "개 앱",
+        "shuffle": "앱 셔플",
+        "empty": "독에 구성된 애플리케이션이 없습니다",
+        "enter_edit": "편집 모드 시작",
+        "exit_edit": "편집 모드 종료"
+      },
+      "picker": {
+        "search": "앱 검색...",
+        "done": "완료",
+        "empty": "일치하는 애플리케이션이 없습니다"
+      },
+      "opacity": {
+        "title": "독 불투명도",
+        "desc": "독 배경 불투명도 수준 조절"
+      },
+      "override_bounds": {
+        "title": "화면 범위 초과 시 크기 자동 보정 비활성화",
+        "desc": "독이 화면 한계를 초과하더라도 사용자 지정 요소 크기를 유지합니다"
+      },
+      "scrolling": {
+        "title": "요소 스크롤 활성화",
+        "desc": "표시되는 요소를 제한하고 마우스 휠 또는 터치패드 스크롤을 허용합니다"
+      },
+      "visible_elements": {
+        "title": "표시할 요소 수",
+        "desc": "독에 동시에 표시되는 항목 수"
+      },
+      "hover_scale": {
+        "title": "호버 확대 효과",
+        "desc": "독 아이템 위에 마우스를 올렸을 때 확대되는 비율"
+      },
+      "cascade_scale": {
+        "title": "인접 요소 함께 확대",
+        "desc": "인접한 아이콘에 계단식 확대 효과 적용"
+      },
+      "exclusive": {
+        "title": "단독 모드",
+        "desc": "창이 독 공간을 차지하지 않도록 방지"
+      },
+      "on_top": {
+        "title": "창 위에 독 배치",
+        "desc": "애플리케이션 창 위에 독이 항상 보이도록 유지"
+      },
+      "smart_autohide": {
+        "title": "스마트 자동 숨기기",
+        "desc": "창이 열려 있을 때만 독을 숨기고 바탕화면에서는 항상 표시"
+      }
     }
   },
   "sysnotif": {
@@ -884,7 +1011,8 @@
       "click_to_add": "아래 도구 모음에서 위젯 아이콘을 클릭해 추가하세요",
       "done": "완료",
       "widget_singular": "개 위젯",
-      "widgets_plural": "개 위젯"
+      "widgets_plural": "개 위젯",
+      "widgets_short": "개"
     },
     "types": {
       "clock": "시계",
@@ -892,7 +1020,9 @@
       "weather": "날씨",
       "image": "이미지",
       "visualizer": "시각화 도구",
-      "user": "사용자"
+      "user": "사용자",
+      "usage": "사용량",
+      "battery": "배터리"
     },
     "variants": {
       "digital": "디지털",
@@ -905,7 +1035,24 @@
       "rounded": "둥근 사각형",
       "bars": "막대",
       "continuous": "연속형",
-      "default": "기본"
+      "default": "기본",
+      "material": "머티리얼",
+      "materialAnalog": "머티리얼 아날로그",
+      "lumen": "루멘"
+    },
+    "presets": {
+      "minimal": {
+        "name": "미니멀",
+        "desc": "미니멀한 디지털 시계와 컴팩트한 날씨가 포함된 깔끔한 레이아웃입니다."
+      },
+      "media_station": {
+        "name": "미디어 스테이션",
+        "desc": "중앙 오디오 비주얼라이저 바와 원형 음악 컨트롤러가 포함된 미디어 설정입니다."
+      },
+      "dashboard": {
+        "name": "대시보드",
+        "desc": "디지털 시계, 하드웨어 리소스 사용량 및 배터리 상태를 보여주는 대시보드입니다."
+      }
     }
   },
   "cli": {

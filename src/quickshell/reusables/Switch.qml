@@ -5,7 +5,7 @@ import "../"
 
 Item {
     id: root
-    implicitWidth: 120
+    implicitWidth: Math.max(120, tabsLayout.implicitWidth)
     implicitHeight: 32
 
     property var options: ["x", "y"]
@@ -57,9 +57,12 @@ Item {
                 prevIdx = curIdx;
             }
 
-            property real itemWidth: bgShape.width / Math.max(1, root.options.length)
-            property real targetLeft: root.currentIndex * itemWidth
-            property real targetRight: (root.currentIndex + 1) * itemWidth
+            readonly property Item currentItem: (tabsRepeater && root.options && root.currentIndex >= 0 && root.currentIndex < tabsRepeater.count)
+                ? tabsRepeater.itemAt(root.currentIndex)
+                : null
+
+            property real targetLeft: currentItem ? currentItem.x : 0
+            property real targetRight: currentItem ? (currentItem.x + currentItem.width) : 0
 
             property real actualLeft: targetLeft
             property real actualRight: targetRight
@@ -95,6 +98,7 @@ Item {
             z: 1
 
             Repeater {
+                id: tabsRepeater
                 model: root.options
 
                 Item {
@@ -102,8 +106,19 @@ Item {
                     required property string modelData
                     required property int index
 
+                    TextMetrics {
+                        id: optMetrics
+                        font.family: ThemeBackend.fontFamily
+                        font.weight: Font.Normal
+                        font.pixelSize: root.fontPixelSize
+                        text: optionItem.modelData
+                    }
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.preferredWidth: Math.max(28, Math.round(optMetrics.width + 16))
+                    Layout.minimumWidth: Math.max(16, Math.round(optMetrics.width * (root.minFontPixelSize / root.fontPixelSize) + 8))
+                    implicitWidth: Layout.preferredWidth
 
                     Rectangle {
                         anchors.fill: parent

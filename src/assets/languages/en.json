@@ -38,7 +38,11 @@
       "about": "About",
       "display_widgets": "Widgets",
       "display_general": "General",
-      "osd": "On-Screen Display"
+      "osd": "On-Screen Display",
+      "dock": "Dock",
+      "bar_general": "General",
+      "bar_modules": "Modules",
+      "bar_side_modules": "Side modules"
     },
     "launcher": {
       "position": {
@@ -96,7 +100,9 @@
       "empty_graphic": {
         "title": "Empty center animation",
         "desc": "Display the sleeping cat graphic in the notification center when empty"
-      }
+      },
+      "test": "Test notification",
+      "test_desc": "This is a test notification"
     },
     "idle": {
       "enabled": {
@@ -256,14 +262,32 @@
         "hide_bar": {
           "title": "Hide the bar in the redactor",
           "desc": "Automatically hide the bar when editing widgets in redactor mode"
-        }
+        },
+        "hide_presets": "Hide Presets",
+        "choose_preset": "Choose a preset",
+        "presets": {
+          "title": "Widget Presets"
+        },
+        "save_preset": {
+          "title": "Save Preset"
+        },
+        "preset_name_placeholder": "Enter preset name..."
       }
     },
     "bar": {
       "modules": {
         "vis": "Visualizer (cava)",
         "actions": "Actions",
-        "workspaces": "Workspaces",
+        "workspaces": {
+          "style": {
+            "name": {
+              "pills": "Pills",
+              "numbers": "Numbers",
+              "pacman": "Pacman"
+            }
+          },
+          "name": "Workspaces"
+        },
         "media": "Media",
         "tray": "Tray",
         "keyboard": "Keyboard",
@@ -273,7 +297,16 @@
         "battery": "Battery",
         "focus": "Focus",
         "sysmon": "System monitor",
-        "timedate": "Time/date",
+        "timedate": {
+          "name": "Time & Date",
+          "style": {
+            "name": {
+              "classic": "Classic",
+              "material": "Material",
+              "badge": "Dot Matrix"
+            }
+          }
+        },
         "info": "Recording/timer",
         "weather": "Weather"
       },
@@ -333,6 +366,12 @@
       "distinct_pills": {
         "title": "Enable a modular and compact style for widgets",
         "desc": "Makes bar's modules have an outlining rectangle and shrink their size to fit the modular look"
+      },
+      "timedate": {
+        "show_date": {
+          "title": "Show Date",
+          "desc": "Display the date text alongside the clock"
+        }
       }
     },
     "theme": {
@@ -510,6 +549,94 @@
     },
     "position": {
       "custom": "Custom"
+    },
+    "dock": {
+      "enabled": {
+        "title": "Enable dock",
+        "desc": "Enable floating application dock"
+      },
+      "position": {
+        "title": "Dock position",
+        "desc": "Select the screen edge to anchor the dock",
+        "bottom": "Bottom",
+        "top": "Top",
+        "left": "Left",
+        "right": "Right"
+      },
+      "elements": {
+        "title": "Number of elements",
+        "desc": "Total app shortcuts displayed on the dock"
+      },
+      "size": {
+        "title": "Element size",
+        "desc": "Dimensions of individual app buttons in pixels"
+      },
+      "autohide": {
+        "title": "Auto-hide",
+        "desc": "Hide the dock when not hovering over the screen edge"
+      },
+      "timeout": {
+        "title": "Auto-hide delay",
+        "desc": "Duration before hiding after pointer leaves"
+      },
+      "floating": {
+        "title": "Floating dock",
+        "desc": "Detach dock from screen edge with rounded corners"
+      },
+      "transparency": {
+        "title": "Dock transparency",
+        "desc": "Adjust dock background opacity level"
+      },
+      "apps": {
+        "title": "Dock Applications",
+        "singular": "app",
+        "plural": "apps",
+        "shuffle": "Shuffle Apps",
+        "empty": "No applications configured for the dock",
+        "enter_edit": "Edit",
+        "exit_edit": "Exit edit mode"
+      },
+      "picker": {
+        "search": "Search apps...",
+        "done": "Done",
+        "empty": "No matching applications"
+      },
+      "opacity": {
+        "title": "Dock opacity",
+        "desc": "Adjust dock background opacity level"
+      },
+      "override_bounds": {
+        "title": "Override out-of-screen-bounds size correction",
+        "desc": "Keep custom element size even if dock exceeds screen limits"
+      },
+      "scrolling": {
+        "title": "Enable element scrolling",
+        "desc": "Limit visible elements and allow mouse wheel or touchpad scrolling"
+      },
+      "visible_elements": {
+        "title": "Visible elements",
+        "desc": "Number of dock items visible at the same time"
+      },
+      "hover_scale": {
+        "title": "Hover scale effect",
+        "desc": "Magnification level when hovering over dock items"
+      },
+      "cascade_scale": {
+        "title": "Scale nearest elements",
+        "desc": "Cascading magnification on neighboring icons"
+      },
+      "exclusive": {
+        "title": "Exclusive mode",
+        "desc": "Prevent windows from taking space occupied by the dock"
+      },
+      "on_top": {
+        "title": "Place dock on top of windows",
+        "desc": "Keep the dock visible above application windows"
+      },
+      "smart_autohide": {
+        "title": "Smart auto-hide",
+        "desc": "Auto-hide dock only when windows are open, keep visible on desktop"
+      }
     }
   },
   "sysnotif": {
@@ -905,7 +1032,8 @@
       "click_to_add": "Click a widget icon in the bottom toolbar to add it",
       "done": "Done",
       "widget_singular": "widget",
-      "widgets_plural": "widgets"
+      "widgets_plural": "widgets",
+      "widgets_short": "w"
     },
     "types": {
       "clock": "Clock",
@@ -913,7 +1041,9 @@
       "weather": "Weather",
       "image": "Image",
       "visualizer": "Visualizer",
-      "user": "User"
+      "user": "User",
+      "usage": "Usage",
+      "battery": "Battery"
     },
     "variants": {
       "digital": "Digital",
@@ -926,7 +1056,21 @@
       "rounded": "Rounded",
       "bars": "Bars",
       "continuous": "Continuous",
-      "default": "Default"
+      "default": "Default",
+      "material": "Material",
+      "materialAnalog": "Material Analog",
+      "lumen": "Lumen"
+    },
+    "presets": {
+      "minimal": {
+        "name": "Minimal"
+      },
+      "media_station": {
+        "name": "Media station"
+      },
+      "dashboard": {
+        "name": "Dashboard"
+      }
     }
   },
   "cli": {

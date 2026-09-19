@@ -43,8 +43,51 @@ PanelWindow {
     property bool isVisible: LauncherController.isVisible
     property int configRevision: 0
     property bool appsLoaded: false
+    property real introItems: 0.0
+
+    function getItemProgress(idx) {
+        if (introItems >= 1.0) return 1.0;
+        if (introItems <= 0.0) return 0.0;
+        let start = Math.min(idx, 10) * 0.04;
+        let p = Math.min(1.0, Math.max(0.0, (introItems - start) / 0.42));
+        if (p <= 0.0) return 0.0;
+        if (p >= 1.0) return 1.0;
+        let c1 = 0.85;
+        let c3 = c1 + 1;
+        return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
+    }
+
+    function getItemOpacity(idx) {
+        if (introItems >= 1.0) return 1.0;
+        if (introItems <= 0.0) return 0.0;
+        let start = Math.min(idx, 10) * 0.04;
+        let p = Math.min(1.0, Math.max(0.0, (introItems - start) / 0.28));
+        return p;
+    }
+
+    function restartItemsIntro() {
+        introItems = 0.0;
+        itemsIntroSequence.restart();
+    }
+
+    SequentialAnimation {
+        id: itemsIntroSequence
+        running: false
+        PauseAnimation { duration: 60 }
+        NumberAnimation {
+            target: launcherWindow
+            property: "introItems"
+            from: 0.0
+            to: 1.0
+            duration: 520
+            easing.type: Easing.Linear
+        }
+    }
 
     Component.onCompleted: {
+        if (smartRanking) {
+            rankFetcher.running = true;
+        }
         loadApps();
         appsLoaded = true;
         executeFilter("");
@@ -61,6 +104,18 @@ PanelWindow {
     Connections {
         target: (typeof I18n !== "undefined") ? I18n : null
         function onLanguageChanged() {
+            if (launcherWindow.isVisible) {
+                launcherWindow.loadApps();
+                launcherWindow.executeFilter(searchInput.text);
+            } else {
+                launcherWindow.appsLoaded = false;
+            }
+        }
+    }
+
+    Connections {
+        target: (typeof DesktopEntries !== "undefined") ? DesktopEntries : null
+        function onApplicationsChanged() {
             if (launcherWindow.isVisible) {
                 launcherWindow.loadApps();
                 launcherWindow.executeFilter(searchInput.text);
@@ -254,8 +309,11 @@ PanelWindow {
                 try {
                     if (this.text && this.text.trim().length > 0) {
                         launcherWindow.usageRanks = JSON.parse(this.text);
-                        launcherWindow.loadApps();
-                        executeFilter(searchInput.text);
+                        if (!launcherWindow.isVisible || appModel.count === 0) {
+                            launcherWindow.loadApps();
+                            launcherWindow.appsLoaded = true;
+                            launcherWindow.executeFilter(searchInput.text);
+                        }
                     }
                 } catch(e) {}
             }
@@ -309,6 +367,7 @@ PanelWindow {
 
     onIsVisibleChanged: {
         if (isVisible) {
+            restartItemsIntro();
             if (!launcherWindow.appsLoaded) {
                 launcherWindow.loadApps();
                 launcherWindow.appsLoaded = true;
@@ -320,8 +379,7 @@ PanelWindow {
             } else {
                 filterDebounceTimer.stop();
             }
-            if (launcherWindow.smartRanking) {
-                rankFetcher.running = false;
+            if (launcherWindow.smartRanking && !rankFetcher.running) {
                 rankFetcher.running = true;
             }
             launcherWindow.grabInputFocus();
@@ -329,11 +387,19 @@ PanelWindow {
             focusRetryTimer.restart();
             focusFinalTimer.restart();
         } else {
+            itemsIntroSequence.stop();
+            introItems = 0.0;
+            launcherWindow.appsLoaded = false;
+            appList.resetScroll();
             filterDebounceTimer.stop();
             focusTimer.stop();
             focusRetryTimer.stop();
             focusFinalTimer.stop();
             keyboardNavTimer.stop();
+            if (launcherWindow.smartRanking) {
+                loadApps();
+                executeFilter("");
+            }
         }
     }
 
@@ -487,14 +553,6 @@ PanelWindow {
         return i === sub.length;
     }
 
-    function getItemKey(item) {
-        if (!item) return "";
-        if (item.isCommand) return "cmd:" + item.command;
-        if (item.isCalc) return "calc:" + item.calcResult;
-        if (item.isWidget) return "widget:" + (item.widgetTarget || item.name);
-        return item.desktop_id ? ("desktop:" + item.desktop_id) : ("name:" + item.name);
-    }
-
     function executeFilter(query) {
         launcherWindow.isKeyboardNav = false;
         if (keyboardNavTimer.running) keyboardNavTimer.stop();
@@ -586,7 +644,7 @@ PanelWindow {
             }
 
             if (matches) {
-                let appCopy = {
+                filtered.push({
                     name: app.name,
                     description: app.description,
                     desktop_id: app.desktop_id,
@@ -599,8 +657,7 @@ PanelWindow {
                     calcResult: "",
                     isWidget: app.isWidget || false,
                     widgetTarget: app.widgetTarget || ""
-                };
-                filtered.push(appCopy);
+                });
             }
         }
 
@@ -613,49 +670,37 @@ PanelWindow {
             });
         }
 
-        let newKeys = {};
-        for (let i = 0; i < filtered.length; i++) {
-            newKeys[getItemKey(filtered[i])] = true;
+        let minCount = Math.min(appModel.count, filtered.length);
+        for (let i = 0; i < minCount; i++) {
+            let cur = appModel.get(i);
+            let target = filtered[i];
+            if (cur.name !== target.name
+                || cur.desktop_id !== target.desktop_id
+                || cur.description !== target.description
+                || cur.icon !== target.icon
+                || cur.fontIcon !== target.fontIcon
+                || cur.score !== target.score
+                || cur.command !== target.command
+                || cur.calcResult !== target.calcResult
+                || cur.isCommand !== target.isCommand
+                || cur.isCalc !== target.isCalc
+                || cur.isWidget !== target.isWidget
+                || cur.widgetTarget !== target.widgetTarget) {
+                appModel.set(i, target);
+            }
         }
 
-        for (let i = appModel.count - 1; i >= 0; i--) {
-            let key = getItemKey(appModel.get(i));
-            if (!newKeys[key]) {
+        if (appModel.count > filtered.length) {
+            for (let i = appModel.count - 1; i >= filtered.length; i--) {
                 appModel.remove(i);
             }
-        }
-
-        for (let i = 0; i < filtered.length; i++) {
-            let item = filtered[i];
-            let targetKey = getItemKey(item);
-
-            if (i < appModel.count) {
-                let currentKey = getItemKey(appModel.get(i));
-                if (currentKey === targetKey) {
-                    appModel.set(i, item);
-                } else {
-                    let foundIndex = -1;
-                    for (let j = i + 1; j < appModel.count; j++) {
-                        if (getItemKey(appModel.get(j)) === targetKey) {
-                            foundIndex = j;
-                            break;
-                        }
-                    }
-                    if (foundIndex !== -1) {
-                        appModel.move(foundIndex, i, 1);
-                        appModel.set(i, item);
-                    } else {
-                        appModel.insert(i, item);
-                    }
-                }
-            } else {
-                appModel.append(item);
+        } else if (appModel.count < filtered.length) {
+            for (let i = appModel.count; i < filtered.length; i++) {
+                appModel.append(filtered[i]);
             }
         }
 
-        while (appModel.count > filtered.length) {
-            appModel.remove(appModel.count - 1);
-        }
+        appList.resetScroll();
 
         if (appModel.count > 0) {
             appList.currentIndex = 0;
@@ -763,9 +808,9 @@ PanelWindow {
         property real animProgress: launcherWindow.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: launcherWindow.isVisible ? (launcherWindow.isCentered ? 320 : 220) : (launcherWindow.isCentered ? 200 : 150)
+                duration: launcherWindow.isVisible ? (launcherWindow.isCentered ? 420 : 340) : (launcherWindow.isCentered ? 200 : 150)
                 easing.type: launcherWindow.isVisible ? Easing.OutBack : Easing.InQuad
-                easing.overshoot: 1.15
+                easing.overshoot: launcherWindow.isVisible ? 1.28 : 1.0
             }
         }
 
@@ -903,7 +948,7 @@ PanelWindow {
                 PathLine { x: 0; y: 0 }
                 PathArc {
                     x: container.dynamicCornerRadius
-                    y: 0
+                    y: container.dynamicCornerRadius
                     radiusX: container.dynamicCornerRadius
                     radiusY: container.dynamicCornerRadius
                     direction: PathArc.Counterclockwise
@@ -1012,7 +1057,7 @@ PanelWindow {
             anchors.fill: parent
             radius: container.dynamicCornerRadius
             color: ThemeBackend.base
-            border.width: launcherWindow.isCentered ? 1 : 0
+            border.width: 0
             border.color: launcherWindow.isCentered ? Qt.alpha(ThemeBackend.surface2, 0.6) : "transparent"
             clip: true
 
@@ -1185,56 +1230,12 @@ PanelWindow {
                              ? Math.max(0.0, Math.min(1.0, (container.animProgress - 0.2) / 0.8))
                              : 1.0
 
-                    Transition {
-                        id: listAddTrans
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 0.0
-                            to: 1.0
-                            duration: 250
-                            easing.type: Easing.OutCubic
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 0.96
-                            to: 1.0
-                            duration: 270
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Transition {
-                        id: listRemoveTrans
-                        NumberAnimation {
-                            property: "opacity"
-                            to: 0.0
-                            duration: 170
-                            easing.type: Easing.OutCubic
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            to: 0.96
-                            duration: 170
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Transition {
-                        id: listDisplacedTrans
-                        NumberAnimation {
-                            properties: "y"
-                            duration: 280
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Transition {
-                        id: listMoveTrans
-                        NumberAnimation {
-                            properties: "y"
-                            duration: 280
-                            easing.type: Easing.OutCubic
-                        }
+                    NumberAnimation {
+                        id: scrollAnim
+                        target: appList
+                        property: "contentY"
+                        duration: 260
+                        easing.type: Easing.OutCubic
                     }
 
                     ListView {
@@ -1245,20 +1246,61 @@ PanelWindow {
                         spacing: launcherWindow.s(4)
                         currentIndex: 0
                         boundsBehavior: Flickable.StopAtBounds
+                        cacheBuffer: launcherWindow.s(500)
 
                         highlightFollowsCurrentItem: false
 
-                        property bool transitionsEnabled: launcherWindow.isVisible && container.animProgress > 0.98
+                        function getItemY(idx) {
+                            return idx * (launcherWindow.s(44) + spacing);
+                        }
 
-                        add: transitionsEnabled ? listAddTrans : null
-                        remove: transitionsEnabled ? listRemoveTrans : null
-                        displaced: transitionsEnabled ? listDisplacedTrans : null
-                        move: transitionsEnabled ? listMoveTrans : null
-                        moveDisplaced: transitionsEnabled ? listDisplacedTrans : null
+                        function resetScroll() {
+                            scrollAnim.stop();
+                            contentY = 0;
+                        }
+
+                        onContentYChanged: {
+                            if (contentY < 0 && !moving && !flicking) {
+                                contentY = 0;
+                            }
+                        }
+
+                        function ensureVisible(idx, animated) {
+                            if (idx < 0 || appModel.count === 0) return;
+                            let itemH = launcherWindow.s(44);
+                            let step = itemH + spacing;
+                            let itemTop = idx * step;
+                            let itemBottom = itemTop + itemH;
+
+                            let curContentY = scrollAnim.running ? scrollAnim.to : contentY;
+                            let totalH = Math.max(0, appModel.count * step - spacing);
+                            let maxScroll = Math.max(0, totalH - height);
+                            let newContentY = curContentY;
+
+                            if (itemTop < curContentY) {
+                                newContentY = itemTop;
+                            } else if (itemBottom > curContentY + height) {
+                                newContentY = itemBottom - height;
+                            }
+
+                            newContentY = Math.max(0, Math.min(maxScroll, newContentY));
+
+                            if (Math.abs(newContentY - contentY) > 0.5) {
+                                if (animated) {
+                                    scrollAnim.stop();
+                                    scrollAnim.from = contentY;
+                                    scrollAnim.to = newContentY;
+                                    scrollAnim.start();
+                                } else {
+                                    scrollAnim.stop();
+                                    contentY = newContentY;
+                                }
+                            }
+                        }
 
                         onCurrentIndexChanged: {
                             if (currentIndex >= 0) {
-                                positionViewAtIndex(currentIndex, ListView.Contain);
+                                ensureVisible(currentIndex, launcherWindow.isKeyboardNav);
                             }
                         }
 
@@ -1267,8 +1309,11 @@ PanelWindow {
                             parent: appList.contentItem
                             z: 0
                             visible: opacity > 0.001
-                            opacity: (appList.count > 0 && appList.currentIndex >= 0 && appList.currentItem !== null) ? 1.0 : 0.0
+                            opacity: (appList.count > 0 && appList.currentIndex >= 0)
+                                     ? launcherWindow.getItemOpacity(appList.currentIndex)
+                                     : 0.0
                             Behavior on opacity {
+                                enabled: !itemsIntroSequence.running
                                 NumberAnimation {
                                     duration: 170
                                     easing.type: Easing.OutCubic
@@ -1280,11 +1325,17 @@ PanelWindow {
                             radius: ThemeBackend.borderRadius
                             color: ThemeBackend.mauve
 
-                            property real targetY: (appList.currentIndex >= 0 && appList.currentItem) ? appList.currentItem.y : 0
+                            property real targetY: (appList.currentIndex >= 0 && appModel.count > 0)
+                                                   ? appList.getItemY(appList.currentIndex)
+                                                   : 0
                             y: targetY
 
+                            transform: Translate {
+                                x: launcherWindow.s(-20) * (1.0 - launcherWindow.getItemProgress(appList.currentIndex))
+                            }
+
                             Behavior on y {
-                                enabled: appList.transitionsEnabled
+                                enabled: launcherWindow.isKeyboardNav
                                 NumberAnimation {
                                     duration: 260
                                     easing.type: Easing.OutCubic
@@ -1296,10 +1347,15 @@ PanelWindow {
                             id: delegateRoot
                             width: ListView.view ? ListView.view.width : 0
                             height: launcherWindow.s(44)
-                            clip: true
+                            clip: false
                             z: 1
 
                             property bool isSelected: index === appList.currentIndex
+
+                            opacity: launcherWindow.getItemOpacity(index)
+                            transform: Translate {
+                                x: launcherWindow.s(-20) * (1.0 - launcherWindow.getItemProgress(index))
+                            }
 
                             Item {
                                 id: delegateContent
@@ -1364,6 +1420,7 @@ PanelWindow {
                                                 id: delegateIcon
                                                 anchors.fill: parent
                                                 property bool failedLoad: false
+                                                cache: false
 
                                                 visible: (!model.fontIcon || model.fontIcon === "") && source !== "" && status === Image.Ready && !failedLoad
 
@@ -1372,7 +1429,17 @@ PanelWindow {
                                                     let ic = model.icon || "";
                                                     if (!ic) return "";
                                                     if (ic.startsWith("file://") || ic.startsWith("image://") || ic.startsWith("http://") || ic.startsWith("https://")) return ic;
-                                                    return ic.startsWith("/") ? "file://" + ic : "image://icon/" + ic;
+                                                    if (ic.startsWith("/")) return "file://" + ic;
+
+                                                    let baseName = ic.replace(/\.(png|svg|xpm|ico)$/i, "");
+                                                    if (typeof Quickshell !== "undefined" && typeof Quickshell.iconPath === "function") {
+                                                        let resolved = Quickshell.iconPath(ic) || Quickshell.iconPath(baseName);
+                                                        if (resolved && resolved.length > 0) {
+                                                            return resolved.startsWith("/") ? ("file://" + resolved) : resolved;
+                                                        }
+                                                    }
+
+                                                    return "image://icon/" + baseName;
                                                 }
 
                                                 sourceSize: Qt.size(64, 64)
@@ -1452,6 +1519,7 @@ PanelWindow {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
+                                        launcherWindow.isKeyboardNav = false;
                                         appList.currentIndex = index;
                                         activateIndex(index);
                                     }
