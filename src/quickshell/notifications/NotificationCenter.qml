@@ -15,13 +15,22 @@ Item {
     }
 
     property real introContent: 0.0
+    readonly property real slideDistance: root.s(52)
     property string searchText: ""
     property string selectedApp: ""
     property int selectedTimeRange: -1 // -1 = all, 0 = today, 1 = yesterday, 2 = older
 
     onVisibleChanged: {
         NotificationManager.sysPanelOpen = visible;
-        if (visible) focusTimer.start();
+        if (visible) {
+            closeSequence.stop();
+            introContent = 0.0;
+            startupSequence.restart();
+            focusTimer.start();
+        } else {
+            startupSequence.stop();
+            closeSequence.stop();
+        }
     }
 
     // Which screen edge this panel is currently docked to — mirrors the
@@ -74,7 +83,7 @@ Item {
     }
 
     Component.onCompleted: {
-        startupSequence.start();
+        if (visible) startupSequence.start();
         focusTimer.start();
         refreshFilteredEntries();
     }
@@ -151,15 +160,13 @@ Item {
         groupedEntries = result;
     }
 
-    SequentialAnimation {
+    NumberAnimation {
         id: startupSequence
-        NumberAnimation {
-            target: root
-            property: "introContent"
-            to: 1.0
-            duration: 420
-            easing.type: Easing.OutExpo
-        }
+        target: root
+        property: "introContent"
+        to: 1.0
+        duration: 320
+        easing.type: Easing.OutCubic
     }
 
     SequentialAnimation {
@@ -169,8 +176,8 @@ Item {
                 target: root
                 property: "introContent"
                 to: 0.0
-                duration: 280
-                easing.type: Easing.InOutCubic
+                duration: 260
+                easing.type: Easing.InCubic
             }
         }
         ScriptAction {
@@ -194,6 +201,9 @@ Item {
         border.color: Qt.rgba(ThemeBackend.surface1.r, ThemeBackend.surface1.g, ThemeBackend.surface1.b, 0.9)
         clip: true
         opacity: root.introContent
+        transform: Translate {
+            x: (root.dockSide === "left" ? -root.slideDistance : (root.dockSide === "right" ? root.slideDistance : 0)) * (1.0 - root.introContent)
+        }
 
         Rectangle {
             visible: root.dockSide !== "center"

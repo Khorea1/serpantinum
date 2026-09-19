@@ -635,7 +635,11 @@ PanelWindow {
         id: container
         property real animProgress: emojiWindow.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
-            NumberAnimation { duration: emojiWindow.isVisible ? 300 : 200; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: emojiWindow.isVisible ? 340 : 150
+                easing.type: emojiWindow.isVisible ? Easing.OutBack : Easing.InQuad
+                easing.overshoot: emojiWindow.isVisible ? 1.28 : 1.0
+            }
         }
 
         x: {

@@ -144,8 +144,7 @@ Item {
 
     property string layoutState: {
         if (isFill) return "default";
-        if (barWindow && barWindow.isNotifOpen) return "settings";
-        if (barWindow && barWindow.isSysOpen) return "sys";
+        if (barWindow && (barWindow.isNotifOpen || barWindow.isSysOpen)) return "sys";
         return "default";
     }
 
