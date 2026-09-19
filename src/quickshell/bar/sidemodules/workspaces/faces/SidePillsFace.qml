@@ -13,20 +13,26 @@ Item {
     Rectangle {
         id: activeHighlight
         z: 3
-        radius: widget ? widget.s(widget.isCompact ? 7 : 8) : 8
+        radius: 0
         color: (widget && widget.isCompact) ? Qt.lighter(ThemeBackend.mauve, 1.05) : ThemeBackend.mauve
 
         property int prevIdx: 0
         property int curIdx: widget ? widget.activeIndex : -1
 
+        readonly property int baseDuration: 260
+        readonly property int stretchPerStep: 55
+        readonly property int maxStretchSteps: 4
+
         onCurIdxChanged: {
-            if (curIdx >= 0 && prevIdx >= 0) {
+            if (curIdx >= 0 && prevIdx >= 0 && curIdx !== prevIdx) {
+                let steps = Math.min(Math.abs(curIdx - prevIdx), maxStretchSteps);
+                let stretch = stretchPerStep * steps;
                 if (curIdx > prevIdx) {
-                    topAnim.duration = 400;
-                    bottomAnim.duration = 300;
+                    topAnim.duration = baseDuration + stretch;
+                    bottomAnim.duration = baseDuration;
                 } else if (curIdx < prevIdx) {
-                    topAnim.duration = 300;
-                    bottomAnim.duration = 400;
+                    topAnim.duration = baseDuration;
+                    bottomAnim.duration = baseDuration + stretch;
                 }
             }
             if (curIdx >= 0) {
@@ -51,8 +57,8 @@ Item {
         property real actualTop: targetTop
         property real actualBottom: targetBottom
 
-        Behavior on actualTop { NumberAnimation { id: topAnim; duration: 380; easing.type: Easing.OutQuint } }
-        Behavior on actualBottom { NumberAnimation { id: bottomAnim; duration: 380; easing.type: Easing.OutQuint } }
+        Behavior on actualTop { NumberAnimation { id: topAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
+        Behavior on actualBottom { NumberAnimation { id: bottomAnim; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
 
         x: wsLayout.x + (wsLayout.width - width) / 2
         y: wsLayout.y + actualTop
@@ -88,7 +94,7 @@ Item {
                 Rectangle {
                     id: wsVisualShape
                     anchors.fill: parent
-                    radius: widget ? widget.s(widget.isCompact ? 8 : 10) : 10
+                    radius: 0
                     color: wsPill.isActive ? "transparent" : (wsPill.isOccupied ? ThemeBackend.surface2 : ((widget && widget.isCompact) ? ThemeBackend.surface1 : ThemeBackend.surface0))
                     border.width: 0
 

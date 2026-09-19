@@ -13,32 +13,38 @@ Item {
     Rectangle {
         id: activeHighlight
         z: 3
-        radius: widget ? widget.s(widget.isCompact ? 7 : 8) : 8
+        radius: 0
         color: (widget && widget.isCompact) ? Qt.lighter(ThemeBackend.mauve, 1.05) : ThemeBackend.mauve
 
-        property int prevIdx: 0
         property int curIdx: widget ? widget.activeIndex : -1
+        property int prevIdx: curIdx
+
+        readonly property real leadSpring: 5.5
+        readonly property real leadDamping: 0.7
+        readonly property real trailSpring: 2.0
+        readonly property real trailDamping: 0.5
+        readonly property real springMass: 1.0
 
         onCurIdxChanged: {
-            if (curIdx >= 0 && prevIdx >= 0) {
-                if (curIdx > prevIdx) {
-                    leftAnim.duration = 400;
-                    rightAnim.duration = 300;
-                } else if (curIdx < prevIdx) {
-                    leftAnim.duration = 300;
-                    rightAnim.duration = 400;
-                }
+            if (curIdx > prevIdx) {
+                leftAnim.spring = trailSpring;
+                leftAnim.damping = trailDamping;
+                rightAnim.spring = leadSpring;
+                rightAnim.damping = leadDamping;
+            } else if (curIdx < prevIdx) {
+                leftAnim.spring = leadSpring;
+                leftAnim.damping = leadDamping;
+                rightAnim.spring = trailSpring;
+                rightAnim.damping = trailDamping;
             }
-            if (curIdx >= 0) {
-                prevIdx = curIdx;
-            }
+            prevIdx = curIdx;
         }
 
         function getX(index, activeIndex) {
             if (index < 0 || !widget) return 0;
             let xPos = 0;
             let spacing = widget.s(widget.isCompact ? 7 : 8);
-            let activeW = widget.s(widget.isCompact ? 34 : 36);
+            let activeW = widget.s(widget.isCompact ? 34 : 28);
             let inactiveW = widget.s(widget.isCompact ? 16 : 18);
             for (let i = 0; i < index; i++) {
                 xPos += (i === activeIndex ? activeW : inactiveW) + spacing;
@@ -47,12 +53,16 @@ Item {
         }
 
         property real targetLeft: (curIdx >= 0 && widget) ? getX(curIdx, curIdx) : 0
-        property real targetRight: (curIdx >= 0 && widget) ? targetLeft + widget.s(widget.isCompact ? 34 : 36) : 0
+        property real targetRight: (curIdx >= 0 && widget) ? targetLeft + widget.s(widget.isCompact ? 34 : 28) : 0
         property real actualLeft: targetLeft
         property real actualRight: targetRight
 
-        Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 380; easing.type: Easing.OutQuint } }
-        Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 380; easing.type: Easing.OutQuint } }
+        Behavior on actualLeft {
+            SpringAnimation { id: leftAnim; spring: activeHighlight.leadSpring; damping: activeHighlight.leadDamping; mass: activeHighlight.springMass; epsilon: 0.05 }
+        }
+        Behavior on actualRight {
+            SpringAnimation { id: rightAnim; spring: activeHighlight.leadSpring; damping: activeHighlight.leadDamping; mass: activeHighlight.springMass; epsilon: 0.05 }
+        }
 
         x: wsLayout.x + actualLeft
         y: wsLayout.y + (wsLayout.height - height) / 2
@@ -79,16 +89,16 @@ Item {
                 property bool isActive: widget ? (index === widget.activeIndex) : false
                 property bool initAnimTrigger: false
 
-                width: isActive ? (widget ? widget.s(widget.isCompact ? 34 : 36) : 36) : (widget ? widget.s(widget.isCompact ? 16 : 18) : 18)
+                width: isActive ? (widget ? widget.s(widget.isCompact ? 34 : 28) : 28) : (widget ? widget.s(widget.isCompact ? 16 : 18) : 18)
                 height: widget ? widget.s(widget.isCompact ? 16 : 18) : 18
                 anchors.verticalCenter: parent.verticalCenter
 
-                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
+                Behavior on width { SpringAnimation { spring: 4.4; damping: 0.6; mass: 0.9; epsilon: 0.05 } }
 
                 Rectangle {
                     id: wsVisualShape
                     anchors.fill: parent
-                    radius: widget ? widget.s(widget.isCompact ? 8 : 10) : 10
+                    radius: 0
                     color: wsPill.isActive ? "transparent" : (wsPill.isOccupied ? ThemeBackend.surface2 : ((widget && widget.isCompact) ? ThemeBackend.surface1 : ThemeBackend.surface0))
                     border.width: 0
 
