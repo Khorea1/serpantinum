@@ -11,6 +11,7 @@
 - fix: fix workspaces not working due to a hyprland lua error
 - fix: remove a reupdate animation for workspacewidget on changing to workspaces out of the visible workspacecount, make it smooth
 - fix: don't prevent qs manager from switching workspaces when the workspace count is low, and allow workspacewidgets to extend beyond the configured amount - the workspacecount is now purely visual
+- animations: add smooth widget entrance, removal, resize, rotation, opacity, and variant transitions
 
 ### 2.1.7
 

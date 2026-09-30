@@ -718,7 +718,8 @@ Item {
         delegate: Widget {
             screen: loaderRoot.screen
             isRedacting: loaderRoot.isRedacting
-            visible: !loaderRoot.isRedacting && !(model.isRemoving || false)
+            isRemoving: model.isRemoving || false
+            visible: !loaderRoot.isRedacting && (!isRemoving || revealProgress > 0.001)
             wId: model.wId
             wType: model.wType
             wVariant: model.wVariant

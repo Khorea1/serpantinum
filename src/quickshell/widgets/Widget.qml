@@ -20,6 +20,17 @@ PanelWindow {
 
     property bool isRedacting: false
     property bool initialized: false
+    property bool isRemoving: false
+    property real revealProgress: 0.0
+
+    NumberAnimation {
+        id: revealAnimation
+        target: root
+        property: "revealProgress"
+        duration: root.isRemoving ? 180 : 320
+        easing.type: root.isRemoving ? Easing.InCubic : Easing.OutBack
+        easing.overshoot: 1.15
+    }
 
     property real animX: wX
     property real animY: wY
@@ -40,11 +51,30 @@ PanelWindow {
 
     property real effectiveWidth: wWidth
     property real effectiveHeight: wHeight
+    Behavior on effectiveWidth {
+        enabled: root.initialized && !root.isRedacting
+        NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+    }
+    Behavior on effectiveHeight {
+        enabled: root.initialized && !root.isRedacting
+        NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+    }
 
     onWWidthChanged: updateEffectiveSize()
     onWHeightChanged: updateEffectiveSize()
-    onWVariantChanged: updateEffectiveSize()
+    onWVariantChanged: {
+        updateEffectiveSize();
+        if (initialized && !isRemoving) {
+            revealProgress = Math.min(revealProgress, 0.82);
+            revealAnimation.to = 1.0;
+            revealAnimation.restart();
+        }
+    }
     onWTypeChanged: updateEffectiveSize()
+    onIsRemovingChanged: {
+        revealAnimation.to = isRemoving ? 0.0 : 1.0;
+        revealAnimation.restart();
+    }
 
     WlrLayershell.namespace: "qs-widget-" + wType + "-" + wId
     WlrLayershell.layer: WlrLayer.Bottom
@@ -64,6 +94,8 @@ PanelWindow {
     Component.onCompleted: {
         Qt.callLater(() => {
             root.initialized = true;
+            revealAnimation.to = root.isRemoving ? 0.0 : 1.0;
+            revealAnimation.start();
         });
     }
 
@@ -120,10 +152,12 @@ PanelWindow {
         width: root.effectiveWidth
         height: root.effectiveHeight
         anchors.centerIn: parent
+        transformOrigin: Item.Center
         rotation: root.wRotation || 0
-        opacity: root.wOpacity
-        Behavior on opacity { NumberAnimation { duration: 150 } }
-        Behavior on rotation { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
+        opacity: root.wOpacity * root.revealProgress
+        scale: 0.92 + (0.08 * root.revealProgress)
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on rotation { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
         onLoaded: {
             if (item) {
                 if (item.imagePath !== undefined) {
