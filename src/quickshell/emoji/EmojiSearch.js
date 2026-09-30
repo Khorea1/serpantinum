@@ -23,45 +23,53 @@ function normalizeHexQuery(q) {
     return q.replace(/^u\+|^0x|^\\u/i, "").toLowerCase();
 }
 
+function normalizeText(value) {
+    let text = String(value || "").toLowerCase();
+    if (text.normalize) text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return text.replace(/[\s\-_]+/g, " ").trim();
+}
+
+function scoreText(hay, query, weight) {
+    if (hay === query) return 100000 * weight;
+    if (hay.startsWith(query)) return 50000 * weight;
+
+    let tokens = hay.split(" ");
+    for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i].startsWith(query)) return 30000 * weight;
+    }
+    if (hay.includes(query)) return 10000 * weight;
+    return query.length >= 2 && isSubsequence(query, hay) ? 1000 * weight : 0;
+}
+
 // fields: array of { get: function(item) -> string, weight: number }
 // Higher weight fields contribute more to matchQuality on exact/prefix
 // hits, mirroring the clipboard widget's own scoring tiers.
 function scoreItem(item, query, fields) {
-    let best = 0;
+    let q = normalizeText(query);
+    let terms = q.split(" ");
+    let fieldValues = [];
+    let phraseBest = 0;
     for (let f = 0; f < fields.length; f++) {
         let raw = fields[f].get(item);
         if (!raw) continue;
-        let hay = (Array.isArray(raw) ? raw.join(" ") : raw).toLowerCase();
+        let hay = normalizeText(Array.isArray(raw) ? raw.join(" ") : raw);
         let w = fields[f].weight || 1;
-        let q = query;
-
-        if (hay === q) {
-            best = Math.max(best, 100000 * w);
-        } else if (hay.startsWith(q)) {
-            best = Math.max(best, 50000 * w);
-        } else {
-            // token-prefix match: any whitespace/dash/underscore separated
-            // token in the haystack starting with the query counts almost
-            // as well as a full prefix match ("account" matching
-            // "cod-account" or "grinning face" matching "face").
-            let tokens = hay.split(/[\s\-_]+/);
-            let tokenHit = false;
-            for (let t = 0; t < tokens.length; t++) {
-                if (tokens[t].length > 0 && tokens[t].startsWith(q)) {
-                    tokenHit = true;
-                    break;
-                }
-            }
-            if (tokenHit) {
-                best = Math.max(best, 30000 * w);
-            } else if (hay.includes(q)) {
-                best = Math.max(best, 10000 * w);
-            } else if (q.length >= 2 && isSubsequence(q, hay)) {
-                best = Math.max(best, 1000 * w);
-            }
-        }
+        fieldValues.push({ text: hay, weight: w });
+        phraseBest = Math.max(phraseBest, scoreText(hay, q, w));
     }
-    return best;
+
+    if (terms.length === 1) return phraseBest;
+
+    let termScore = 0;
+    for (let t = 0; t < terms.length; t++) {
+        let best = 0;
+        for (let f = 0; f < fieldValues.length; f++) {
+            best = Math.max(best, scoreText(fieldValues[f].text, terms[t], fieldValues[f].weight));
+        }
+        if (best === 0) return 0;
+        termScore += best;
+    }
+    return phraseBest + termScore;
 }
 
 // Decayed frecency score, same half-life shape used by the app
@@ -80,7 +88,7 @@ function decayedScore(entry, halfLifeDays, nowMs) {
 // order when the query is empty (category filtering already applied by
 // the caller before this runs).
 function filterAndSort(dataset, query, fields, keyOf, historyStore, halfLifeDays) {
-    let q = (query || "").trim().toLowerCase();
+    let q = normalizeText(query);
     if (q.length === 0) return dataset;
 
     let now = Date.now();

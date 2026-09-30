@@ -384,13 +384,13 @@ PanelWindow {
 
     function rebuildResults() {
         let dataset = emojiWindow.activeDataset();
-        if (emojiWindow.activeCategory !== "all") {
+        let q = ESearch.normalizeHexQuery(emojiWindow.searchText.trim().toLowerCase());
+        if (q.length === 0 && emojiWindow.activeCategory !== "all") {
             let cat = emojiWindow.activeCategory;
             let field = emojiWindow.activeTab === "nerd" ? "g" : "c";
             dataset = dataset.filter(it => it[field] === cat);
         }
 
-        let q = ESearch.normalizeHexQuery(emojiWindow.searchText.trim().toLowerCase());
         if (q.length === 0) {
             emojiWindow.resultsModel = dataset;
         } else {
