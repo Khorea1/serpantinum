@@ -322,7 +322,7 @@ PanelWindow {
                 Text {
                     Layout.alignment: Qt.AlignVCenter
                     text: "󰂚"
-                    font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                    font.family: ThemeBackend.iconFont
                     font.pixelSize: popupWindow.s(12)
                     color: ThemeBackend.subtext1
                 }

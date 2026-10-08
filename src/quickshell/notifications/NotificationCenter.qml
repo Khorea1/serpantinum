@@ -278,7 +278,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignVCenter
                             text: "󰅗"
-                            font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                            font.family: ThemeBackend.iconFont
                             font.pixelSize: root.s(12)
                             color: ThemeBackend.subtext1
                         }
@@ -306,7 +306,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignVCenter
                             text: NotificationManager.dndActive ? "󰂛" : "󰂚"
-                            font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                            font.family: ThemeBackend.iconFont
                             font.pixelSize: root.s(15)
                             color: NotificationManager.dndActive ? ThemeBackend.crust : ThemeBackend.subtext1
                         }
@@ -323,7 +323,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignVCenter
                             text: root.showDndMenu ? "󰅃" : "󰅀"
-                            font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                            font.family: ThemeBackend.iconFont
                             font.pixelSize: root.s(11)
                             color: NotificationManager.dndActive ? ThemeBackend.crust : ThemeBackend.subtext1
                         }
@@ -524,7 +524,7 @@ Item {
 
                     Text {
                         text: "󰍉"
-                        font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                        font.family: ThemeBackend.iconFont
                         font.pixelSize: root.s(14)
                         color: ThemeBackend.overlay0
                     }
@@ -563,7 +563,7 @@ Item {
 
                     Text {
                         text: "󰑓"
-                        font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                        font.family: ThemeBackend.iconFont
                         font.pixelSize: root.s(12)
                         color: ThemeBackend.overlay0
                         visible: searchInput.text !== ""
@@ -812,7 +812,7 @@ Item {
                                     Text {
                                         anchors.centerIn: parent
                                         text: "󰂚"
-                                        font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                                        font.family: ThemeBackend.iconFont
                                         font.pixelSize: root.s(12)
                                         color: ThemeBackend.overlay0
                                         visible: !parent.children[1].visible
@@ -867,7 +867,7 @@ Item {
                                     Text {
                                         anchors.centerIn: parent
                                         text: "󰅖"
-                                        font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                                        font.family: ThemeBackend.iconFont
                                         font.pixelSize: root.s(11)
                                         color: ThemeBackend.overlay0
                                     }
@@ -1043,7 +1043,7 @@ Item {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "󰅖"
-                                            font.family: ThemeBackend.iconFamily || "Iosevka Nerd Font"
+                                            font.family: ThemeBackend.iconFont
                                             font.pixelSize: root.s(10)
                                             color: ThemeBackend.overlay0
                                         }

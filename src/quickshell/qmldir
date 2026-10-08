@@ -20,6 +20,7 @@ Osd 1.0 popouts/Osd.qml
 PopoutManager 1.0 popouts/PopoutManager.qml
 SideMusicPopout 1.0 popouts/SideMusicPopout.qml
 TrayBase 1.0 popouts/TrayBase.qml
+DesktopMenu 1.0 popouts/DesktopMenu.qml
 
 WidgetLoader 1.0 widgets/WidgetLoader.qml
 WidgetRedactor 1.0 widgets/WidgetRedactor.qml
@@ -32,6 +33,7 @@ singleton Audio 1.0 singletons/audio/Audio.qml
 singleton Cava 1.0 singletons/audio/Cava.qml
 singleton MprisController 1.0 singletons/audio/MprisController.qml
 singleton Sounds 1.0 singletons/audio/Sounds.qml
+singleton Lyrics 1.0 singletons/audio/Lyrics.qml
 
 singleton Matugen 1.0 singletons/theme/Matugen.qml
 singleton Scaler 1.0 singletons/theme/Scaler.qml
@@ -65,3 +67,4 @@ singleton PickWindowController 1.0 singletons/widgetcontrols/PickWindowControlle
 singleton SideMusicController 1.0 singletons/widgetcontrols/SideMusicController.qml
 singleton TrayMenuController 1.0 singletons/widgetcontrols/TrayMenuController.qml
 singleton WidgetSync 1.0 singletons/widgetcontrols/WidgetSync.qml
+singleton DesktopMenuController singletons/widgetcontrols/DesktopMenuController.qml

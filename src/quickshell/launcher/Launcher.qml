@@ -11,6 +11,7 @@ import "../"
 import "../reusables"
 import "../WindowRegistry.js" as WindowRegistry
 import "../reusables/RofiKeyNav.js" as RofiKeyNav
+import "./EmojiData.js" as EmojiData
 
 PanelWindow {
     id: launcherWindow
@@ -44,6 +45,52 @@ PanelWindow {
     property int configRevision: 0
     property bool appsLoaded: false
     property real introItems: 0.0
+    property int currentTabIndex: 0
+
+    property string tabAppsTitle: (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_applications", "Applications") : "Applications"
+    property string tabFilesTitle: (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_files", "Files") : "Files"
+    property string tabEmojisTitle: (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_emojis", "Emojis") : "Emojis"
+
+    function saveLastTab() {
+        let dir = (typeof Caching !== "undefined" && typeof Caching.getCacheDir === "function") ? Caching.getCacheDir("launcher") : "";
+        if (dir) {
+            Quickshell.execDetached(["bash", "-c", "mkdir -p '" + dir + "' && echo '" + currentTabIndex + "' > '" + dir + "/last_tab.txt'"]);
+        }
+    }
+
+    onCurrentTabIndexChanged: {
+        saveLastTab();
+        if (tabSwitch.currentIndex !== currentTabIndex) {
+            tabSwitch.currentIndex = currentTabIndex;
+        }
+        if (currentTabIndex === 0) {
+            executeFilter(searchInput.text);
+        } else if (currentTabIndex === 1) {
+            executeFileSearch(searchInput.text);
+        } else {
+            executeEmojiFilter(searchInput.text);
+        }
+        launcherWindow.grabInputFocus();
+    }
+
+    FileView {
+        id: lastTabWatcher
+        path: (typeof Caching !== "undefined" && typeof Caching.getCacheDir === "function") ? (Caching.getCacheDir("launcher") + "/last_tab.txt") : ""
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                let val = text().trim();
+                if (val !== "") {
+                    let idx = parseInt(val);
+                    if (!isNaN(idx) && (idx >= 0 && idx <= 2)) {
+                        launcherWindow.currentTabIndex = idx;
+                        tabSwitch.currentIndex = idx;
+                    }
+                }
+            } catch(e) {}
+        }
+    }
 
     function getItemProgress(idx) {
         if (introItems >= 1.0) return 1.0;
@@ -90,7 +137,13 @@ PanelWindow {
         }
         loadApps();
         appsLoaded = true;
-        executeFilter("");
+        if (currentTabIndex === 0) {
+            executeFilter("");
+        } else if (currentTabIndex === 1) {
+            executeFileSearch("");
+        } else {
+            executeEmojiFilter("");
+        }
     }
 
     Connections {
@@ -104,9 +157,18 @@ PanelWindow {
     Connections {
         target: (typeof I18n !== "undefined") ? I18n : null
         function onLanguageChanged() {
+            launcherWindow.tabAppsTitle = (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_applications", "Applications") : "Applications";
+            launcherWindow.tabFilesTitle = (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_files", "Files") : "Files";
+            launcherWindow.tabEmojisTitle = (typeof I18n !== "undefined") ? I18n.t("applauncher.tab_emojis", "Emojis") : "Emojis";
             if (launcherWindow.isVisible) {
                 launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
+                if (launcherWindow.currentTabIndex === 0) {
+                    launcherWindow.executeFilter(searchInput.text);
+                } else if (launcherWindow.currentTabIndex === 1) {
+                    launcherWindow.executeFileSearch(searchInput.text);
+                } else {
+                    launcherWindow.executeEmojiFilter(searchInput.text);
+                }
             } else {
                 launcherWindow.appsLoaded = false;
             }
@@ -118,7 +180,9 @@ PanelWindow {
         function onApplicationsChanged() {
             if (launcherWindow.isVisible) {
                 launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
+                if (launcherWindow.currentTabIndex === 0) {
+                    launcherWindow.executeFilter(searchInput.text);
+                }
             } else {
                 launcherWindow.appsLoaded = false;
             }
@@ -130,15 +194,9 @@ PanelWindow {
         function onValuesChanged() {
             if (launcherWindow.isVisible) {
                 launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
-            } else {
-                launcherWindow.appsLoaded = false;
-            }
-        }
-        function onCountChanged() {
-            if (launcherWindow.isVisible) {
-                launcherWindow.loadApps();
-                launcherWindow.executeFilter(searchInput.text);
+                if (launcherWindow.currentTabIndex === 0) {
+                    launcherWindow.executeFilter(searchInput.text);
+                }
             } else {
                 launcherWindow.appsLoaded = false;
             }
@@ -173,7 +231,9 @@ PanelWindow {
     onSmartRankingChanged: {
         if (launcherWindow.isVisible) {
             loadApps();
-            executeFilter(searchInput.text);
+            if (launcherWindow.currentTabIndex === 0) {
+                executeFilter(searchInput.text);
+            }
         } else {
             launcherWindow.appsLoaded = false;
         }
@@ -267,14 +327,22 @@ PanelWindow {
     property real outerCornerRadius: cornerRadius
 
     property real baseLauncherWidth: s(customWidth)
-    property real collapsedCenterHeight: s(64)
+    property real collapsedCenterHeight: s(110)
 
     property real targetLauncherHeight: {
+        let headerH = s(36) + s(28) + s(8) + s(28);
+        if (currentTabIndex === 2) {
+            let totalRows = Math.ceil(emojiModel.count / 5);
+            if (totalRows <= 0) {
+                return headerH;
+            }
+            return headerH + s(8) + (Math.min(totalRows, customItemCount) * s(60));
+        }
         let count = Math.min(appModel.count, customItemCount);
         if (count <= 0) {
-            return s(64);
+            return headerH;
         }
-        return s(70) + (count * s(48));
+        return headerH + s(8) + (count * s(48));
     }
 
     property real animatedLauncherHeight: targetLauncherHeight
@@ -312,12 +380,71 @@ PanelWindow {
                         if (!launcherWindow.isVisible || appModel.count === 0) {
                             launcherWindow.loadApps();
                             launcherWindow.appsLoaded = true;
-                            launcherWindow.executeFilter(searchInput.text);
+                            if (launcherWindow.currentTabIndex === 0) {
+                                launcherWindow.executeFilter(searchInput.text);
+                            }
                         }
                     }
                 } catch(e) {}
             }
         }
+    }
+
+    property string fileSearchScript: "import os, sys, json\nq = sys.argv[1] if len(sys.argv) > 1 else ''\nhome = os.path.expanduser('~')\nres = []\nif q.startswith('/') or q.startswith('~'):\n    p = os.path.expanduser(q)\n    d = p if (os.path.isdir(p) and (q.endswith('/') or q.endswith('\\\\'))) else (os.path.dirname(p) or home)\n    pref = '' if (os.path.isdir(p) and (q.endswith('/') or q.endswith('\\\\'))) else os.path.basename(p).lower()\n    if os.path.isdir(d):\n        try:\n            entries = sorted(os.listdir(d), key=lambda x: (not os.path.isdir(os.path.join(d, x)), x.lower()))\n            for item in entries:\n                if item.startswith('.') and not pref.startswith('.'):\n                    continue\n                if not pref or pref in item.lower():\n                    full = os.path.join(d, item)\n                    res.append({'name': item, 'path': full, 'isDir': os.path.isdir(full)})\n                    if len(res) >= 40: break\n        except Exception: pass\nelse:\n    s = q.lower().strip()\n    targets = [home, os.path.join(home, 'Desktop'), os.path.join(home, 'Documents'), os.path.join(home, 'Downloads'), os.path.join(home, 'Pictures'), os.path.join(home, 'Videos'), os.path.join(home, 'Music')]\n    seen = set()\n    for t in targets:\n        if not os.path.isdir(t): continue\n        try:\n            for root, dirs, files in os.walk(t):\n                rel = os.path.relpath(root, t)\n                if rel != '.' and rel.count(os.sep) >= 2:\n                    dirs.clear()\n                    continue\n                dirs[:] = [dr for dr in dirs if not dr.startswith('.') and dr not in ('node_modules', '.git', '.cache', 'target', 'build', '.local')]\n                if s:\n                    for dr in dirs:\n                        if s in dr.lower():\n                            full = os.path.join(root, dr)\n                            if full not in seen:\n                                seen.add(full)\n                                res.append({'name': dr, 'path': full, 'isDir': True})\n                                if len(res) >= 40: break\n                for fn in files:\n                    if fn.startswith('.'): continue\n                    if not s or s in fn.lower():\n                        full = os.path.join(root, fn)\n                        if full not in seen:\n                            seen.add(full)\n                            res.append({'name': fn, 'path': full, 'isDir': False})\n                            if len(res) >= 40: break\n                if len(res) >= 40: break\n        except Exception: pass\n        if len(res) >= 40: break\nprint(json.dumps(res[:40]))"
+
+    Process {
+        id: fileSearchProcess
+        running: false
+        command: []
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    if (this.text && this.text.trim().length > 0) {
+                        let parsed = JSON.parse(this.text);
+                        let items = [];
+                        for (let i = 0; i < parsed.length; i++) {
+                            let p = parsed[i];
+                            items.push({
+                                name: p.name,
+                                description: p.path,
+                                desktop_id: "",
+                                icon: "",
+                                fontIcon: launcherWindow.getFileFontIcon(p.name, p.isDir),
+                                score: 0,
+                                isCommand: false,
+                                command: "",
+                                isCalc: false,
+                                calcResult: "",
+                                isWidget: false,
+                                widgetTarget: "",
+                                isFile: true,
+                                filePath: p.path,
+                                isDir: p.isDir
+                            });
+                        }
+                        if (launcherWindow.currentTabIndex === 1) {
+                            launcherWindow.applyModelItems(items);
+                        }
+                    } else if (launcherWindow.currentTabIndex === 1) {
+                        launcherWindow.applyModelItems([]);
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    function getFileFontIcon(name, isDir) {
+        if (isDir) return "󰉋";
+        let ext = name.split(".").pop().toLowerCase();
+        if (["png", "jpg", "jpeg", "webp", "gif", "svg"].indexOf(ext) !== -1) return "󰋩";
+        if (["mp4", "mkv", "webm", "avi", "mov"].indexOf(ext) !== -1) return "󰕧";
+        if (["mp3", "wav", "flac", "ogg", "m4a"].indexOf(ext) !== -1) return "󰎆";
+        if (["zip", "tar", "gz", "xz", "7z", "rar", "bz2"].indexOf(ext) !== -1) return "󰛫";
+        if (["pdf"].indexOf(ext) !== -1) return "󰈦";
+        if (["js", "ts", "qml", "py", "sh", "rs", "c", "cpp", "h", "json", "html", "css", "nix"].indexOf(ext) !== -1) return "󰅩";
+        if (["txt", "md", "doc", "docx", "odt"].indexOf(ext) !== -1) return "󰈙";
+        return "󰈔";
     }
 
     Timer {
@@ -365,8 +492,27 @@ PanelWindow {
         }
     }
 
+    Timer {
+        id: fileDebounceTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            executeFileSearch(launcherWindow.pendingQuery);
+        }
+    }
+
+    Timer {
+        id: emojiDebounceTimer
+        interval: 60
+        repeat: false
+        onTriggered: {
+            executeEmojiFilter(launcherWindow.pendingQuery);
+        }
+    }
+
     onIsVisibleChanged: {
         if (isVisible) {
+            tabSwitch.currentIndex = launcherWindow.currentTabIndex;
             restartItemsIntro();
             if (!launcherWindow.appsLoaded) {
                 launcherWindow.loadApps();
@@ -375,9 +521,19 @@ PanelWindow {
             if (searchInput.text !== "") {
                 searchInput.clear();
                 filterDebounceTimer.stop();
-                executeFilter("");
+                fileDebounceTimer.stop();
+                emojiDebounceTimer.stop();
             } else {
                 filterDebounceTimer.stop();
+                fileDebounceTimer.stop();
+                emojiDebounceTimer.stop();
+            }
+            if (launcherWindow.currentTabIndex === 0) {
+                executeFilter("");
+            } else if (launcherWindow.currentTabIndex === 1) {
+                executeFileSearch("");
+            } else {
+                executeEmojiFilter("");
             }
             if (launcherWindow.smartRanking && !rankFetcher.running) {
                 rankFetcher.running = true;
@@ -391,11 +547,17 @@ PanelWindow {
             introItems = 0.0;
             launcherWindow.appsLoaded = false;
             appList.resetScroll();
+            emojiGrid.resetScroll();
             filterDebounceTimer.stop();
+            fileDebounceTimer.stop();
+            emojiDebounceTimer.stop();
             focusTimer.stop();
             focusRetryTimer.stop();
             focusFinalTimer.stop();
             keyboardNavTimer.stop();
+            if (fileSearchProcess.running) {
+                fileSearchProcess.running = false;
+            }
             if (launcherWindow.smartRanking) {
                 loadApps();
                 executeFilter("");
@@ -482,7 +644,10 @@ PanelWindow {
                     isCalc: false,
                     calcResult: "",
                     isWidget: false,
-                    widgetTarget: ""
+                    widgetTarget: "",
+                    isFile: false,
+                    filePath: "",
+                    isDir: false
                 });
             }
         }
@@ -509,7 +674,10 @@ PanelWindow {
                 isCalc: false,
                 calcResult: "",
                 isWidget: true,
-                widgetTarget: w.id
+                widgetTarget: w.id,
+                isFile: false,
+                filePath: "",
+                isDir: false
             });
         }
 
@@ -536,9 +704,80 @@ PanelWindow {
         id: appModel
     }
 
+    ListModel {
+        id: emojiModel
+    }
+
     function filterApps(query) {
         launcherWindow.pendingQuery = query;
         filterDebounceTimer.restart();
+    }
+
+    function filterFiles(query) {
+        launcherWindow.pendingQuery = query;
+        fileDebounceTimer.restart();
+    }
+
+    function filterEmojis(query) {
+        launcherWindow.pendingQuery = query;
+        emojiDebounceTimer.restart();
+    }
+
+    function executeEmojiFilter(query) {
+        launcherWindow.isKeyboardNav = false;
+        if (keyboardNavTimer.running) keyboardNavTimer.stop();
+
+        let results = EmojiData.search(query ? query.trim() : "", 150);
+        applyEmojiModelItems(results);
+    }
+
+    function applyEmojiModelItems(filtered) {
+        let minCount = Math.min(emojiModel.count, filtered.length);
+        for (let i = 0; i < minCount; i++) {
+            let cur = emojiModel.get(i);
+            let target = filtered[i];
+            if (cur.emoji !== target.emoji || cur.name !== target.name || cur.category !== target.category) {
+                emojiModel.set(i, {
+                    emoji: target.emoji,
+                    name: target.name,
+                    category: target.category,
+                    keywordsText: target.keywords ? target.keywords.join(", ") : ""
+                });
+            }
+        }
+
+        if (emojiModel.count > filtered.length) {
+            for (let i = emojiModel.count - 1; i >= filtered.length; i--) {
+                emojiModel.remove(i);
+            }
+        } else if (emojiModel.count < filtered.length) {
+            for (let i = emojiModel.count; i < filtered.length; i++) {
+                let target = filtered[i];
+                emojiModel.append({
+                    emoji: target.emoji,
+                    name: target.name,
+                    category: target.category,
+                    keywordsText: target.keywords ? target.keywords.join(", ") : ""
+                });
+            }
+        }
+
+        emojiGrid.resetScroll();
+        if (emojiModel.count > 0) {
+            emojiGrid.currentIndex = 0;
+        } else {
+            emojiGrid.currentIndex = -1;
+        }
+    }
+
+    function executeFileSearch(query) {
+        launcherWindow.isKeyboardNav = false;
+        if (keyboardNavTimer.running) keyboardNavTimer.stop();
+        if (fileSearchProcess.running) {
+            fileSearchProcess.running = false;
+        }
+        fileSearchProcess.command = ["python3", "-c", launcherWindow.fileSearchScript, query ? query.trim() : ""];
+        fileSearchProcess.running = true;
     }
 
     function isSubsequence(sub, str) {
@@ -551,6 +790,49 @@ PanelWindow {
             j++;
         }
         return i === sub.length;
+    }
+
+    function applyModelItems(filtered) {
+        let minCount = Math.min(appModel.count, filtered.length);
+        for (let i = 0; i < minCount; i++) {
+            let cur = appModel.get(i);
+            let target = filtered[i];
+            if (cur.name !== target.name
+                || cur.desktop_id !== target.desktop_id
+                || cur.description !== target.description
+                || cur.icon !== target.icon
+                || cur.fontIcon !== target.fontIcon
+                || cur.score !== target.score
+                || cur.command !== target.command
+                || cur.calcResult !== target.calcResult
+                || cur.isCommand !== target.isCommand
+                || cur.isCalc !== target.isCalc
+                || cur.isWidget !== target.isWidget
+                || cur.widgetTarget !== target.widgetTarget
+                || cur.isFile !== target.isFile
+                || cur.filePath !== target.filePath
+                || cur.isDir !== target.isDir) {
+                appModel.set(i, target);
+            }
+        }
+
+        if (appModel.count > filtered.length) {
+            for (let i = appModel.count - 1; i >= filtered.length; i--) {
+                appModel.remove(i);
+            }
+        } else if (appModel.count < filtered.length) {
+            for (let i = appModel.count; i < filtered.length; i++) {
+                appModel.append(filtered[i]);
+            }
+        }
+
+        appList.resetScroll();
+
+        if (appModel.count > 0) {
+            appList.currentIndex = 0;
+        } else {
+            appList.currentIndex = -1;
+        }
     }
 
     function executeFilter(query) {
@@ -576,7 +858,10 @@ PanelWindow {
                     isCalc: false,
                     calcResult: "",
                     isWidget: false,
-                    widgetTarget: ""
+                    widgetTarget: "",
+                    isFile: false,
+                    filePath: "",
+                    isDir: false
                 });
             } else {
                 filtered.push({
@@ -591,7 +876,10 @@ PanelWindow {
                     isCalc: false,
                     calcResult: "",
                     isWidget: false,
-                    widgetTarget: ""
+                    widgetTarget: "",
+                    isFile: false,
+                    filePath: "",
+                    isDir: false
                 });
             }
         }
@@ -610,7 +898,10 @@ PanelWindow {
                 isCalc: true,
                 calcResult: mathResult,
                 isWidget: false,
-                widgetTarget: ""
+                widgetTarget: "",
+                isFile: false,
+                filePath: "",
+                isDir: false
             });
         }
 
@@ -656,7 +947,10 @@ PanelWindow {
                     isCalc: false,
                     calcResult: "",
                     isWidget: app.isWidget || false,
-                    widgetTarget: app.widgetTarget || ""
+                    widgetTarget: app.widgetTarget || "",
+                    isFile: false,
+                    filePath: "",
+                    isDir: false
                 });
             }
         }
@@ -670,49 +964,37 @@ PanelWindow {
             });
         }
 
-        let minCount = Math.min(appModel.count, filtered.length);
-        for (let i = 0; i < minCount; i++) {
-            let cur = appModel.get(i);
-            let target = filtered[i];
-            if (cur.name !== target.name
-                || cur.desktop_id !== target.desktop_id
-                || cur.description !== target.description
-                || cur.icon !== target.icon
-                || cur.fontIcon !== target.fontIcon
-                || cur.score !== target.score
-                || cur.command !== target.command
-                || cur.calcResult !== target.calcResult
-                || cur.isCommand !== target.isCommand
-                || cur.isCalc !== target.isCalc
-                || cur.isWidget !== target.isWidget
-                || cur.widgetTarget !== target.widgetTarget) {
-                appModel.set(i, target);
-            }
-        }
-
-        if (appModel.count > filtered.length) {
-            for (let i = appModel.count - 1; i >= filtered.length; i--) {
-                appModel.remove(i);
-            }
-        } else if (appModel.count < filtered.length) {
-            for (let i = appModel.count; i < filtered.length; i++) {
-                appModel.append(filtered[i]);
-            }
-        }
-
-        appList.resetScroll();
-
-        if (appModel.count > 0) {
-            appList.currentIndex = 0;
-        } else {
-            appList.currentIndex = -1;
-        }
+        applyModelItems(filtered);
     }
 
     function activateIndex(index) {
         if (index < 0 || index >= appModel.count) return;
         let item = appModel.get(index);
         if (!item) return;
+
+        if (item.isFile) {
+            let script = "p=\"$1\"\n"
+                + "if [ -d \"$p\" ]; then\n"
+                + "  xdg-open \"$p\"\n"
+                + "  exit 0\n"
+                + "fi\n"
+                + "mime=$(xdg-mime query filetype \"$p\" 2>/dev/null)\n"
+                + "handler=\"\"\n"
+                + "if [ -n \"$mime\" ]; then\n"
+                + "  handler=$(xdg-mime query default \"$mime\" 2>/dev/null)\n"
+                + "fi\n"
+                + "if [ -n \"$handler\" ]; then\n"
+                + "  xdg-open \"$p\" 2>/dev/null && exit 0\n"
+                + "fi\n"
+                + "if command -v nautilus >/dev/null 2>&1; then\n"
+                + "  nautilus --select \"$p\" >/dev/null 2>&1 &\n"
+                + "else\n"
+                + "  xdg-open \"$(dirname \"$p\")\" >/dev/null 2>&1 &\n"
+                + "fi";
+            Quickshell.execDetached(["bash", "-c", script, "_", item.filePath]);
+            closeLauncher();
+            return;
+        }
 
         if (item.isCommand) {
             if (item.command && item.command.trim().length > 0) {
@@ -736,6 +1018,14 @@ PanelWindow {
         }
 
         launchApp(item.name, item.desktop_id);
+    }
+
+    function activateEmoji(index) {
+        if (index < 0 || index >= emojiModel.count) return;
+        let item = emojiModel.get(index);
+        if (!item) return;
+        Quickshell.execDetached(["wl-copy", "--", item.emoji]);
+        closeLauncher();
     }
 
     function launchWidget(widgetName, widgetTarget) {
@@ -1146,6 +1436,7 @@ PanelWindow {
                     id: searchInput
                     z: 10
                     focus: true
+                    Keys.priority: Keys.BeforeItem
                     anchors.left: parent.left
                     anchors.right: parent.right
                     y: contentContainer.isSearchAtBottom ? Math.max(0, parent.height - height) : 0
@@ -1160,27 +1451,83 @@ PanelWindow {
                     fontPixelSize: launcherWindow.s(12)
                     charSpacing: 1
 
-                    placeholderText: typeof I18n !== "undefined" ? I18n.t("applauncher.placeholder", "Start with > for a command...") : "Start with > for a command..."
+                    placeholderText: {
+                        if (launcherWindow.currentTabIndex === 1) {
+                            return typeof I18n !== "undefined" ? I18n.t("applauncher.placeholder_files", "Search files or enter path...") : "Search files or enter path...";
+                        } else if (launcherWindow.currentTabIndex === 2) {
+                            return typeof I18n !== "undefined" ? I18n.t("applauncher.placeholder_emojis", "Search emojis by name or keyword...") : "Search emojis by name or keyword...";
+                        }
+                        return typeof I18n !== "undefined" ? I18n.t("applauncher.placeholder", "Start with > for a command...") : "Start with > for a command...";
+                    }
                     showClearButton: true
 
-                    onTextEdited: function(newText) {
-                        filterApps(newText);
+                    onHasFocusChanged: {
+                        if (!searchInput.hasFocus && launcherWindow.isVisible) {
+                            if (launcherWindow.currentTabIndex === 2) {
+                                emojiGrid.forceActiveFocus();
+                            } else {
+                                appList.forceActiveFocus();
+                            }
+                        }
                     }
-                    onCleared: filterApps("")
+
+                    onTextEdited: function(newText) {
+                        if (launcherWindow.currentTabIndex === 0) {
+                            filterApps(newText);
+                        } else if (launcherWindow.currentTabIndex === 1) {
+                            filterFiles(newText);
+                        } else {
+                            filterEmojis(newText);
+                        }
+                    }
+                    onCleared: {
+                        if (launcherWindow.currentTabIndex === 0) {
+                            filterApps("");
+                        } else if (launcherWindow.currentTabIndex === 1) {
+                            filterFiles("");
+                        } else {
+                            filterEmojis("");
+                        }
+                    }
+
+                    Keys.onTabPressed: function(event) {
+                        launcherWindow.currentTabIndex = (launcherWindow.currentTabIndex + 1) % 3;
+                        tabSwitch.currentIndex = launcherWindow.currentTabIndex;
+                        event.accepted = true;
+                    }
+                    Keys.onBacktabPressed: function(event) {
+                        launcherWindow.currentTabIndex = (launcherWindow.currentTabIndex + 2) % 3;
+                        tabSwitch.currentIndex = launcherWindow.currentTabIndex;
+                        event.accepted = true;
+                    }
 
                     function moveSelectionDown() {
                         launcherWindow.isKeyboardNav = true;
                         keyboardNavTimer.restart();
-                        if (appList.currentIndex < appModel.count - 1) {
-                            appList.currentIndex++;
+                        if (launcherWindow.currentTabIndex === 2) {
+                            if (emojiGrid.currentIndex + 5 < emojiModel.count) {
+                                emojiGrid.currentIndex += 5;
+                            } else if (emojiGrid.currentIndex < emojiModel.count - 1) {
+                                emojiGrid.currentIndex = emojiModel.count - 1;
+                            }
+                        } else {
+                            if (appList.currentIndex < appModel.count - 1) {
+                                appList.currentIndex++;
+                            }
                         }
                     }
 
                     function moveSelectionUp() {
                         launcherWindow.isKeyboardNav = true;
                         keyboardNavTimer.restart();
-                        if (appList.currentIndex > 0) {
-                            appList.currentIndex--;
+                        if (launcherWindow.currentTabIndex === 2) {
+                            if (emojiGrid.currentIndex >= 5) {
+                                emojiGrid.currentIndex -= 5;
+                            }
+                        } else {
+                            if (appList.currentIndex > 0) {
+                                appList.currentIndex--;
+                            }
                         }
                     }
 
@@ -1192,8 +1539,32 @@ PanelWindow {
                         moveSelectionUp();
                         event.accepted = true;
                     }
+                    Keys.onLeftPressed: function(event) {
+                        if (launcherWindow.currentTabIndex === 2) {
+                            launcherWindow.isKeyboardNav = true;
+                            keyboardNavTimer.restart();
+                            if (emojiGrid.currentIndex > 0) {
+                                emojiGrid.currentIndex--;
+                            }
+                            event.accepted = true;
+                        }
+                    }
+                    Keys.onRightPressed: function(event) {
+                        if (launcherWindow.currentTabIndex === 2) {
+                            launcherWindow.isKeyboardNav = true;
+                            keyboardNavTimer.restart();
+                            if (emojiGrid.currentIndex < emojiModel.count - 1) {
+                                emojiGrid.currentIndex++;
+                            }
+                            event.accepted = true;
+                        }
+                    }
                     Keys.onReturnPressed: function(event) {
-                        activateIndex(appList.currentIndex);
+                        if (launcherWindow.currentTabIndex === 2) {
+                            activateEmoji(emojiGrid.currentIndex);
+                        } else {
+                            activateIndex(appList.currentIndex);
+                        }
                         event.accepted = true;
                     }
                     Keys.onEscapePressed: function(event) {
@@ -1217,13 +1588,40 @@ PanelWindow {
                     }
                 }
 
+                Switch {
+                    id: tabSwitch
+                    z: 10
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    y: contentContainer.isSearchAtBottom
+                       ? (searchInput.y - height - launcherWindow.s(8))
+                       : (searchInput.y + searchInput.height + launcherWindow.s(8))
+                    height: launcherWindow.s(28)
+                    cornerRadius: ThemeBackend.borderRadius
+                    fontPixelSize: launcherWindow.s(11)
+                    baseColor: ThemeBackend.surface0
+                    accentColor: ThemeBackend.mauve
+                    textColor: ThemeBackend.text
+                    activeTextColor: ThemeBackend.crust
+                    options: [launcherWindow.tabAppsTitle, launcherWindow.tabFilesTitle, launcherWindow.tabEmojisTitle]
+                    currentIndex: launcherWindow.currentTabIndex
+                    onValueChanged: function(index, value) {
+                        launcherWindow.currentTabIndex = index;
+                    }
+                    onToggled: function(index) {
+                        launcherWindow.currentTabIndex = index;
+                    }
+                }
+
                 Item {
                     id: listContainer
                     z: 1
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    y: contentContainer.isSearchAtBottom ? 0 : (searchInput.height + launcherWindow.s(10))
-                    height: Math.max(0, parent.height - searchInput.height - launcherWindow.s(10))
+                    y: contentContainer.isSearchAtBottom ? 0 : (tabSwitch.y + tabSwitch.height + launcherWindow.s(8))
+                    height: contentContainer.isSearchAtBottom
+                            ? Math.max(0, tabSwitch.y - launcherWindow.s(8))
+                            : Math.max(0, parent.height - y)
                     clip: true
 
                     opacity: launcherWindow.isCentered
@@ -1241,14 +1639,24 @@ PanelWindow {
                     ListView {
                         id: appList
                         anchors.fill: parent
+                        visible: launcherWindow.currentTabIndex !== 2
                         clip: true
                         model: appModel
                         spacing: launcherWindow.s(4)
                         currentIndex: 0
                         boundsBehavior: Flickable.StopAtBounds
                         cacheBuffer: launcherWindow.s(500)
-
                         highlightFollowsCurrentItem: false
+
+                        Keys.forwardTo: [searchInput]
+
+                        Keys.onPressed: function(event) {
+                            if (event.text && event.text.length > 0 && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Escape && event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab) {
+                                launcherWindow.grabInputFocus();
+                                searchInput.text += event.text;
+                                event.accepted = true;
+                            }
+                        }
 
                         function getItemY(idx) {
                             return idx * (launcherWindow.s(44) + spacing);
@@ -1524,6 +1932,201 @@ PanelWindow {
                                         activateIndex(index);
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    GridView {
+                        id: emojiGrid
+                        anchors.fill: parent
+                        visible: launcherWindow.currentTabIndex === 2
+                        clip: true
+                        model: emojiModel
+                        cellWidth: width / 5
+                        cellHeight: launcherWindow.s(60)
+                        currentIndex: 0
+                        boundsBehavior: Flickable.StopAtBounds
+                        cacheBuffer: launcherWindow.s(400)
+                        highlightFollowsCurrentItem: false
+
+                        Keys.forwardTo: [searchInput]
+
+                        Keys.onPressed: function(event) {
+                            if (event.text && event.text.length > 0 && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Escape && event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab) {
+                                launcherWindow.grabInputFocus();
+                                searchInput.text += event.text;
+                                event.accepted = true;
+                            }
+                        }
+
+                        function resetScroll() {
+                            emojiScrollAnim.stop();
+                            contentY = 0;
+                        }
+
+                        onContentYChanged: {
+                            if (contentY < 0 && !moving && !flicking) {
+                                contentY = 0;
+                            }
+                        }
+
+                        function ensureVisible(idx, animated) {
+                            if (idx < 0 || emojiModel.count === 0) return;
+                            let row = Math.floor(idx / 5);
+                            let rowH = cellHeight;
+                            let itemTop = row * rowH;
+                            let itemBottom = itemTop + rowH;
+
+                            let curContentY = emojiScrollAnim.running ? emojiScrollAnim.to : contentY;
+                            let totalRows = Math.ceil(emojiModel.count / 5);
+                            let totalH = Math.max(0, totalRows * rowH);
+                            let maxScroll = Math.max(0, totalH - height);
+                            let newContentY = curContentY;
+
+                            if (itemTop < curContentY) {
+                                newContentY = itemTop;
+                            } else if (itemBottom > curContentY + height) {
+                                newContentY = itemBottom - height;
+                            }
+
+                            newContentY = Math.max(0, Math.min(maxScroll, newContentY));
+
+                            if (Math.abs(newContentY - contentY) > 0.5) {
+                                if (animated) {
+                                    emojiScrollAnim.stop();
+                                    emojiScrollAnim.from = contentY;
+                                    emojiScrollAnim.to = newContentY;
+                                    emojiScrollAnim.start();
+                                } else {
+                                    emojiScrollAnim.stop();
+                                    contentY = newContentY;
+                                }
+                            }
+                        }
+
+                        onCurrentIndexChanged: {
+                            if (currentIndex >= 0) {
+                                ensureVisible(currentIndex, launcherWindow.isKeyboardNav);
+                            }
+                        }
+
+                        NumberAnimation {
+                            id: emojiScrollAnim
+                            target: emojiGrid
+                            property: "contentY"
+                            duration: 220
+                            easing.type: Easing.OutCubic
+                        }
+
+                        delegate: Item {
+                            id: emojiDelegateRoot
+                            width: emojiGrid.cellWidth
+                            height: emojiGrid.cellHeight
+                            clip: false
+
+                            readonly property bool isSelected: index === emojiGrid.currentIndex
+
+                            opacity: launcherWindow.getItemOpacity(Math.floor(index / 5))
+                            transform: Translate {
+                                y: launcherWindow.s(15) * (1.0 - launcherWindow.getItemProgress(Math.floor(index / 5)))
+                            }
+
+                            Item {
+                                id: emojiDelegateContent
+                                anchors.fill: parent
+                                anchors.margins: launcherWindow.s(3)
+
+                                scale: emojiMa.pressed ? 0.92 : (emojiDelegateRoot.isSelected ? 1.04 : (emojiMa.containsMouse ? 1.02 : 1.0))
+                                Behavior on scale {
+                                    NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.25 }
+                                }
+
+                                Rectangle {
+                                    id: emojiBg
+                                    anchors.fill: parent
+                                    radius: ThemeBackend.borderRadius
+                                    color: emojiDelegateRoot.isSelected
+                                           ? ThemeBackend.mauve
+                                           : (emojiMa.containsMouse ? Qt.alpha(ThemeBackend.surface1, 0.7) : Qt.alpha(ThemeBackend.surface0, 0.45))
+                                    border.width: emojiDelegateRoot.isSelected ? 0 : 1
+                                    border.color: emojiDelegateRoot.isSelected ? "transparent" : Qt.alpha(ThemeBackend.surface2, 0.3)
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: launcherWindow.s(4)
+                                    spacing: launcherWindow.s(1)
+
+                                    Text {
+                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                        text: model.emoji
+                                        font.pixelSize: launcherWindow.s(22)
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                                        text: model.name
+                                        font.family: ThemeBackend.fontFamily
+                                        font.pixelSize: launcherWindow.s(9)
+                                        font.weight: emojiDelegateRoot.isSelected ? Font.Bold : Font.Normal
+                                        color: emojiDelegateRoot.isSelected ? ThemeBackend.crust : ThemeBackend.subtext0
+                                        elide: Text.ElideRight
+                                        horizontalAlignment: Text.AlignHCenter
+                                        maximumLineCount: 1
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: emojiMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        launcherWindow.isKeyboardNav = false;
+                                        emojiGrid.currentIndex = index;
+                                        activateEmoji(index);
+                                    }
+                                    onEntered: {
+                                        if (!launcherWindow.isKeyboardNav) {
+                                            emojiGrid.currentIndex = index;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        anchors.centerIn: parent
+                        visible: launcherWindow.currentTabIndex === 2 && emojiModel.count === 0
+                        width: parent.width
+                        height: launcherWindow.s(60)
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: launcherWindow.s(6)
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "🔍"
+                                font.pixelSize: launcherWindow.s(24)
+                            }
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: typeof I18n !== "undefined" ? I18n.t("applauncher.no_emojis_found", "No emojis found") : "No emojis found"
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: launcherWindow.s(12)
+                                color: ThemeBackend.subtext0
                             }
                         }
                     }
