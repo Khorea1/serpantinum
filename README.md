@@ -17,6 +17,23 @@
 
 ---
 
+## Fork differences
+
+This fork builds on the original [Serpantinum](https://github.com/ilyamiro/serpantinum). This comparison is against upstream commit [4ab43a3f023b44f336812bd32d2828ea89118b0a](https://github.com/ilyamiro/serpantinum/commit/4ab43a3f023b44f336812bd32d2828ea89118b0a), not a claim about the latest upstream state.
+
+| Area | Upstream baseline | This fork |
+|---|---|---|
+| Symbol picker | No unified emoji/glyph/kaomoji picker in this revision. | Adds one picker with emoji, Nerd Font glyph, and kaomoji tabs, search, keyboard navigation, and frequently used items. See the [picker source](src/quickshell/emoji/Emoji.qml). |
+| Notifications | Already includes notifications and a Notification Center. | Extends the existing center with text, app, and date filters; grouped history; unread tracking; bulk, per-item, and group dismissal; and timed Do Not Disturb snoozes. See [NotificationCenter.qml](src/quickshell/notifications/NotificationCenter.qml). |
+| Fonts | Discovers bundled fonts and files in Serpantinum's user-state directory. | Adds system fonts through Fontconfig alongside fonts in the user-state directory; selected font files are still loaded by the shell. See [ThemeBackend.qml](src/quickshell/singletons/theme/ThemeBackend.qml). |
+| Wallpapers | Uses the QML wallpaper surface. | Adds optional `wallpaperBackend = "awww"` for static images. QML remains the default backend and continues to handle video wallpapers. See [Wallpaper.qml](src/quickshell/singletons/theme/Wallpaper.qml). |
+| Bar and widgets | Includes workspace indicators and a media widget. | Refines workspace and widget transitions, uses square workspace indicators, and collapses the media widget when there is no active media. |
+
+> [!NOTE]
+> The installation instructions below still select the original upstream repository: the Arch command downloads its installer, the Nix flake input is `github:ilyamiro/serpantinum`, and the installer defaults to `ilyamiro/serpantinum`. They do not install this fork.
+
+---
+
 ## Installation
 
 > [!IMPORTANT]
