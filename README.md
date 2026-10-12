@@ -36,7 +36,7 @@ This fork builds on the original [Serpantinum](https://github.com/ilyamiro/serpa
 > [!NOTE]
 > The installation instructions below still select the original upstream repository: the Arch command downloads its installer, the Nix flake input is `github:ilyamiro/serpantinum`, and the installer defaults to `ilyamiro/serpantinum`. They do not install this fork.
 
-On Hyprland, add `"expose"` to your bar's configured module list to show a dedicated overview button. Click it to view window previews, use the arrow keys to navigate, press Enter to focus the selection, or Escape to close. The overview needs Quickshell's Wayland screencopy capability and `hyprctl` for activation. It never edits compositor keybindings or starts automatically.
+On Hyprland, open **Guide → Bar → Modules** and drag **Window overview** from the available modules into the bar layout, or add `"expose"` to your bar's configured module list. It is opt-in and will not appear in existing bar layouts until enabled. Click it to view window previews, use the arrow keys to navigate, press Enter to focus the selection, or Escape to close. The overview needs Quickshell's Wayland screencopy capability and `hyprctl` for activation. It never edits compositor keybindings or starts automatically.
 
 ---
 
