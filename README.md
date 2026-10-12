@@ -40,6 +40,12 @@ On Hyprland, add `"expose"` to your bar's configured module list to show a dedic
 
 ---
 
+### Optional compact system info bar module
+
+The `sysinfo` module, adapted from serpantinum-plus, adds a compact CPU/RAM/temperature readout to a horizontal bar and a system-monitor button to a vertical bar. Add **System info** in the bar's module layout editor. Existing `sysmon` layouts are unchanged. The readout uses the shared `SysData` sampler and does not start a separate polling script.
+
+Clicking the module can launch a terminal system monitor. Set `bar.sysinfoCommand` in the existing settings JSON to an **array of executable arguments**, for example `["foot", "-e", "btop"]`, `["alacritty", "-e", "btop"]`, or `["kitty", "-e", "btop"]`. The command is optional: without it, the module displays statistics but clicking does nothing. The configured terminal and `btop` must be installed. Strings or shell command lines are not accepted.
+
 ## Installation
 
 > [!IMPORTANT]

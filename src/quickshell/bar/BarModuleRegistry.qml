@@ -161,6 +161,13 @@ QtObject {
             horizontalFace: "faces/sysmon/SysMonFace.qml",
             verticalFace: "faces/sysmon/SideSysMonFace.qml"
         },
+        "sysinfo": {
+            name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.sysinfo", "System Info") : "System Info",
+            icon: "󰍛",
+            defaultVariant: "default",
+            horizontalFace: "faces/sysinfo/SysInfoFace.qml",
+            verticalFace: "faces/sysinfo/SideSysInfoFace.qml"
+        },
         "kb": {
             name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.keyboard", "Keyboard") : "Keyboard",
             icon: "󰌌",

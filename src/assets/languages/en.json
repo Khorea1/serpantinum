@@ -313,6 +313,7 @@
         "focus": "Focus",
         "expose": "Window overview",
         "sysmon": "System monitor",
+        "sysinfo": "System info",
         "timedate": {
           "name": "Time & Date",
           "style": {
