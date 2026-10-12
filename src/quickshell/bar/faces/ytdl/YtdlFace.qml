@@ -469,7 +469,12 @@ Item {
         anchor.window: root.barWindow
         anchor.rect.x: root.popupX
         anchor.rect.y: root.popupY
+        // Niri/Sway use the Wayland popup grab; Hyprland retains its focus grab.
+        grabFocus: !root.isHyprland
         visible: root.open && root.barWindow !== null
+        onVisibleChanged: {
+            if (!visible && root.open && !root.isHyprland) root.open = false
+        }
         color: "transparent"
         implicitWidth: root.px(360)
         implicitHeight: col.implicitHeight + root.px(28)
