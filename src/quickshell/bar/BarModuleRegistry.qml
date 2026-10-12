@@ -140,6 +140,13 @@ QtObject {
             horizontalFace: "faces/weather/WeatherFace.qml",
             verticalFace: "faces/weather/SideWeatherFace.qml"
         },
+        "ytdl": {
+            name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.ytdl") : "Downloader",
+            icon: "󰇚",
+            defaultVariant: "default",
+            horizontalFace: "faces/ytdl/YtdlFace.qml",
+            verticalFace: "faces/ytdl/YtdlFace.qml"
+        },
         "sysmon": {
             name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.sysmon", "System Monitor") : "System Monitor",
             icon: "󰍛",

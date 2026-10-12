@@ -191,6 +191,44 @@ end)
 ```
 ---
 
+## Optional video downloader bar module
+
+The `ytdl` module adds video, audio, playlist and subtitle downloads using
+`yt-dlp` and `ffmpeg`. Install both executables separately, and install `wl-paste`
+(for the paste button) and `notify-send` (for completion notifications) if needed.
+These are optional dependencies; the module is disabled until explicitly added
+to your bar configuration.
+
+Add `ytdl` to a `bar.modules` group, for example:
+
+```json
+{
+  "bar": {
+    "modules": {
+      "right": ["tray", "ytdl", ["kb", "wifi", "bt", "vol", "bat"]]
+    },
+    "ytdl": {
+      "downloadDir": "/home/username/Downloads/YT"
+    }
+  }
+}
+```
+
+This is a partial configuration example: keep your existing `left`, `center`,
+and other bar settings. `bar.ytdl.downloadDir` is optional and must be an
+absolute path. By default, downloads go into
+`~/Downloads/YT/{Video,Audio,Transcript}`. Downloads and transcript files use
+separate subdirectories. The module works on top, bottom, left and right bars;
+on Hyprland, outside clicks also dismiss its panel.
+
+The UI module was adapted from
+[Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
+(commit `1a4d80b`); its original implementation credits
+[dlpwaters/omarchy-yt-downloader](https://github.com/dlpwaters/omarchy-yt-downloader)
+(MIT).
+
+---
+
 ## Running
 
 To run the shell, launch `serpantinumd start`
