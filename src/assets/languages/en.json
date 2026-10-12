@@ -964,7 +964,8 @@
       "system": "System usage",
       "timer": "Timer",
       "snake": "Snake",
-      "dropshelf": "Drop Shelf"
+      "dropshelf": "Drop Shelf",
+      "music": "Music"
     },
     "dropshelf": {
       "title": "Drop Shelf",
@@ -989,6 +990,20 @@
       "description": "Original files stay in place. Images are saved privately. Links can be opened or dragged elsewhere.",
       "file": "File",
       "link_badge": "LINK"
+    },
+    "music": {
+      "now_playing": "NOW PLAYING",
+      "nothing_playing": "Nothing playing",
+      "track_one": "1 track",
+      "track_count": "{count} tracks",
+      "library": "LIBRARY",
+      "no_music": "No music found in\n{dir}",
+      "scan_error": "Could not scan music folder",
+      "missing_mpv": "Install mpv to play local music",
+      "start_error": "Could not start mpv",
+      "play_error": "Could not play this file",
+      "empty_playlist": "mpv returned an empty playlist",
+      "mpv_exit": "mpv exited (code {code})"
     },
     "snake": {
       "endless": "Endless",

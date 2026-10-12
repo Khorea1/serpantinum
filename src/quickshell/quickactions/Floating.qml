@@ -248,6 +248,11 @@ Variants {
                 let settings = Config.getSetting("quickactions", {});
                 return settings && settings.dropShelfEnabled === true;
             }
+            property bool musicEnabled: {
+                let revision = configRevision;
+                let settings = Config.getSetting("quickactions", {});
+                return settings && settings.musicEnabled === true;
+            }
             property var tabModules: {
                 let tabs = [
                     { id: "draw", file: "actions/DrawAction.qml", label: I18n.t("quickactions.tabs.draw"), icon: "󰏘", lazy: false },
@@ -259,6 +264,9 @@ Variants {
                 }
                 if (dropShelfEnabled) {
                     tabs.push({ id: "dropshelf", file: "actions/DropShelf.qml", label: I18n.t("quickactions.tabs.dropshelf"), icon: "󰉋", lazy: true });
+                }
+                if (musicEnabled) {
+                    tabs.push({ id: "music", file: "actions/Music.qml", label: I18n.t("quickactions.tabs.music"), icon: "󰎆", lazy: true });
                 }
                 return tabs;
             }
