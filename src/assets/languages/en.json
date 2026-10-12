@@ -305,6 +305,7 @@
         "battery": "Battery",
         "focus": "Focus",
         "sysmon": "System monitor",
+        "sysinfo": "System info",
         "timedate": {
           "name": "Time & Date",
           "style": {
