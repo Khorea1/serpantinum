@@ -954,7 +954,32 @@
       "draw": "Drawing",
       "system": "System usage",
       "timer": "Timer",
-      "snake": "Snake"
+      "snake": "Snake",
+      "dropshelf": "Drop Shelf"
+    },
+    "dropshelf": {
+      "title": "Drop Shelf",
+      "empty_status": "Drop files or images here",
+      "count": "{count} items",
+      "cleared": "Shelf cleared. Undo to restore.",
+      "added": "Added {count} items",
+      "links_added": "Added {count} links",
+      "already_added": "Already on the shelf",
+      "busy": "Wait for the current image to finish",
+      "invalid_drop": "Drop a local file, image, or link",
+      "saving_image": "Saving image…",
+      "retrying_image": "Saving image… trying another source",
+      "image_error": "Could not save that image",
+      "image_too_large": "Image exceeds the 12 MiB limit",
+      "save_error": "Could not save the shelf",
+      "image_added": "Image added",
+      "undo": "Undo",
+      "clear": "Clear",
+      "release": "Release to add",
+      "drop_hint": "Drop files, images, or links here",
+      "description": "Original files stay in place. Images are saved privately. Links can be opened or dragged elsewhere.",
+      "file": "File",
+      "link_badge": "LINK"
     },
     "snake": {
       "endless": "Endless",
