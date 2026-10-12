@@ -273,8 +273,8 @@ Variants {
             }
 
             property int tabCount: Math.max(1, tabModules.length)
-            onTabModulesChanged: {
-                if (activeIndex >= tabCount) activeIndex = tabCount - 1;
+            onTabCountChanged: {
+                activeIndex = Math.max(0, Math.min(activeIndex, tabCount - 1));
             }
 
             Connections {
