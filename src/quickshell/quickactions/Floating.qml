@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import "../"
+import "QuickactionsNavigation.js" as Navigation
 
 Variants {
     model: Quickshell.screens
@@ -290,6 +291,10 @@ Variants {
                         floatingWidget.showSystemUsage();
                     }
                 }
+
+                function onQuickActionRequested(screen, action) {
+                    if (floatingWidget.matchesScreen(screen)) floatingWidget.applyQuickAction(action);
+                }
             }
 
             function matchesScreen(targetScreen) {
@@ -313,6 +318,59 @@ Variants {
                 floatingWidget.useGraceTimer = true;
                 floatingWidget.showSidebar(sideEdge, centerPos, true);
                 hideTimer.restart();
+            }
+
+            function closeQuickactions() {
+                edgeTransitionTimer.stop();
+                teleportTimer.stop();
+                peekShowTimer.stop();
+                peekHideTimer.stop();
+                pendingMode = "";
+                isPinned = false;
+                hideTimer.stop();
+                isExpanded = false;
+                isSidebarVisible = false;
+                isPeekVisible = false;
+                useGraceTimer = false;
+                disableAnim = false;
+            }
+
+            function applyQuickAction(action) {
+                if (action === "hide" || (action === "toggle" && (isSidebarVisible || isPinned || pendingMode === "sidebar"))) {
+                    closeQuickactions();
+                    return;
+                }
+                if (action === "show" || action === "toggle") {
+                    if (!isSidebarVisible && pendingMode !== "sidebar") {
+                        let edge = activeEdge === barPosition ? (barPosition === "left" ? "right" : "left") : activeEdge;
+                        let center = (edge === "left" || edge === "right")
+                            ? (topBound + bottomBound) / 2 : (leftBound + rightBound) / 2;
+                        isPinned = false;
+                        isExpanded = false;
+                        showSidebar(edge, center, false);
+                    }
+                    isPinned = true;
+                    hideTimer.stop();
+                    peekHideTimer.stop();
+                    return;
+                }
+                if (!isSidebarVisible || edgeTransitionTimer.running || teleportTimer.running) return;
+                if (action === "nextSection" || action === "previousSection") {
+                    activeIndex = Navigation.sectionIndex(activeIndex, tabCount, activeEdge, action === "nextSection" ? 1 : -1);
+                } else if (action === "expand" || action === "collapse") {
+                    isExpanded = action === "expand";
+                } else if (action === "moveForward" || action === "moveBackward") {
+                    let destination = Navigation.movedPosition(activeEdge, currentPos,
+                        { left: leftBound, right: rightBound, top: topBound, bottom: bottomBound },
+                        barPosition, action === "moveForward" ? 1 : -1);
+                    if (!destination) return;
+                    disableAnim = true;
+                    activeEdge = destination.edge;
+                    currentPos = destination.position;
+                    positionChangeAnimTimer.restart();
+                }
+                if (isPinned) hideTimer.stop();
+                else kickTimer();
             }
 
             function childIntercepts(sequenceStr) {

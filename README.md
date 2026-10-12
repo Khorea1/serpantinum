@@ -321,6 +321,58 @@ Adapted from [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpa
 
 ---
 
+## Optional Quickactions IPC shortcuts
+
+The `quickactions` IPC target controls the Quickactions panel on **one monitor**.
+The second argument is mandatory: either an exact output name (such as
+`DP-1`) or `cursor` to select the monitor currently under the pointer.
+An unknown name, missing selector, or missing cursor screen is rejected instead
+of operating on a different monitor. `cursor` tracks the pointer, not the
+keyboard-focused window. These commands require Quickactions to be enabled in
+the general settings and performance mode to be disabled.
+
+```sh
+serpantinum ipc call quickactions toggle cursor
+serpantinum ipc call quickactions show DP-1
+serpantinum ipc call quickactions nextSection DP-1
+serpantinum ipc call quickactions expand DP-1
+serpantinum ipc call quickactions moveForward DP-1
+serpantinum ipc call quickactions hide DP-1
+```
+
+Other methods: `previousSection`, `collapse`, and `moveBackward`. `toggle`
+and `show` pin the panel until `hide` or another `toggle`. Navigation is
+inactive when the panel is closed. Moving changes its position along the screen
+perimeter, skipping the edge occupied by the bar. The active tab is preserved
+when hiding or moving. All shortcuts are **opt-in**; nothing modifies the
+compositor configuration automatically.
+
+Examples to add manually to the appropriate compositor's keybinding file:
+
+```lua
+-- Hyprland (compositors/hyprland/config/keybinds.lua)
+hl.bind("ALT + Home", hl.dsp.exec_cmd("serpantinum ipc call quickactions toggle cursor"))
+hl.bind("ALT + End", hl.dsp.exec_cmd("serpantinum ipc call quickactions nextSection cursor"))
+```
+
+```kdl
+// Niri (inside the binds { ... } block in config/keybinds.kdl)
+Alt+Home { spawn "serpantinum" "ipc" "call" "quickactions" "toggle" "cursor"; }
+Alt+End { spawn "serpantinum" "ipc" "call" "quickactions" "nextSection" "cursor"; }
+```
+
+```conf
+# Sway (compositors/sway/configDir/keybinds)
+bindsym Mod1+Home exec serpantinum ipc call quickactions toggle cursor
+bindsym Mod1+End exec serpantinum ipc call quickactions nextSection cursor
+```
+
+For multi-monitor bindings that must always target a specific output, replace
+`cursor` with its exact monitor name. Select keys that do not conflict with
+your existing compositor bindings.
+
+---
+
 ## Running
 
 To run the shell, launch `serpantinumd start`
