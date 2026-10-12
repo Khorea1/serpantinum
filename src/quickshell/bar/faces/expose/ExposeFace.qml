@@ -18,6 +18,8 @@ Item {
     readonly property bool moduleActive: module ? module.moduleActive : true
     readonly property string desktopEnv: (SystemInfo.desktopEnv || "").toLowerCase()
     readonly property bool isHyprland: desktopEnv.indexOf("hyprland") !== -1
+    readonly property bool isNiri: desktopEnv.indexOf("niri") !== -1
+    readonly property bool isSupported: isHyprland || isNiri
     property bool open: false
 
     // Only built while the overview is open; empty (and free) otherwise.
@@ -57,15 +59,21 @@ Item {
         Quickshell.execDetached(["bash", scriptPath, address]);
     }
 
+    function toggleOverview() {
+        if (!moduleActive) return;
+        if (isHyprland) open = !open;
+        else if (isNiri) Quickshell.execDetached(["niri", "msg", "action", "toggle-overview"]);
+    }
+
     onOpenChanged: if (open && isHyprland && Hyprland.refreshToplevels) Hyprland.refreshToplevels()
     onModuleActiveChanged: if (!moduleActive) open = false
     onIsHyprlandChanged: if (!isHyprland) open = false
 
-    implicitWidth: isHyprland ? px(32) : 0
-    implicitHeight: isHyprland ? px(32) : 0
+    implicitWidth: isSupported ? px(32) : 0
+    implicitHeight: isSupported ? px(32) : 0
     property real targetWidth: implicitWidth
     property real targetHeight: implicitHeight
-    property bool isFaceVisible: moduleActive && isHyprland
+    property bool isFaceVisible: moduleActive && isSupported
 
     // ───────────────────────── bar button ─────────────────────────
     Item {
@@ -132,13 +140,13 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.open = !root.open
+            onClicked: root.toggleOverview()
         }
     }
 
     // ───────────────────────── overview (created on demand) ─────────────────────────
     LazyLoader {
-        active: root.open && root.isFaceVisible && root.barWindow !== null
+        active: root.open && root.isHyprland && root.isFaceVisible && root.barWindow !== null
 
         PanelWindow {
             id: overview

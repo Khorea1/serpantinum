@@ -200,6 +200,7 @@ Item {
             "left": I18n.t("guide.bar.modules.actions"),
             "workspaces": I18n.t("guide.bar.modules.workspaces.name"),
             "focus": I18n.t("guide.bar.modules.focus"),
+            "expose": I18n.t("guide.bar.modules.expose", "Window overview"),
             "timedate": I18n.t("guide.bar.modules.timedate.name"),
             "info": I18n.t("guide.bar.modules.info"),
             "weather": I18n.t("guide.bar.modules.weather"),
@@ -217,6 +218,7 @@ Item {
             "left": "󰍜",
             "workspaces": "󰮯",
             "focus": "󰈈",
+            "expose": "󰕰",
             "timedate": "󰃰",
             "info": "󰋼",
             "weather": "󰖐",
@@ -234,6 +236,7 @@ Item {
             "left": ThemeBackend.blue,
             "workspaces": ThemeBackend.mauve,
             "focus": ThemeBackend.teal,
+            "expose": ThemeBackend.mauve,
             "timedate": ThemeBackend.peach,
             "info": ThemeBackend.red,
             "weather": ThemeBackend.yellow,
@@ -852,6 +855,7 @@ Item {
                             if (moduleId === "left") return I18n.t("guide.bar.modules.actions");
                             if (moduleId === "workspaces") return I18n.t("guide.bar.modules.workspaces.name");
                             if (moduleId === "focus") return I18n.t("guide.bar.modules.focus");
+                            if (moduleId === "expose") return I18n.t("guide.bar.modules.expose", "Window overview");
                             if (moduleId === "timedate") return I18n.t("guide.bar.modules.timedate.name");
                             if (moduleId === "info") return I18n.t("guide.bar.modules.info");
                             if (moduleId === "weather") return I18n.t("guide.bar.modules.weather");
