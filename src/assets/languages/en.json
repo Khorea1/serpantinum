@@ -316,7 +316,8 @@
           }
         },
         "info": "Recording/timer",
-        "weather": "Weather"
+        "weather": "Weather",
+        "ytdl": "Video downloader"
       },
       "position": {
         "title": "Bar position",
@@ -735,6 +736,41 @@
       "placeholder": "Search settings...",
       "prompt": "Type to search settings...",
       "no_results": "No settings found"
+    }
+  },
+  "bar": {
+    "ytdl": {
+      "title": "YT Downloader",
+      "placeholder": "Paste a video or playlist link",
+      "paste": "Paste",
+      "video": "Video",
+      "audio": "Audio",
+      "transcript": "Transcript",
+      "finding": "Finding...",
+      "find_langs": "Find languages",
+      "playlist_mode": "Playlist mode (keeps order, adds a folder)",
+      "stop": "Stop",
+      "download": "Download",
+      "open_folder": "Open folder",
+      "invalid_url": "Enter a valid http:// or https:// URL",
+      "missing": "Missing dependencies: {tools}",
+      "missing_detail": "Missing: {tools} (install and reopen this panel)",
+      "starting": "Starting download...",
+      "item": "Item {index}/{count}",
+      "eta": "ETA {time}",
+      "converting": "Converting...",
+      "stopped": "Download stopped",
+      "done": "Done: {file}",
+      "finished": "Download finished: {file}",
+      "retrying": "Retrying with an alternate YouTube client...",
+      "failed": "Download failed (exit code {code})",
+      "paste_first": "Paste a valid link first",
+      "looking": "Looking for subtitle languages...",
+      "manual": "manual",
+      "auto": "automatic",
+      "no_tracks": "No subtitle tracks found",
+      "tracks_found": "{count} subtitle tracks found",
+      "tracks_error": "Could not read subtitle languages"
     }
   },
   "sysnotif": {
