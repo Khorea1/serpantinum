@@ -243,6 +243,11 @@ Variants {
                 let settings = Config.getSetting("quickactions", {});
                 return settings && settings.snakeEnabled === true;
             }
+            property bool musicEnabled: {
+                let revision = configRevision;
+                let settings = Config.getSetting("quickactions", {});
+                return settings && settings.musicEnabled === true;
+            }
             property var tabModules: {
                 let tabs = [
                     { id: "draw", file: "actions/DrawAction.qml", label: I18n.t("quickactions.tabs.draw"), icon: "󰏘", lazy: false },
@@ -251,6 +256,9 @@ Variants {
                 ];
                 if (snakeEnabled) {
                     tabs.push({ id: "snake", file: "actions/Game.qml", label: I18n.t("quickactions.tabs.snake"), icon: "󰓅", lazy: true });
+                }
+                if (musicEnabled) {
+                    tabs.push({ id: "music", file: "actions/Music.qml", label: I18n.t("quickactions.tabs.music"), icon: "󰎆", lazy: true });
                 }
                 return tabs;
             }

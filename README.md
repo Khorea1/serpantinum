@@ -219,6 +219,29 @@ The Snake implementation is adapted from
 [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
 (commit `1a4d80b`), with MIT-licensed logic credited in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+## Optional local Music player
+
+Set `quickactions.musicEnabled` to `true` in the existing JSON settings to add
+an on-demand Music tab alongside the original Quickactions tabs:
+
+```json
+{
+  "quickactions": {
+    "musicEnabled": true
+  }
+}
+```
+
+The tab scans `$SERPANTINUM_MUSIC_DIR` if set, or `$HOME/Music` by default.
+Python 3 is used for scanning; **mpv** is needed only when playback starts.
+The player supports local playlists, seeking, shuffle and repeat. Each loaded
+tab owns its own mpv process and private IPC socket; switching away or closing
+the expanded panel stops only that tab's player. No MPRIS controls or compositor
+keybindings are changed. Music state is not persisted between tab unloads.
+
+Adapted from [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
+(commit `1a4d80b`), with private process ownership added for multi-monitor safety.
+Functional validation on real Hyprland, Niri and Sway sessions remains pending.
 
 ---
 
