@@ -243,6 +243,11 @@ Variants {
                 let settings = Config.getSetting("quickactions", {});
                 return settings && settings.snakeEnabled === true;
             }
+            property bool dropShelfEnabled: {
+                let revision = configRevision;
+                let settings = Config.getSetting("quickactions", {});
+                return settings && settings.dropShelfEnabled === true;
+            }
             property var tabModules: {
                 let tabs = [
                     { id: "draw", file: "actions/DrawAction.qml", label: I18n.t("quickactions.tabs.draw"), icon: "󰏘", lazy: false },
@@ -251,6 +256,9 @@ Variants {
                 ];
                 if (snakeEnabled) {
                     tabs.push({ id: "snake", file: "actions/Game.qml", label: I18n.t("quickactions.tabs.snake"), icon: "󰓅", lazy: true });
+                }
+                if (dropShelfEnabled) {
+                    tabs.push({ id: "dropshelf", file: "actions/DropShelf.qml", label: I18n.t("quickactions.tabs.dropshelf"), icon: "󰉋", lazy: true });
                 }
                 return tabs;
             }

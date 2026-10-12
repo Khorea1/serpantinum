@@ -220,6 +220,37 @@ The Snake implementation is adapted from
 (commit `1a4d80b`), with MIT-licensed logic credited in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
+## Optional Drop Shelf Quickactions tab
+
+Enable the Drop Shelf in your existing JSON settings without replacing other
+Quickactions options:
+
+```json
+{
+  "quickactions": {
+    "dropShelfEnabled": true
+  }
+}
+```
+
+Drag local files, web links or images into the shelf. Double-click an item to
+open it, or drag it to another application. Dragging is a **copy** operation:
+the shelf retains its entries even if the drop is cancelled. Removing an entry
+or clearing the shelf requires an explicit button press, with Undo available
+until the next removal or panel unload. Original files are never deleted.
+
+The list is stored at `$XDG_STATE_HOME/serpantinum/dropshelf/shelf.json`
+(default `~/.local/state/serpantinum/dropshelf/shelf.json`). Imported images
+are kept in `$XDG_DATA_HOME/serpantinum/dropshelf/` (default
+`~/.local/share/serpantinum/dropshelf/`); clearing the list does **not** delete
+these images. Network image imports require `curl` and `file`; pasted image
+data requires `base64` and `file`. Image imports have a 12 MiB size limit.
+The feature is experimental; drag-and-drop across compositors and concurrent
+edits on multiple monitors still require manual verification.
+
+Adapted from [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
+(commit `1a4d80b`).
+
 ---
 
 ## Running
