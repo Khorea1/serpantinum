@@ -219,7 +219,8 @@ and other bar settings. `bar.ytdl.downloadDir` is optional and must be an
 absolute path. By default, downloads go into
 `~/Downloads/YT/{Video,Audio,Transcript}`. Downloads and transcript files use
 separate subdirectories. The module works on top, bottom, left and right bars;
-on Hyprland, outside clicks also dismiss its panel.
+outside clicks dismiss its panel through Hyprland's focus grab or the standard
+Wayland popup grab on Niri and Sway.
 
 The UI module was adapted from
 [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
