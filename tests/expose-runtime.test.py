@@ -44,13 +44,16 @@ ShellRoot {
             interval: 200
             running: true
             onTriggered: {
-                const enabled = Quickshell.env("EXPOSE_TEST_DESKTOP") === "Hyprland"
+                const desktop = Quickshell.env("EXPOSE_TEST_DESKTOP")
+                const enabled = desktop === "Hyprland" || desktop === "niri"
                 if (face.isFaceVisible !== enabled
                     || face.targetWidth !== (enabled ? 32 : 0)
                     || face.targetHeight !== (enabled ? 32 : 0)) {
                     console.log("EXPOSE_SMOKE_FAIL", face.isFaceVisible, face.targetWidth, face.targetHeight)
                 } else {
-                    console.log("EXPOSE_SMOKE_PASS", enabled ? "hyprland" : "other")
+                    // The Niri action goes to a fake executable, never the live compositor.
+                    if (desktop === "niri") face.toggleOverview()
+                    console.log("EXPOSE_SMOKE_PASS", desktop.toLowerCase())
                 }
                 Qt.quit()
             }
@@ -90,22 +93,41 @@ def main() -> None:
         shutil.copy2(FACE_DIR / "ScreenLayout.js", target / "ScreenLayout.js")
         shell = root / "quickshell/shell.qml"
         shell.write_text(SHELL)
+        bin_dir = root / "bin"
+        bin_dir.mkdir()
+        fake_niri = bin_dir / "niri"
+        fake_niri.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$EXPOSE_TEST_ARGS"\n')
+        fake_niri.chmod(0o700)
+        capture = root / "niri-args"
 
         for desktop in ("niri", "sway", "Hyprland"):
+            capture.unlink(missing_ok=True)
             env = os.environ.copy()
             env.update(QT_QPA_PLATFORM="offscreen", HOME=str(root),
                        XDG_CONFIG_HOME=str(root / "config"),
                        XDG_RUNTIME_DIR=str(root / "runtime"),
-                       EXPOSE_TEST_DESKTOP=desktop)
+                       EXPOSE_TEST_DESKTOP=desktop,
+                       EXPOSE_TEST_ARGS=str(capture),
+                       PATH=str(bin_dir) + os.pathsep + env.get("PATH", ""))
             result = subprocess.run(
                 ["qs", "-p", str(shell), "--no-color"],
                 env=env, text=True, capture_output=True, timeout=5, check=False)
             output = result.stdout + result.stderr
-            expected = "EXPOSE_SMOKE_PASS " + ("hyprland" if desktop == "Hyprland" else "other")
+            expected = "EXPOSE_SMOKE_PASS " + desktop.lower()
             if expected not in output or "EXPOSE_SMOKE_FAIL" in output:
                 raise AssertionError(f"Exposé runtime ({desktop}) failed:\n{output}")
+            if desktop == "niri":
+                import time
+                for _ in range(30):
+                    if capture.exists():
+                        break
+                    time.sleep(0.05)
+                if not capture.exists() or capture.read_text().splitlines() != ["msg", "action", "toggle-overview"]:
+                    raise AssertionError("Niri Exposé did not dispatch toggle-overview to the fake IPC")
+            elif capture.exists():
+                raise AssertionError(f"Exposé incorrectly dispatched Niri IPC under {desktop}")
 
-    print("Exposé offscreen QML: Hyprland visible; Niri and Sway hidden")
+    print("Exposé offscreen QML: Hyprland custom, Niri native action, Sway hidden")
 
 
 if __name__ == "__main__":
