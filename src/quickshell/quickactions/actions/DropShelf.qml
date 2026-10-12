@@ -85,7 +85,7 @@ Item {
     function persist() {
         if (!stateLoaded) return;
         pendingSave = true;
-        flushSave();
+        saveTimer.restart();
     }
 
     function flushSave() {
@@ -301,6 +301,13 @@ Item {
         }
     }
 
+    Timer {
+        id: saveTimer
+        interval: 100
+        repeat: false
+        onTriggered: root.flushSave()
+    }
+
     Process {
         id: stateInitProc
         command: ["mkdir", "-p", "-m", "0700", root.stateDir]
@@ -316,6 +323,10 @@ Item {
 
     Component.onCompleted: {
         stateInitProc.running = true;
+    }
+
+    Component.onDestruction: {
+        if (pendingSave) flushSave();
     }
 
     Process {
