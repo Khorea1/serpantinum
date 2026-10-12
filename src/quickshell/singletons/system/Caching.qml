@@ -6,7 +6,8 @@ QtObject {
     id: root
 
     readonly property string serpantinumDir: Quickshell.env("SERPANTINUM_DIR")
-    readonly property string qsDir: Quickshell.env("QS_DIR")
+    // Direct Quickshell launches may only export SERPANTINUM_DIR.
+    readonly property string qsDir: Quickshell.env("QS_DIR") || (serpantinumDir ? serpantinumDir + "/quickshell" : "")
     readonly property string mainQml: Quickshell.env("MAIN_QML")
 
     readonly property string home: Quickshell.env("HOME")

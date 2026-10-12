@@ -113,7 +113,7 @@ function filterAndSort(dataset, query, fields, keyOf, historyStore, halfLifeDays
     return result;
 }
 
-// Builds the "frequently used" shelf: top N keys by decayed score,
+// Finds the top N used keys by decayed score,
 // resolved back to their dataset items via `lookup` (a plain object
 // mapping key -> item), skipping any key no longer present in the
 // dataset (e.g. after a data update).
@@ -133,4 +133,25 @@ function topUsed(historyStore, lookup, limit, halfLifeDays) {
     let out = [];
     for (let i = 0; i < scored.length; i++) out.push(lookup[scored[i].key]);
     return out;
+}
+
+// Place frequent items first in All without repeating them in the main dataset.
+function prioritizeUsed(dataset, recent, keyOf) {
+    let available = new Set(dataset.map(keyOf));
+    let seen = new Set();
+    let items = [];
+    for (let item of recent) {
+        let key = keyOf(item);
+        if (!available.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        items.push(item);
+    }
+    let count = items.length;
+    for (let item of dataset) {
+        let key = keyOf(item);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        items.push(item);
+    }
+    return { items: items, count: count };
 }

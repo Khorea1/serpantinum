@@ -848,7 +848,7 @@
     "escapeMode": "Код \\u",
     "frequent": "Часто используемые",
     "empty": "Ничего не найдено",
-    "hint": "Стрелки: выбрать · Ctrl+H/L: категория · Tab: режим · Enter: копировать · Ctrl+Enter: ввести"
+    "hint": "←↑↓→ Выбор · Alt+H/L Категория · Tab Режим · Ctrl+H/L Виджет · Enter Копия · Alt+Enter Ввод"
   },
   "lock": {
     "status": {

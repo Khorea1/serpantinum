@@ -235,6 +235,13 @@ Item {
                 spacing: root.s(8)
 
                 Text {
+                    text: "󰂚"
+                    font.family: ThemeBackend.iconFont
+                    font.pixelSize: root.s(19)
+                    color: ThemeBackend.mauve
+                }
+
+                Text {
                     text: I18n.t("syspanel.notifications.title")
                     font.family: ThemeBackend.fontFamily
                     font.weight: Font.Bold

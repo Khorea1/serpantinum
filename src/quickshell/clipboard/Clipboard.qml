@@ -41,6 +41,7 @@ PanelWindow {
     }
 
     property bool isVisible: ClipboardController.isVisible
+
     property int configRevision: 0
     property bool isDirty: true
 
@@ -584,8 +585,8 @@ PanelWindow {
         property real animProgress: clipboardWindow.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: clipboardWindow.isVisible ? 300 : 200
-                easing.type: Easing.OutCubic
+                duration: clipboardWindow.isVisible ? 260 : 150
+                easing.type: clipboardWindow.isVisible ? Easing.OutCubic : Easing.InCubic
             }
         }
 
@@ -608,7 +609,7 @@ PanelWindow {
                 ? (clipboardWindow.animatedLauncherHeight * animProgress)
                 : clipboardWindow.animatedLauncherHeight
 
-        opacity: (clipboardWindow.isVisible || animProgress > 0.001) ? 1.0 : 0.0
+        opacity: Math.max(0.0, Math.min(1.0, (animProgress - 0.08) / 0.72))
 
         Shape {
             visible: clipboardWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
@@ -914,6 +915,7 @@ PanelWindow {
                         cornerRadius: Math.min(ThemeBackend.borderRadius, clipboardWindow.s(10))
                         fontPixelSize: clipboardWindow.s(12)
                         charSpacing: 1
+                        leadingIcon: "󰅌"
 
                         placeholderText: typeof I18n !== "undefined" ? I18n.t("clipboard.search", "Search clipboard") : "Search clipboard"
                         showClearButton: true
@@ -963,6 +965,7 @@ PanelWindow {
                         // row-up:   "Up,Control+k"
                         // row-down: "Down,Control+j"
                         onKeyPressed: function(event) {
+                            if (modeSwitcher.handleKey(event)) return;
                             if (RofiKeyNav.handlePressed(event, moveSelectionDown, moveSelectionUp)) {
                                 event.accepted = true;
                             }
@@ -992,6 +995,14 @@ PanelWindow {
                             closeClipboard();
                             event.accepted = true;
                         }
+                    }
+
+                    SelectorSwitcher {
+                        id: modeSwitcher
+                        currentWidget: "clipboard"
+                        enabled: clipboardWindow.isVisible
+                        Layout.preferredWidth: implicitWidth
+                        Layout.preferredHeight: clipboardWindow.s(32)
                     }
 
                     ClickButton {

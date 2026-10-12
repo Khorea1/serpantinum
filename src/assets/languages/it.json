@@ -803,7 +803,7 @@
     "escapeMode": "Codice \\u",
     "frequent": "Usati di frequente",
     "empty": "Nessun risultato",
-    "hint": "Frecce: seleziona · Ctrl+H/L: categoria · Tab: modalità · Invio: copia · Ctrl+Invio: digita"
+    "hint": "←↑↓→ Seleziona · Alt+H/L Categoria · Tab Modalità · Ctrl+H/L Widget · Invio Copia · Alt+Invio Digita"
   },
   "lock": {
     "status": {

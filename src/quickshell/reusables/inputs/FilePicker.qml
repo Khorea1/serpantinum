@@ -6,7 +6,7 @@ import Qt.labs.folderlistmodel
 import Quickshell
 import "../../"
 import "../"
-import "RofiKeyNav.js" as RofiKeyNav
+import "../RofiKeyNav.js" as RofiKeyNav
 
 Popup {
     id: pickerRoot

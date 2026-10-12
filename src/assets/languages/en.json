@@ -1,4 +1,10 @@
 {
+  "selector": {
+    "launcher": "Launcher",
+    "emoji": "Emoji",
+    "clipboard": "Clipboard",
+    "pickwindow": "Window picker"
+  },
   "guide": {
     "about": {
       "title": "Serpantinum",
@@ -804,7 +810,7 @@
     "escapeMode": "\\u code",
     "frequent": "Frequently used",
     "empty": "Nothing found",
-    "hint": "Arrows: select · Ctrl+H/L: category · Tab: mode · Enter: copy · Ctrl+Enter: type"
+    "hint": "←↑↓→ Select · Alt+H/L Category · Tab Mode · Ctrl+H/L Widget · Enter Copy · Alt+Enter Type"
   },
   "lock": {
     "status": {

@@ -848,7 +848,7 @@
     "escapeMode": "Código \\u",
     "frequent": "Usados con frecuencia",
     "empty": "No se encontró nada",
-    "hint": "Flechas: seleccionar · Ctrl+H/L: categoría · Tab: modo · Enter: copiar · Ctrl+Enter: escribir"
+    "hint": "←↑↓→ Selección · Alt+H/L Categoría · Tab Modo · Ctrl+H/L Widget · Enter Copiar · Alt+Enter Escribir"
   },
   "lock": {
     "status": {

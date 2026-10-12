@@ -560,9 +560,8 @@ PanelWindow {
         property real animProgress: pickWindowRoot.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: pickWindowRoot.isVisible ? (pickWindowRoot.isCentered ? 320 : 220) : (pickWindowRoot.isCentered ? 200 : 150)
-                easing.type: pickWindowRoot.isVisible ? Easing.OutBack : Easing.InQuad
-                easing.overshoot: 1.15
+                duration: pickWindowRoot.isVisible ? 260 : 150
+                easing.type: pickWindowRoot.isVisible ? Easing.OutCubic : Easing.InCubic
             }
         }
 
@@ -606,9 +605,7 @@ PanelWindow {
             return pickWindowRoot.animatedPickerHeight;
         }
 
-        opacity: pickWindowRoot.isCentered
-                 ? Math.max(0.0, Math.min(1.0, animProgress * 1.5))
-                 : ((pickWindowRoot.isVisible || animProgress > 0.001) ? 1.0 : 0.0)
+        opacity: Math.max(0.0, Math.min(1.0, (animProgress - 0.08) / 0.72))
 
         transformOrigin: Item.Center
 
@@ -899,7 +896,8 @@ PanelWindow {
                     z: 10
                     focus: true
                     anchors.left: parent.left
-                    anchors.right: parent.right
+                    anchors.right: modeSwitcher.left
+                    anchors.rightMargin: pickWindowRoot.s(8)
                     y: contentContainer.isSearchAtBottom ? Math.max(0, parent.height - height) : 0
                     height: pickWindowRoot.s(36)
 
@@ -911,6 +909,7 @@ PanelWindow {
                     cornerRadius: ThemeBackend.borderRadius
                     fontPixelSize: pickWindowRoot.s(12)
                     charSpacing: 1
+                    leadingIcon: ""
 
                     placeholderText: "Search open windows..."
                     showClearButton: true
@@ -963,10 +962,20 @@ PanelWindow {
                     // row-up:   "Up,Control+k"
                     // row-down: "Down,Control+j"
                     onKeyPressed: function(event) {
+                        if (modeSwitcher.handleKey(event)) return;
                         if (RofiKeyNav.handlePressed(event, moveSelectionDown, moveSelectionUp)) {
                             event.accepted = true;
                         }
                     }
+                }
+
+                SelectorSwitcher {
+                    id: modeSwitcher
+                    z: 11
+                    currentWidget: "pickwindow"
+                    enabled: pickWindowRoot.isVisible
+                    anchors.right: parent.right
+                    anchors.verticalCenter: searchInput.verticalCenter
                 }
 
                 Item {

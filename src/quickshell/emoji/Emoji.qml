@@ -41,6 +41,7 @@ PanelWindow {
     }
 
     property bool isVisible: EmojiController.isVisible
+
     property int configRevision: 0
 
     // ── Bar-relative attach chrome (same convention as Clipboard/Launcher) ──
@@ -116,10 +117,10 @@ PanelWindow {
 
     property var resultsModel: []
     property var categoriesModel: []
-    property var shelfModel: []
+    property int featuredCount: 0
 
     readonly property int halfLifeDays: 10
-    readonly property int shelfLimit: 18
+    readonly property int recentLimit: 18
 
     function activateFromController(mode) {
         if (mode === "nerd" || mode === "nerdfont" || mode === "nerd-font") {
@@ -148,7 +149,6 @@ PanelWindow {
         if (tab === "kao") emojiWindow.wantKao = true;
         emojiWindow.rebuildCategories();
         emojiWindow.rebuildResults();
-        emojiWindow.rebuildShelf();
     }
 
     function cycleTab(delta) {
@@ -164,7 +164,7 @@ PanelWindow {
         id: historyFileView
         path: emojiWindow.historyFile
         printErrors: false
-        onLoaded: emojiWindow.rebuildShelf()
+        onLoaded: emojiWindow.refreshRecent()
         onLoadFailed: error => {
             if (error === 2) {
                 historyFileView.writeAdapter();
@@ -200,13 +200,13 @@ PanelWindow {
 
         historyAdapter.entries = entries;
         historySaveTimer.restart();
-        emojiWindow.rebuildShelf();
+        emojiWindow.refreshRecent();
     }
 
     function clearHistory() {
         historyAdapter.entries = {};
         historyFileView.writeAdapter();
-        emojiWindow.rebuildShelf();
+        emojiWindow.refreshRecent();
     }
 
     function currentLookup() {
@@ -215,8 +215,9 @@ PanelWindow {
         return emojiWindow.emojiLookup;
     }
 
-    function rebuildShelf() {
-        emojiWindow.shelfModel = ESearch.topUsed(historyAdapter.entries, emojiWindow.currentLookup(), emojiWindow.shelfLimit, emojiWindow.halfLifeDays);
+    function refreshRecent() {
+        if (emojiWindow.activeCategory === "all" && emojiWindow.searchText.trim().length === 0)
+            emojiWindow.rebuildResults(true);
     }
 
     // ───────────────────────── Dataset loading ─────────────────────────
@@ -256,7 +257,6 @@ PanelWindow {
             emojiWindow.rebuildCategories();
             emojiWindow.rebuildResults();
         }
-        emojiWindow.rebuildShelf();
     }
 
     function onNerdDataLoaded(txt) {
@@ -274,7 +274,6 @@ PanelWindow {
             emojiWindow.rebuildCategories();
             emojiWindow.rebuildResults();
         }
-        emojiWindow.rebuildShelf();
     }
 
     function onKaoDataLoaded(txt) {
@@ -292,7 +291,6 @@ PanelWindow {
             emojiWindow.rebuildCategories();
             emojiWindow.rebuildResults();
         }
-        emojiWindow.rebuildShelf();
     }
 
     // ───────────────────────── Categories ─────────────────────────
@@ -382,7 +380,9 @@ PanelWindow {
         return "e:" + item.u;
     }
 
-    function rebuildResults() {
+    function rebuildResults(preserveSelection) {
+        let selected = preserveSelection && emojiWindow.selIndex >= 0 && emojiWindow.selIndex < emojiWindow.resultsModel.length
+            ? emojiWindow.keyOfActiveTab(emojiWindow.resultsModel[emojiWindow.selIndex]) : null;
         let dataset = emojiWindow.activeDataset();
         let q = ESearch.normalizeHexQuery(emojiWindow.searchText.trim().toLowerCase());
         if (q.length === 0 && emojiWindow.activeCategory !== "all") {
@@ -391,7 +391,14 @@ PanelWindow {
             dataset = dataset.filter(it => it[field] === cat);
         }
 
+        emojiWindow.featuredCount = 0;
         if (q.length === 0) {
+            if (emojiWindow.activeCategory === "all") {
+                let recent = ESearch.topUsed(historyAdapter.entries, emojiWindow.currentLookup(), emojiWindow.recentLimit, emojiWindow.halfLifeDays);
+                let merged = ESearch.prioritizeUsed(dataset, recent, emojiWindow.keyOfActiveTab);
+                emojiWindow.featuredCount = merged.count;
+                dataset = merged.items;
+            }
             emojiWindow.resultsModel = dataset;
         } else {
             emojiWindow.resultsModel = ESearch.filterAndSort(
@@ -400,7 +407,8 @@ PanelWindow {
             );
         }
 
-        emojiWindow.selIndex = emojiWindow.resultsModel.length > 0 ? 0 : -1;
+        let selectedIndex = selected ? emojiWindow.resultsModel.findIndex(it => emojiWindow.keyOfActiveTab(it) === selected) : -1;
+        emojiWindow.selIndex = selectedIndex >= 0 ? selectedIndex : (emojiWindow.resultsModel.length > 0 ? 0 : -1);
         emojiWindow.hoveredIndex = -1;
     }
 
@@ -494,11 +502,7 @@ PanelWindow {
         event.accepted = true;
     }
 
-    function activateShelf(item, keepOpen) {
-        emojiWindow.copyDescribed(emojiWindow.describeItem(item), keepOpen);
-    }
-
-    // ───────────────────── Direct typing (Ctrl+Enter / Ctrl+click) ─────────────────────
+    // ───────────────────── Direct typing (Alt+Enter / Alt+click) ─────────────────────
     // Instead of going through the clipboard, this types the glyph straight into
     // whatever window regains keyboard focus once the picker closes. Wayland has
     // no xdotool-equivalent that works everywhere, so we shell out to `wtype`
@@ -530,10 +534,6 @@ PanelWindow {
     function typeIndex(idx) {
         if (idx < 0 || idx >= emojiWindow.resultsModel.length) return;
         emojiWindow.typeDescribed(emojiWindow.describeItem(emojiWindow.resultsModel[idx]));
-    }
-
-    function typeShelf(item) {
-        emojiWindow.typeDescribed(emojiWindow.describeItem(item));
     }
 
     // ───────────────────────── Keyboard navigation ─────────────────────────
@@ -578,7 +578,6 @@ PanelWindow {
             emojiWindow.nerdEscapeMode = false;
             emojiWindow.rebuildCategories();
             emojiWindow.rebuildResults();
-            emojiWindow.rebuildShelf();
             emojiWindow.grabInputFocus();
             focusTimer.restart();
             focusRetryTimer.restart();
@@ -636,9 +635,8 @@ PanelWindow {
         property real animProgress: emojiWindow.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: emojiWindow.isVisible ? 340 : 150
-                easing.type: emojiWindow.isVisible ? Easing.OutBack : Easing.InQuad
-                easing.overshoot: emojiWindow.isVisible ? 1.28 : 1.0
+                duration: emojiWindow.isVisible ? 260 : 150
+                easing.type: emojiWindow.isVisible ? Easing.OutCubic : Easing.InCubic
             }
         }
 
@@ -654,7 +652,7 @@ PanelWindow {
         }
         width: emojiWindow.basePickerWidth * (emojiWindow.isSideAttached ? animProgress : 1.0)
         height: emojiWindow.basePickerHeight * (!emojiWindow.isSideAttached ? animProgress : 1.0)
-        opacity: (emojiWindow.isVisible || animProgress > 0.001) ? 1.0 : 0.0
+        opacity: Math.max(0.0, Math.min(1.0, (animProgress - 0.08) / 0.72))
 
         MouseArea { anchors.fill: parent }
 
@@ -716,6 +714,13 @@ PanelWindow {
                             textColor: emojiWindow.activeTab === "kao" ? ThemeBackend.crust : ThemeBackend.text
                             onTriggered: emojiWindow.setActiveTab("kao")
                         }
+                        SelectorSwitcher {
+                            id: modeSwitcher
+                            currentWidget: "emoji"
+                            enabled: emojiWindow.isVisible
+                            Layout.preferredWidth: implicitWidth
+                            Layout.preferredHeight: emojiWindow.s(32)
+                        }
                     }
 
                     // ── Search row ──
@@ -757,7 +762,8 @@ PanelWindow {
                             Keys.onTabPressed: function(event) { emojiWindow.cycleTab(1); event.accepted = true; }
                             Keys.onBacktabPressed: function(event) { emojiWindow.cycleTab(-1); event.accepted = true; }
                             onKeyPressed: function(event) {
-                                // Ctrl+H / Ctrl+L: cycle subcategories (Smileys/People/...,
+                                if (modeSwitcher.handleKey(event)) return;
+                                // Alt+H / Alt+L: cycle subcategories (Smileys/People/...,
                                 // devicons/codicons/..., Happy/Sad/...), vim-style and
                                 // consistent with the existing Ctrl+J/K row nav below.
                                 // Handled here (Input's early keyPressed signal) rather than
@@ -847,12 +853,54 @@ PanelWindow {
                         boundsBehavior: Flickable.StopAtBounds
                         flickableDirection: Flickable.HorizontalFlick
 
+                        function ensureActiveVisible() {
+                            if (width <= 0) return;
+                            let index = emojiWindow.categoriesModel.findIndex(cat => cat.code === emojiWindow.activeCategory);
+                            let chip = categoryRepeater.itemAt(index);
+                            if (!chip) return;
+
+                            let left = categoryScroll.running ? categoryScroll.to : contentX;
+                            let target = left;
+                            let margin = emojiWindow.s(6);
+                            if (chip.x < left + margin) {
+                                target = chip.x - margin;
+                            } else if (chip.x + chip.width > left + width - margin) {
+                                target = chip.x + chip.width - width + margin;
+                            }
+                            target = Math.max(0, Math.min(Math.max(0, contentWidth - width), target));
+                            if (Math.abs(target - left) < 0.5) return;
+
+                            categoryScroll.stop();
+                            categoryScroll.from = contentX;
+                            categoryScroll.to = target;
+                            categoryScroll.start();
+                        }
+
+                        onWidthChanged: Qt.callLater(ensureActiveVisible)
+                        onContentWidthChanged: Qt.callLater(ensureActiveVisible)
+                        onMovementStarted: categoryScroll.stop()
+
+                        Connections {
+                            target: emojiWindow
+                            function onActiveCategoryChanged() { Qt.callLater(categoryFlick.ensureActiveVisible); }
+                            function onCategoriesModelChanged() { Qt.callLater(categoryFlick.ensureActiveVisible); }
+                        }
+
+                        NumberAnimation {
+                            id: categoryScroll
+                            target: categoryFlick
+                            property: "contentX"
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+
                         Row {
                             id: categoryRow
                             height: parent.height
                             spacing: emojiWindow.s(6)
 
                             Repeater {
+                                id: categoryRepeater
                                 model: emojiWindow.categoriesModel
                                 delegate: Rectangle {
                                     required property var modelData
@@ -876,78 +924,6 @@ PanelWindow {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: emojiWindow.setCategory(modelData.code)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // ── Frequently used shelf ──
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        visible: emojiWindow.searchText.trim().length === 0 && emojiWindow.shelfModel.length > 0
-                        spacing: emojiWindow.s(3)
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: emojiWindow.s(4)
-                            Text {
-                                text: "󰓎"
-                                font.family: "Iosevka Nerd Font"
-                                font.pixelSize: emojiWindow.s(10)
-                                color: ThemeBackend.yellow
-                            }
-                            Text {
-                                text: typeof I18n !== "undefined" ? I18n.t("emoji.frequent", "Frequently used") : "Frequently used"
-                                font.family: ThemeBackend.fontFamily
-                                font.weight: Font.Bold
-                                font.pixelSize: emojiWindow.s(10.5)
-                                color: ThemeBackend.subtext0
-                                opacity: 0.85
-                            }
-                        }
-
-                        ListView {
-                            id: shelfList
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: emojiWindow.s(38)
-                            orientation: ListView.Horizontal
-                            spacing: emojiWindow.s(4)
-                            model: emojiWindow.shelfModel
-                            clip: true
-                            boundsBehavior: Flickable.StopAtBounds
-
-                            delegate: Rectangle {
-                                required property var modelData
-                                width: emojiWindow.s(36)
-                                height: emojiWindow.s(36)
-                                radius: emojiWindow.s(8)
-                                color: shelfMa.containsMouse ? ThemeBackend.surface1 : "transparent"
-
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.e
-                                    font.family: emojiWindow.activeTab === "nerd" ? "Iosevka Nerd Font" : (emojiWindow.activeTab === "kao" ? "JetBrains Mono" : ThemeBackend.fontFamily)
-                                    font.pixelSize: emojiWindow.activeTab === "kao" ? emojiWindow.s(9) : emojiWindow.s(18)
-                                    color: ThemeBackend.text
-                                    elide: Text.ElideNone
-                                }
-
-                                MouseArea {
-                                    id: shelfMa
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: (mouse) => {
-                                        if (mouse.modifiers & Qt.AltModifier) {
-                                            emojiWindow.typeShelf(modelData);
-                                            return;
-                                        }
-                                        let keepOpen = mouse.button === Qt.RightButton ? true : emojiWindow.keepOpenChecked;
-                                        emojiWindow.activateShelf(modelData, keepOpen);
                                     }
                                 }
                             }
@@ -1001,7 +977,7 @@ PanelWindow {
                                     anchors.fill: parent
                                     anchors.margins: emojiWindow.s(2)
                                     radius: emojiWindow.s(8)
-                                    color: gridDelegate.isSel ? ThemeBackend.mauve : (gridMa.containsMouse ? ThemeBackend.surface1 : "transparent")
+                                    color: gridDelegate.isSel ? ThemeBackend.mauve : (gridMa.containsMouse ? ThemeBackend.surface1 : (gridDelegate.index < emojiWindow.featuredCount ? Qt.alpha(ThemeBackend.yellow, 0.1) : "transparent"))
                                     scale: gridMa.pressed ? 0.92 : 1.0
 
                                     Behavior on color { ColorAnimation { duration: 120 } }
@@ -1010,9 +986,20 @@ PanelWindow {
                                     Text {
                                         anchors.centerIn: parent
                                         text: gridDelegate.modelData.e
-                                        font.family: emojiWindow.activeTab === "nerd" ? "Iosevka Nerd Font" : undefined
+                                        font.family: emojiWindow.activeTab === "nerd" ? "Iosevka Nerd Font" : ThemeBackend.fontFamily
                                         font.pixelSize: emojiWindow.s(20)
                                         color: gridDelegate.isSel ? ThemeBackend.crust : ThemeBackend.text
+                                    }
+
+                                    Rectangle {
+                                        visible: gridDelegate.index < emojiWindow.featuredCount
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.margins: emojiWindow.s(5)
+                                        width: emojiWindow.s(5)
+                                        height: width
+                                        radius: width / 2
+                                        color: gridDelegate.isSel ? ThemeBackend.crust : ThemeBackend.yellow
                                     }
 
                                     MouseArea {
@@ -1072,13 +1059,13 @@ PanelWindow {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: emojiWindow.s(8)
-                                    color: listDelegate.isSel ? ThemeBackend.mauve : (listMa.containsMouse ? ThemeBackend.surface1 : "transparent")
+                                    color: listDelegate.isSel ? ThemeBackend.mauve : (listMa.containsMouse ? ThemeBackend.surface1 : (listDelegate.index < emojiWindow.featuredCount ? Qt.alpha(ThemeBackend.yellow, 0.1) : "transparent"))
                                     Behavior on color { ColorAnimation { duration: 120 } }
 
                                     RowLayout {
                                         anchors.fill: parent
                                         anchors.leftMargin: emojiWindow.s(10)
-                                        anchors.rightMargin: emojiWindow.s(10)
+                                        anchors.rightMargin: emojiWindow.s(listDelegate.index < emojiWindow.featuredCount ? 22 : 10)
                                         spacing: emojiWindow.s(10)
 
                                         Text {
@@ -1098,6 +1085,17 @@ PanelWindow {
                                             opacity: 0.85
                                             elide: Text.ElideRight
                                         }
+                                    }
+
+                                    Rectangle {
+                                        visible: listDelegate.index < emojiWindow.featuredCount
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.rightMargin: emojiWindow.s(10)
+                                        width: emojiWindow.s(5)
+                                        height: width
+                                        radius: width / 2
+                                        color: listDelegate.isSel ? ThemeBackend.crust : ThemeBackend.yellow
                                     }
 
                                     MouseArea {
@@ -1129,37 +1127,53 @@ PanelWindow {
                     }
 
                     // ── Footer preview / hints ──
-                    RowLayout {
+                    ColumnLayout {
+                        id: footer
                         Layout.fillWidth: true
-                        Layout.preferredHeight: emojiWindow.s(24)
-                        spacing: emojiWindow.s(8)
+                        spacing: emojiWindow.s(3)
 
                         readonly property var previewIdx: emojiWindow.hoveredIndex >= 0 ? emojiWindow.hoveredIndex : emojiWindow.selIndex
                         readonly property var previewItem: (previewIdx >= 0 && previewIdx < emojiWindow.resultsModel.length) ? emojiWindow.resultsModel[previewIdx] : null
                         readonly property var previewDesc: previewItem ? emojiWindow.describeItem(previewItem) : null
 
-                        Text {
-                            visible: parent.previewDesc !== null
-                            text: parent.previewDesc ? parent.previewDesc.glyph : ""
-                            font.family: emojiWindow.activeTab === "nerd" ? "Iosevka Nerd Font" : (emojiWindow.activeTab === "kao" ? "JetBrains Mono" : undefined)
-                            font.pixelSize: emojiWindow.s(16)
-                            color: ThemeBackend.text
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: footer.previewDesc !== null
+                            spacing: emojiWindow.s(6)
+
+                            Text {
+                                Layout.alignment: Qt.AlignTop
+                                text: footer.previewDesc ? footer.previewDesc.glyph : ""
+                                font.family: emojiWindow.activeTab === "nerd" ? "Iosevka Nerd Font" : (emojiWindow.activeTab === "kao" ? "JetBrains Mono" : ThemeBackend.fontFamily)
+                                font.pixelSize: emojiWindow.s(16)
+                                color: ThemeBackend.text
+                            }
+                            Text {
+                                id: previewText
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: footer.previewDesc ? (footer.previewDesc.label + "  \u00b7  " + footer.previewDesc.sub) : ""
+                                font.family: ThemeBackend.fontFamily
+                                font.pixelSize: emojiWindow.s(10.5)
+                                color: ThemeBackend.subtext0
+                                wrapMode: Text.Wrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+
+                                HoverHandler { id: previewHover }
+                                ToolTip.visible: previewHover.hovered && previewText.truncated
+                                ToolTip.delay: 500
+                                ToolTip.text: previewText.text
+                            }
                         }
                         Text {
                             Layout.fillWidth: true
-                            visible: parent.previewDesc !== null
-                            text: parent.previewDesc ? (parent.previewDesc.label + "  \u00b7  " + parent.previewDesc.sub) : ""
-                            font.family: ThemeBackend.fontFamily
-                            font.pixelSize: emojiWindow.s(10.5)
-                            color: ThemeBackend.subtext0
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "Arrows: select \u00b7 Ctrl+H/L: category \u00b7 Tab: mode \u00b7 Enter: copy \u00b7 Ctrl+Enter: type") : "Arrows: select \u00b7 Ctrl+H/L: category \u00b7 Tab: mode \u00b7 Enter: copy \u00b7 Ctrl+Enter: type"
+                            Layout.minimumWidth: 0
+                            text: typeof I18n !== "undefined" ? I18n.t("emoji.hint", "←↑↓→ Select · Alt+H/L Category · Tab Mode · Ctrl+H/L Widget · Enter Copy · Alt+Enter Type") : "←↑↓→ Select · Alt+H/L Category · Tab Mode · Ctrl+H/L Widget · Enter Copy · Alt+Enter Type"
                             font.family: ThemeBackend.fontFamily
                             font.pixelSize: emojiWindow.s(9.5)
                             color: ThemeBackend.overlay1
-                            elide: Text.ElideLeft
+                            wrapMode: Text.WordWrap
                         }
                     }
                 }

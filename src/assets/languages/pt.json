@@ -1344,6 +1344,9 @@
       "sddm_success": "-> Tema material you do SDDM instalado e serviço ativado [ OK ]"
     }
   },
+  "emoji": {
+    "hint": "←↑↓→ Selecionar · Alt+H/L Categoria · Tab Modo · Ctrl+H/L Widget · Enter Copiar · Alt+Enter Digitar"
+  },
   "translator": {
     "title": "Tradutor",
     "status_translating": "Traduzindo...",

@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import "../../"
 
 Item {
@@ -35,6 +36,17 @@ Item {
                 }
             }
         } catch (e) {}
+        // Other Wayland compositors do not expose Hyprland's focused monitor.
+        try {
+            const toplevel = ToplevelManager.activeToplevel;
+            if (toplevel && toplevel.screens && toplevel.screens.length > 0) {
+                return toplevel.screens[0];
+            }
+        } catch (e) {}
+
+        const screens = Quickshell.screens;
+        if (screens && screens.length > 0) return screens[0];
+        if (screens && screens.count > 0) return screens.get(0);
         return null;
     }
 

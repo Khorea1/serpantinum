@@ -1098,9 +1098,8 @@ PanelWindow {
         property real animProgress: launcherWindow.isVisible ? 1.0 : 0.0
         Behavior on animProgress {
             NumberAnimation {
-                duration: launcherWindow.isVisible ? (launcherWindow.isCentered ? 420 : 340) : (launcherWindow.isCentered ? 200 : 150)
-                easing.type: launcherWindow.isVisible ? Easing.OutBack : Easing.InQuad
-                easing.overshoot: launcherWindow.isVisible ? 1.28 : 1.0
+                duration: launcherWindow.isVisible ? 260 : 150
+                easing.type: launcherWindow.isVisible ? Easing.OutCubic : Easing.InCubic
             }
         }
 
@@ -1144,9 +1143,7 @@ PanelWindow {
             return launcherWindow.animatedLauncherHeight;
         }
 
-        opacity: launcherWindow.isCentered
-                 ? Math.max(0.0, Math.min(1.0, animProgress * 1.5))
-                 : ((launcherWindow.isVisible || animProgress > 0.001) ? 1.0 : 0.0)
+        opacity: Math.max(0.0, Math.min(1.0, (animProgress - 0.08) / 0.72))
 
         transformOrigin: Item.Center
 
@@ -1438,7 +1435,8 @@ PanelWindow {
                     focus: true
                     Keys.priority: Keys.BeforeItem
                     anchors.left: parent.left
-                    anchors.right: parent.right
+                    anchors.right: modeSwitcher.left
+                    anchors.rightMargin: launcherWindow.s(8)
                     y: contentContainer.isSearchAtBottom ? Math.max(0, parent.height - height) : 0
                     height: launcherWindow.s(36)
 
@@ -1450,6 +1448,7 @@ PanelWindow {
                     cornerRadius: ThemeBackend.borderRadius
                     fontPixelSize: launcherWindow.s(12)
                     charSpacing: 1
+                    leadingIcon: "󱓞"
 
                     placeholderText: {
                         if (launcherWindow.currentTabIndex === 1) {
@@ -1582,10 +1581,20 @@ PanelWindow {
                     // row-up:   "Up,Control+k"
                     // row-down: "Down,Control+j"
                     onKeyPressed: function(event) {
+                        if (modeSwitcher.handleKey(event)) return;
                         if (RofiKeyNav.handlePressed(event, moveSelectionDown, moveSelectionUp)) {
                             event.accepted = true;
                         }
                     }
+                }
+
+                SelectorSwitcher {
+                    id: modeSwitcher
+                    z: 11
+                    currentWidget: "launcher"
+                    enabled: launcherWindow.isVisible
+                    anchors.right: parent.right
+                    anchors.verticalCenter: searchInput.verticalCenter
                 }
 
                 Switch {

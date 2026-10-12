@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "../../"
 import "../"
-import "RofiKeyNav.js" as RofiKeyNav
+import "../RofiKeyNav.js" as RofiKeyNav
 
 
 Item {
