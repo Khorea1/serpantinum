@@ -9,8 +9,8 @@ Item {
 
     property string appClass: ""
     property string appTitle: ""
-    readonly property string displayText: appTitle !== "" ? appTitle : appClass
-    readonly property bool isFocused: displayText !== ""
+    readonly property string displayText: appTitle.trim()
+    readonly property bool isFocused: appClass !== "Desktop" && displayText !== ""
 
     function updateFocus(dataStr) {
         if (!dataStr) return;

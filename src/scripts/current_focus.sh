@@ -68,18 +68,17 @@ get_active_window_hyprland() {
     if [ -z "$data" ] || [ "$data" = "{}" ]; then
         active_addr=""
         cls="Desktop"
-        title="Desktop"
+        title=""
         return
     fi
-    raw=$(jq -r '(.initialClass // .class // "Unknown") as $c | "\(.address // "")|\($c)|\(.initialTitle // .title // $c)"' <<< "$data" 2>/dev/null)
+    raw=$(jq -r '(.initialClass // .class // "Unknown") as $c | "\(.address // "")|\($c)|\(.title // "")"' <<< "$data" 2>/dev/null)
     IFS='|' read -r active_addr cls title <<< "$raw"
     cls="${cls:-Desktop}"
-    title="${title:-Desktop}"
     cls_lower="${cls,,}"
     title_lower="${title,,}"
     if [[ "$cls_lower" == *quickshell* ]] || [[ "$title_lower" == *qs-master* ]] || [[ "$cls_lower" == *qs-master* ]]; then
         cls="Quickshell"
-        title="Quickshell"
+        [ -n "$title" ] && title="Quickshell"
     fi
 }
 
@@ -89,18 +88,17 @@ get_active_window_niri() {
     if [ -z "$data" ] || [ "$data" = "null" ] || [ "$data" = "{}" ]; then
         active_niri_id=""
         cls="Desktop"
-        title="Desktop"
+        title=""
         return
     fi
-    raw=$(jq -r '(.app_id // "Unknown") as $c | "\(.id // "")|\($c)|\(.title // $c)"' <<< "$data" 2>/dev/null)
+    raw=$(jq -r '(.app_id // "Unknown") as $c | "\(.id // "")|\($c)|\(.title // "")"' <<< "$data" 2>/dev/null)
     IFS='|' read -r active_niri_id cls title <<< "$raw"
     cls="${cls:-Desktop}"
-    title="${title:-Desktop}"
     cls_lower="${cls,,}"
     title_lower="${title,,}"
     if [[ "$cls_lower" == *quickshell* ]] || [[ "$title_lower" == *qs-master* ]] || [[ "$cls_lower" == *qs-master* ]]; then
         cls="Quickshell"
-        title="Quickshell"
+        [ -n "$title" ] && title="Quickshell"
     fi
 }
 
@@ -110,24 +108,23 @@ get_active_window_sway() {
     if [ -z "$data" ]; then
         active_sway_id=""
         cls="Desktop"
-        title="Desktop"
+        title=""
         return
     fi
-    raw=$(jq -r '.. | select(.focused? == true and (.type? == "con" or .type? == "floating_con")) | "\(.id // "")|\(.app_id // .window_properties?.class // "Unknown")|\(.name // "Unknown")"' <<< "$data" 2>/dev/null)
+    raw=$(jq -r '.. | select(.focused? == true and (.type? == "con" or .type? == "floating_con")) | "\(.id // "")|\(.app_id // .window_properties?.class // "Unknown")|\(.name // "")"' <<< "$data" 2>/dev/null)
     if [ -z "$raw" ]; then
         active_sway_id=""
         cls="Desktop"
-        title="Desktop"
+        title=""
         return
     fi
     IFS='|' read -r active_sway_id cls title <<< "$raw"
     cls="${cls:-Desktop}"
-    title="${title:-Desktop}"
     cls_lower="${cls,,}"
     title_lower="${title,,}"
     if [[ "$cls_lower" == *quickshell* ]] || [[ "$title_lower" == *qs-master* ]] || [[ "$cls_lower" == *qs-master* ]]; then
         cls="Quickshell"
-        title="Quickshell"
+        [ -n "$title" ] && title="Quickshell"
     fi
 }
 
@@ -308,17 +305,18 @@ while true; do
                 ;;
             *)
                 case "$line" in
-                    activewindowv2*|closewindow*)
+                    activewindowv2*|windowtitle*|closewindow*)
                         target="$line"
                         closed=false
                         [[ "$line" == closewindow* ]] && closed=true
                         while read -t 0.02 -r extra_line; do
                             case "$extra_line" in
                                 activewindowv2*) target="$extra_line" ;;
+                                windowtitle*) target="$extra_line" ;;
                                 closewindow*) closed=true ;;
                             esac
                         done
-                        if [ "$closed" = false ] && [ "${target#activewindowv2>>}" = "${active_addr#0x}" ]; then
+                        if [ "$closed" = false ] && [[ "$target" == activewindowv2* ]] && [ "${target#activewindowv2>>}" = "${active_addr#0x}" ]; then
                             continue
                         fi
                         get_active_window
