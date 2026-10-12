@@ -41,7 +41,6 @@ Item {
     property bool stateLoaded: false
     property bool stateDirectoryReady: false
     property bool pendingSave: false
-    property bool saveInFlight: false
     readonly property int maxImageBytes: 12 * 1024 * 1024
 
     readonly property string stateDir: {
@@ -73,7 +72,7 @@ Item {
     }
 
     function loadState(text) {
-        if (!stateDirectoryReady || pendingSave || saveInFlight) return;
+        if (!stateDirectoryReady || pendingSave) return;
         const restored = Model.parseState(text);
         if (stateLoaded && Model.serialize(entries) === Model.serialize(restored)) return;
         entries = restored;
@@ -90,10 +89,14 @@ Item {
     }
 
     function flushSave() {
-        if (!pendingSave || !stateDirectoryReady || !stateLoaded || saveInFlight) return;
+        if (!pendingSave || !stateDirectoryReady || !stateLoaded) return;
         pendingSave = false;
-        saveInFlight = true;
-        stateFile.setText(Model.serialize(entries));
+        try {
+            stateFile.setText(Model.serialize(entries));
+        } catch (error) {
+            pendingSave = true;
+            statusText = I18n.t("quickactions.dropshelf.save_error");
+        }
     }
 
     function rememberUndo() {
@@ -285,19 +288,14 @@ Item {
         atomicWrites: true
         printErrors: false
         onFileChanged: {
-            if (!root.saveInFlight && !root.pendingSave) reload();
+            if (!root.pendingSave) reload();
         }
         onLoaded: root.loadState(text())
         onLoadFailed: function(error) {
             if (error === FileViewError.FileNotFound) root.loadState("");
             else root.statusText = I18n.t("quickactions.dropshelf.save_error");
         }
-        onSaved: {
-            root.saveInFlight = false;
-            root.flushSave();
-        }
         onSaveFailed: function(error) {
-            root.saveInFlight = false;
             root.pendingSave = true;
             root.statusText = I18n.t("quickactions.dropshelf.save_error");
         }
@@ -309,7 +307,10 @@ Item {
         onExited: function(exitCode) {
             root.stateDirectoryReady = exitCode === 0;
             if (exitCode !== 0) root.statusText = I18n.t("quickactions.dropshelf.save_error");
-            else stateFile.reload();
+            else {
+                stateFile.reload();
+                stateFile.text(); // Trigger the initial read with preload disabled.
+            }
         }
     }
 
