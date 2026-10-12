@@ -69,6 +69,13 @@ QtObject {
             horizontalFace: "faces/focus/FocusFace.qml",
             verticalFace: "faces/focus/SideFocusFace.qml"
         },
+        "expose": {
+            name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.expose", "Window overview") : "Window overview",
+            icon: "󰕰",
+            defaultVariant: "default",
+            horizontalFace: "faces/expose/ExposeFace.qml",
+            verticalFace: "faces/expose/ExposeFace.qml"
+        },
         "media": {
             name: typeof I18n !== "undefined" ? I18n.t("guide.bar.modules.media", "Media") : "Media",
             icon: "󰎈",
