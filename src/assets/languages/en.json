@@ -5,6 +5,13 @@
     "clipboard": "Clipboard",
     "pickwindow": "Window picker"
   },
+  "expose": {
+    "title": "Window overview",
+    "window": "window",
+    "windows": "windows",
+    "all_workspaces": "all workspaces",
+    "empty": "No windows open"
+  },
   "guide": {
     "about": {
       "title": "Serpantinum",
@@ -304,6 +311,7 @@
         "volume": "Volume",
         "battery": "Battery",
         "focus": "Focus",
+        "expose": "Window overview",
         "sysmon": "System monitor",
         "timedate": {
           "name": "Time & Date",
