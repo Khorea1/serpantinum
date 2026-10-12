@@ -227,6 +227,35 @@ The UI module was adapted from
 [dlpwaters/omarchy-yt-downloader](https://github.com/dlpwaters/omarchy-yt-downloader)
 (MIT).
 
+## Optional Snake Quickactions tab
+
+Quickactions includes Draw, System Usage and Timer tabs. The Snake game is
+available as a fourth tab when explicitly enabled. In your Serpantinum JSON
+settings, add the following fragment without replacing your other settings:
+
+```json
+{
+  "quickactions": {
+    "snakeEnabled": true
+  }
+}
+```
+
+The game supports keyboard controls (arrow keys or WASD to move; Space to
+pause/restart; M for mode, B for borders, F for food, R to reset), multiple
+levels and local high scores. The game loads only while its tab is selected and
+the Quickactions panel is expanded; closing the tab stops game timers and
+releases the view. Scores are stored under
+`$XDG_STATE_HOME/serpantinum/quickactions/snake/state.json`, or
+`~/.local/state/serpantinum/quickactions/snake/state.json` by default. Every
+screen uses the same saved score state; interactive testing is still needed
+for simultaneous play on multiple monitors.
+
+The Snake implementation is adapted from
+[Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
+(commit `1a4d80b`), with MIT-licensed logic credited in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ---
 
 ## Running

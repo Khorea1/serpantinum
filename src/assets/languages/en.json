@@ -950,6 +950,45 @@
     }
   },
   "quickactions": {
+    "tabs": {
+      "draw": "Drawing",
+      "system": "System usage",
+      "timer": "Timer",
+      "snake": "Snake"
+    },
+    "snake": {
+      "endless": "Endless",
+      "level": "Level {level}",
+      "levels": "Levels",
+      "score": "Score {score}",
+      "best": "Best {best}",
+      "level_cleared": "Level {level} cleared in {time}. The snake requests a raise.",
+      "cleared": "LEVEL {level} CLEARED",
+      "game_over": "GAME OVER",
+      "paused": "PAUSED",
+      "incoming": "Level {level} incoming",
+      "restart_hint": "Space to restart",
+      "resume_hint": "Space to resume",
+      "help": "Arrows / WASD / Space · M mode · B borders · F food · R restart",
+      "mode": "mode",
+      "borders": "borders",
+      "food": "food",
+      "wrap": "Wrap",
+      "solid": "Solid",
+      "quips": {
+        "a": "Score: {score}. The snake has filed no complaints.",
+        "b": "You made it {time}. Your real work is still undefeated.",
+        "c": "Level {level}. The walls remain undefeated.",
+        "d": "{score} points. Somewhere, a Nokia 3310 nods respectfully.",
+        "e": "{time} spent here. The build is still compiling.",
+        "f": "You and the wall had a productive {time} together.",
+        "g": "New high score: {score}. The trophy is imaginary.",
+        "h": "You beat level {level}. Please return to pretending to work.",
+        "record_a": "New high score: {score}. Nicely done.",
+        "record_b": "Personal best: {score}. History has been made, barely.",
+        "record_c": "Record broken: {score}. The snake salutes you."
+      }
+    },
     "systemusage": {
       "cpu": "CPU",
       "ram": "RAM",

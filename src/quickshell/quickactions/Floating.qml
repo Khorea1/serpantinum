@@ -236,13 +236,29 @@ Variants {
 
             property int hoveredBars: 0
 
-            property var tabModules: [
-                "actions/DrawAction.qml",
-                "actions/SystemUsage.qml",
-                "actions/Timer.qml"
-            ]
+            // Tab descriptors form a stable contract for optional Quickactions.
+            // Existing tabs retain their positions and eager loading behavior.
+            property bool snakeEnabled: {
+                let revision = configRevision;
+                let settings = Config.getSetting("quickactions", {});
+                return settings && settings.snakeEnabled === true;
+            }
+            property var tabModules: {
+                let tabs = [
+                    { id: "draw", file: "actions/DrawAction.qml", label: I18n.t("quickactions.tabs.draw"), icon: "󰏘", lazy: false },
+                    { id: "system", file: "actions/SystemUsage.qml", label: I18n.t("quickactions.tabs.system"), icon: "󰍛", lazy: false },
+                    { id: "timer", file: "actions/Timer.qml", label: I18n.t("quickactions.tabs.timer"), icon: "󱎫", lazy: false }
+                ];
+                if (snakeEnabled) {
+                    tabs.push({ id: "snake", file: "actions/Game.qml", label: I18n.t("quickactions.tabs.snake"), icon: "󰓅", lazy: true });
+                }
+                return tabs;
+            }
 
             property int tabCount: Math.max(1, tabModules.length)
+            onTabModulesChanged: {
+                if (activeIndex >= tabCount) activeIndex = tabCount - 1;
+            }
 
             Connections {
                 target: FloatingController
@@ -273,13 +289,8 @@ Variants {
             }
 
             function showSystemUsage() {
-                let sysIndex = 1;
-                for (let i = 0; i < floatingWidget.tabModules.length; i++) {
-                    if (floatingWidget.tabModules[i].indexOf("SystemUsage") !== -1) {
-                        sysIndex = i;
-                        break;
-                    }
-                }
+                let sysIndex = floatingWidget.tabModules.findIndex(tab => tab.id === "system");
+                if (sysIndex < 0) return;
                 floatingWidget.activeIndex = sysIndex;
                 let sideEdge = (floatingWidget.barPosition === "left") ? "right" : "left";
                 let centerPos = floatingWidget.height / 2;
@@ -1236,7 +1247,8 @@ Variants {
                                 anchors.rightMargin: floatingWidget.s(4)
 
                                 visible: index === floatingWidget.activeIndex && floatingWidget.expandProgress > 0.01
-                                source: modelData
+                                active: !modelData.lazy || (index === floatingWidget.activeIndex && floatingWidget.isSidebarVisible && floatingWidget.isExpanded)
+                                source: modelData.file
                                 asynchronous: false
 
                                 property var scaleFunc: floatingWidget.s
