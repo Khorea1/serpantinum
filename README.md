@@ -19,14 +19,20 @@
 
 ## Fork differences
 
-This fork builds on the original [Serpantinum](https://github.com/ilyamiro/serpantinum). The baseline below is upstream commit [8c3ea64566e0a277bdf44065a6c489a850572875](https://github.com/ilyamiro/serpantinum/commit/8c3ea64566e0a277bdf44065a6c489a850572875), last incorporated into this fork on October 8, 2026. Upstream has continued to evolve since then, so these differences describe the fork relative to that shared baseline, not necessarily to upstream's current tip.
+This fork builds on the original [Serpantinum](https://github.com/ilyamiro/serpantinum). The baseline below is upstream commit [8c3ea64566e0a277bdf44065a6c489a850572875](https://github.com/ilyamiro/serpantinum/commit/8c3ea64566e0a277bdf44065a6c489a850572875), last incorporated into this fork on October 8, 2026. Upstream has continued to evolve since then, so these differences describe the fork relative to that shared baseline, not necessarily to upstream's current tip. Several optional features are adapted from [Mustafa2624's serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus) at [commit `1a4d80b`](https://github.com/Mustafa2624/serpantinum-plus/commit/1a4d80b9025fb6423008fb77ea8a41a9feeb2292).
 
 | Area | Upstream baseline | This fork |
 |---|---|---|
 | Symbol picker | No unified emoji/glyph/kaomoji picker in this revision. | Adds emoji, Nerd Font glyph, and kaomoji tabs with search, category navigation, direct typing (`Alt+Enter`), and recently/frequently used symbols prioritized within the results. Category chips scroll to keep the active category visible. See the [picker source](src/quickshell/emoji/Emoji.qml). |
 | Window picker | No dedicated window picker in this revision. | Adds a searchable window picker alongside the other popup tools. See [PickWindow.qml](src/quickshell/pickwindow/PickWindow.qml). |
 | Window overview | No thumbnail overview in this revision. | Adds an optional `expose` bar module: custom window previews on Hyprland and the native overview on Niri. It remains hidden on Sway and leaves the searchable window picker and workspace indicators intact. Adapted from [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus/tree/1a4d80b9025fb6423008fb77ea8a41a9feeb2292/custom/overlay/src/quickshell/bar/faces/expose). |
+| Video downloader | No `ytdl` bar module. | Adds an opt-in downloader for video, audio, playlists and subtitles via `yt-dlp` and `ffmpeg`, with configurable download paths. [Setup](#optional-video-downloader-bar-module). |
+| Compact system info | Includes the existing `sysmon` module, but no compact `sysinfo` module. | Adds an optional CPU/RAM/temperature readout on horizontal bars or a system-monitor launcher on vertical bars, with an optional command setting. Existing `sysmon` layouts are unchanged. [Setup](#optional-compact-system-info-bar-module). |
 | Popup navigation | Launcher and clipboard are separate popups. | Adds a shared switcher for launcher, symbols, clipboard, and window picker, accessible through on-screen buttons or `Ctrl+H/L`. The symbol picker's categories use `Alt+H/L`. See [SelectorSwitcher.qml](src/quickshell/reusables/behavior/SelectorSwitcher.qml). |
+| Quickactions: Snake | Quickactions has Draw, System Usage and Timer, but no Snake tab. | Adds an optional keyboard-controlled Snake game with levels and persistent local high scores. [Setup](#optional-snake-quickactions-tab). |
+| Quickactions: Drop Shelf | No persistent drop shelf tab. | Adds an optional shelf for files, links and images, with drag-and-drop, saved entries and Undo for removals. [Setup](#optional-drop-shelf-quickactions-tab). |
+| Quickactions: Music | No local music player tab. | Adds an optional player for local music with playlists and mpv playback, using isolated player processes per loaded tab. [Setup](#optional-local-music-player). |
+| Quickactions: IPC | No monitor-targeted Quickactions IPC commands. | Adds explicit monitor or `cursor` selection for panel visibility, tabs, expansion and movement, with user-configured shortcuts. [Setup](#optional-quickactions-ipc-shortcuts). |
 | Notifications | Already includes notifications and a Notification Center. | Extends the existing center with text, app, and date filters; grouped history; unread tracking; bulk, per-item, and group dismissal; and timed Do Not Disturb snoozes. See [NotificationCenter.qml](src/quickshell/notifications/NotificationCenter.qml). |
 | Fonts | Discovers bundled fonts and files in Serpantinum's user-state directory. | Adds system fonts through Fontconfig alongside fonts in the user-state directory; selected font files are still loaded by the shell. See [ThemeBackend.qml](src/quickshell/singletons/theme/ThemeBackend.qml). |
 | Wallpapers | Uses the QML wallpaper surface. | Adds optional `wallpaperBackend = "awww"` for static images. QML remains the default backend and continues to handle video wallpapers. See [Wallpaper.qml](src/quickshell/singletons/theme/Wallpaper.qml). |
@@ -240,8 +246,9 @@ The UI module was adapted from
 ## Optional Snake Quickactions tab
 
 Quickactions includes Draw, System Usage and Timer tabs. The Snake game is
-available as a fourth tab when explicitly enabled. In your Serpantinum JSON
-settings, add the following fragment without replacing your other settings:
+available as a fourth tab when enabled. In **Guide → General → Quickactions:
+Snake**, turn on the switch. You can also enable it in your Serpantinum JSON
+settings by adding the following fragment without replacing other settings:
 
 ```json
 {
@@ -265,10 +272,12 @@ The Snake implementation is adapted from
 [Mustafa2624/serpantinum-plus](https://github.com/Mustafa2624/serpantinum-plus)
 (commit `1a4d80b`), with MIT-licensed logic credited in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Optional local Music player
 
-Set `quickactions.musicEnabled` to `true` in the existing JSON settings to add
-an on-demand Music tab alongside the original Quickactions tabs:
+Enable **Guide → General → Quickactions: Music** to add an on-demand Music tab
+alongside the original Quickactions tabs, or set `quickactions.musicEnabled`
+to `true` in the existing JSON settings:
 
 ```json
 {
@@ -291,8 +300,8 @@ Functional validation on real Hyprland, Niri and Sway sessions remains pending.
 
 ## Optional Drop Shelf Quickactions tab
 
-Enable the Drop Shelf in your existing JSON settings without replacing other
-Quickactions options:
+Enable **Guide → General → Quickactions: Drop Shelf**, or add the following to
+your existing JSON settings without replacing other Quickactions options:
 
 ```json
 {
@@ -382,6 +391,8 @@ To run the shell, launch `serpantinumd start`
 
 ## Credits
 
+* Original project: [Serpantinum](https://github.com/ilyamiro/serpantinum) by [Illia Miroshnichenko (ilyamiro)](https://github.com/ilyamiro).
+* Special thanks to [Mustafa2624](https://github.com/Mustafa2624) for the [serpantinum-plus fork](https://github.com/Mustafa2624/serpantinum-plus), which inspired and provided the basis for the optional Exposé, compact system info, video downloader, Snake, Music and Drop Shelf integrations in this fork. The original authors of third-party components are credited in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the relevant feature sections above.
 * Special thanks to Darkall44/Qylock for providing a gorgeous material SDDM theme!
 
 <br><br><br>
