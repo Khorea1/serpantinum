@@ -50,6 +50,7 @@ Item {
     property real sfxVolume: generalSettings.sfxVolume !== undefined ? generalSettings.sfxVolume : 100
     property bool screenshotCaptureOnRelease: generalSettings.screenshotCaptureOnRelease !== undefined ? generalSettings.screenshotCaptureOnRelease : false
     property bool quickactions: generalSettings.quickactions !== undefined ? generalSettings.quickactions : true
+    property var quickactionsSettings: Config.getSetting("quickactions", {})
     property int weatherInterval: generalSettings.weatherInterval !== undefined ? generalSettings.weatherInterval : 15
     property string weatherUnit: generalSettings.weatherUnit !== undefined ? generalSettings.weatherUnit : "metric"
     property bool isLocEditOpen: false
@@ -87,12 +88,16 @@ Item {
             generalTabRoot.sfxVolume = gs.sfxVolume !== undefined ? gs.sfxVolume : 100;
             generalTabRoot.screenshotCaptureOnRelease = gs.screenshotCaptureOnRelease !== undefined ? gs.screenshotCaptureOnRelease : false;
             generalTabRoot.quickactions = gs.quickactions !== undefined ? gs.quickactions : true;
+            generalTabRoot.quickactionsSettings = Config.getSetting("quickactions", {});
             generalTabRoot.weatherInterval = gs.weatherInterval !== undefined ? gs.weatherInterval : 15;
             generalTabRoot.weatherUnit = gs.weatherUnit !== undefined ? gs.weatherUnit : "metric";
             generalTabRoot.generalSettings = gs;
             if (weatherIntervalSelector.value !== generalTabRoot.weatherInterval) {
                 weatherIntervalSelector.value = generalTabRoot.weatherInterval;
             }
+        }
+        function onRawSettingsChanged() {
+            generalTabRoot.quickactionsSettings = Config.getSetting("quickactions", {});
         }
     }
 
@@ -120,6 +125,14 @@ Item {
         current.weatherInterval = generalTabRoot.weatherInterval;
         current.weatherUnit = generalTabRoot.weatherUnit;
         Config.setSetting("general", current);
+    }
+
+    function setQuickactionsFeature(key, enabled) {
+        if (!Config.dataReady) return;
+        let current = Object.assign({}, Config.getSetting("quickactions", {}));
+        current[key] = enabled;
+        Config.setSetting("quickactions", current);
+        quickactionsSettings = current;
     }
 
     ImagePicker {
@@ -330,6 +343,7 @@ Item {
                 icon: "󱓞"
                 title: I18n.t("guide.general.quickactions.title") || "Quickactions"
                 description: I18n.t("guide.general.quickactions.desc") || "Enable floating quickactions overlay"
+                searchKeywords: "quickactions floating panel overlay"
 
                 Toggle {
                     checked: generalTabRoot.quickactions
@@ -341,6 +355,57 @@ Item {
                         generalTabRoot.quickactions = c;
                         generalTabRoot.updateGeneralSettings();
                     }
+                }
+            }
+
+            SettingsRow {
+                rootObj: generalTabRoot.rootObj
+                icon: "󰓅"
+                title: I18n.t("guide.general.quickactions.snake.title")
+                description: I18n.t("guide.general.quickactions.snake.desc")
+                searchKeywords: "quickactions snake game tab"
+
+                Toggle {
+                    checked: generalTabRoot.quickactionsSettings.snakeEnabled === true
+                    accentColor: ThemeBackend.mauve
+                    baseColor: ThemeBackend.surface1
+                    handleColor: ThemeBackend.crust
+                    handleOffColor: ThemeBackend.text
+                    onToggled: function(c) { generalTabRoot.setQuickactionsFeature("snakeEnabled", c); }
+                }
+            }
+
+            SettingsRow {
+                rootObj: generalTabRoot.rootObj
+                icon: "󰉋"
+                title: I18n.t("guide.general.quickactions.dropshelf.title")
+                description: I18n.t("guide.general.quickactions.dropshelf.desc")
+                searchKeywords: "quickactions drop shelf files images links tab"
+
+                Toggle {
+                    checked: generalTabRoot.quickactionsSettings.dropShelfEnabled === true
+                    accentColor: ThemeBackend.mauve
+                    baseColor: ThemeBackend.surface1
+                    handleColor: ThemeBackend.crust
+                    handleOffColor: ThemeBackend.text
+                    onToggled: function(c) { generalTabRoot.setQuickactionsFeature("dropShelfEnabled", c); }
+                }
+            }
+
+            SettingsRow {
+                rootObj: generalTabRoot.rootObj
+                icon: "󰎆"
+                title: I18n.t("guide.general.quickactions.music.title")
+                description: I18n.t("guide.general.quickactions.music.desc")
+                searchKeywords: "quickactions music mpv library playback tab"
+
+                Toggle {
+                    checked: generalTabRoot.quickactionsSettings.musicEnabled === true
+                    accentColor: ThemeBackend.mauve
+                    baseColor: ThemeBackend.surface1
+                    handleColor: ThemeBackend.crust
+                    handleOffColor: ThemeBackend.text
+                    onToggled: function(c) { generalTabRoot.setQuickactionsFeature("musicEnabled", c); }
                 }
             }
 

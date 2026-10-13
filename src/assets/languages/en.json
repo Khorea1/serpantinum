@@ -216,7 +216,19 @@
       },
       "quickactions": {
         "title": "Quickactions",
-        "desc": "Enable floating quickactions overlay"
+        "desc": "Enable floating quickactions overlay",
+        "snake": {
+          "title": "Quickactions: Snake",
+          "desc": "Show the Snake game tab"
+        },
+        "dropshelf": {
+          "title": "Quickactions: Drop Shelf",
+          "desc": "Show the shelf for files, images and links"
+        },
+        "music": {
+          "title": "Quickactions: Music",
+          "desc": "Show the local music player tab (mpv for playback)"
+        }
       },
       "location": {
         "title": "Location",

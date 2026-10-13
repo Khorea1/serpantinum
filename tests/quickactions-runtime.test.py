@@ -42,11 +42,22 @@ PROBE = """
                                 console.log("QA_FAIL core_loader", i)
                         }
                         activeIndex = tabCount - 1
-                        Config.rawSettings = {quickactions: {}}
-                        configRevision++
+                        Config.setSetting("quickactions", {})
                         phase = 1
-                    } else {
+                    } else if (phase === 1) {
                         console.log("QA_CLAMPED", tabCount, activeIndex, moduleRepeater.count)
+                        Config.setSetting("quickactions", {snakeEnabled: true})
+                        phase = 2
+                    } else if (phase === 2) {
+                        console.log("QA_SNAKE", tabCount, tabModules[3].id)
+                        Config.setSetting("quickactions", {snakeEnabled: true, dropShelfEnabled: true})
+                        phase = 3
+                    } else if (phase === 3) {
+                        console.log("QA_DROPSHELF", tabCount, tabModules[4].id)
+                        Config.setSetting("quickactions", {snakeEnabled: true, dropShelfEnabled: true, musicEnabled: true})
+                        phase = 4
+                    } else {
+                        console.log("QA_RESTORED", tabCount, tabModules[5].id)
                         stop()
                         Qt.quit()
                     }
@@ -121,10 +132,13 @@ def main() -> None:
         output = result.stdout + result.stderr
         expected = ("QA_INITIAL 3 0",
                     f"QA_CONFIGURED {EXPECTED_COUNT} 0 {EXPECTED_COUNT}",
-                    "QA_CLAMPED 3 2 3")
+                    "QA_CLAMPED 3 2 3",
+                    "QA_SNAKE 4 snake",
+                    "QA_DROPSHELF 5 dropshelf",
+                    "QA_RESTORED 6 music")
         if result.returncode or any(marker not in output for marker in expected) or "QA_FAIL" in output:
             raise AssertionError(f"Quickactions QML failed:\n{output}")
-    print(f"Quickactions QML: initial selection, {EXPECTED_COUNT} tabs, and removal clamp OK")
+    print(f"Quickactions QML: initial {EXPECTED_COUNT} tabs, removal clamp, and live re-enabling OK")
 
 
 if __name__ == "__main__":

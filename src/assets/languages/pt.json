@@ -203,7 +203,19 @@
       },
       "quickactions": {
         "title": "Ações rápidas",
-        "desc": "Ativa o overlay flutuante de ações rápidas"
+        "desc": "Ativa o overlay flutuante de ações rápidas",
+        "snake": {
+          "title": "Ações rápidas: Snake",
+          "desc": "Mostra a aba do jogo Snake"
+        },
+        "dropshelf": {
+          "title": "Ações rápidas: Drop Shelf",
+          "desc": "Mostra a prateleira para arquivos, imagens e links"
+        },
+        "music": {
+          "title": "Ações rápidas: Música",
+          "desc": "Mostra o player de música local (usa mpv para reproduzir)"
+        }
       },
       "location": {
         "title": "Localização",
