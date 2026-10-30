@@ -33,10 +33,14 @@ function scoreText(hay, query, weight) {
     if (hay === query) return 100000 * weight;
     if (hay.startsWith(query)) return 50000 * weight;
 
-    let tokens = hay.split(" ");
-    for (let i = 0; i < tokens.length; i++) {
-        if (tokens[i].startsWith(query)) return 30000 * weight;
-    }
+    // "some token starts with query". normalizeText collapses every run of
+    // whitespace (and '-', '_') to a single space with no leading/trailing
+    // space, so a token boundary is exactly the start of the string or a
+    // space — no need to materialize the token array (a per-item, per-field
+    // allocation that dominated scoring on the 11k-entry Nerd Font tab).
+    // Queries containing a space can never prefix a single token, so they
+    // fall through to the phrase tier as before.
+    if (query.indexOf(" ") === -1 && hay.includes(" " + query)) return 30000 * weight;
     if (hay.includes(query)) return 10000 * weight;
     return query.length >= 2 && isSubsequence(query, hay) ? 1000 * weight : 0;
 }
@@ -44,27 +48,51 @@ function scoreText(hay, query, weight) {
 // fields: array of { get: function(item) -> string, weight: number }
 // Higher weight fields contribute more to matchQuality on exact/prefix
 // hits, mirroring the clipboard widget's own scoring tiers.
-function scoreItem(item, query, fields) {
-    let q = normalizeText(query);
-    let terms = q.split(" ");
-    let fieldValues = [];
-    let phraseBest = 0;
-    for (let f = 0; f < fields.length; f++) {
-        let raw = fields[f].get(item);
-        if (!raw) continue;
-        let hay = normalizeText(Array.isArray(raw) ? raw.join(" ") : raw);
-        let w = fields[f].weight || 1;
-        fieldValues.push({ text: hay, weight: w });
-        phraseBest = Math.max(phraseBest, scoreText(hay, q, w));
-    }
+//
+// Precomputes, for each item, the normalized haystack of every field. The
+// datasets are immutable between keystrokes, so normalizing once here turns
+// the per-keystroke cost from "normalize every field of every item" into a
+// plain scan over already-normalized strings — the dominant cost for the
+// 11k-entry Nerd Font tab. Keeps items, per-field weights and the haystack
+// matrix aligned by index.
+function buildFieldIndex(dataset, fields) {
+    let weights = new Array(fields.length);
+    for (let f = 0; f < fields.length; f++) weights[f] = fields[f].weight || 1;
 
+    let hay = new Array(dataset.length);
+    for (let i = 0; i < dataset.length; i++) {
+        let item = dataset[i];
+        let row = new Array(fields.length);
+        for (let f = 0; f < fields.length; f++) {
+            let raw = fields[f].get(item);
+            row[f] = raw ? normalizeText(Array.isArray(raw) ? raw.join(" ") : raw) : "";
+        }
+        hay[i] = row;
+    }
+    return { items: dataset, weights: weights, hay: hay };
+}
+
+// scoreItem over a pre-normalized row: same tier/weight semantics, but no
+// per-field { text, weight } allocation and no query re-normalization per
+// item.
+function scoreIndexedRow(row, weights, q, terms) {
+    let phraseBest = 0;
+    for (let f = 0; f < row.length; f++) {
+        let h = row[f];
+        if (!h) continue;
+        let s = scoreText(h, q, weights[f]);
+        if (s > phraseBest) phraseBest = s;
+    }
     if (terms.length === 1) return phraseBest;
 
     let termScore = 0;
     for (let t = 0; t < terms.length; t++) {
         let best = 0;
-        for (let f = 0; f < fieldValues.length; f++) {
-            best = Math.max(best, scoreText(fieldValues[f].text, terms[t], fieldValues[f].weight));
+        for (let f = 0; f < row.length; f++) {
+            let h = row[f];
+            if (!h) continue;
+            let s = scoreText(h, terms[t], weights[f]);
+            if (s > best) best = s;
         }
         if (best === 0) return 0;
         termScore += best;
@@ -81,22 +109,24 @@ function decayedScore(entry, halfLifeDays, nowMs) {
     return (entry.c || 0) * Math.pow(0.5, ageDays / halfLifeDays);
 }
 
-// Generic filter+sort. `dataset` is the full array, `keyOf` extracts the
-// history-store key for an item, `historyStore` maps key -> {c,t}.
-// Returns a new array, sorted by (matchQuality desc, historyScore desc,
-// original order) when there's a query, or left in original dataset
-// order when the query is empty (category filtering already applied by
-// the caller before this runs).
-function filterAndSort(dataset, query, fields, keyOf, historyStore, halfLifeDays) {
+// Filter+sort over a prebuilt field index (see buildFieldIndex). `keyOf`
+// extracts the history-store key for an item, `historyStore` maps key ->
+// {c,t}. Returns a new array, sorted by (matchQuality desc, historyScore
+// desc, original order), or null when the query is empty (callers handle the
+// unfiltered/featured ordering).
+function filterAndSortIndexed(index, query, keyOf, historyStore, halfLifeDays) {
     let q = normalizeText(query);
-    if (q.length === 0) return dataset;
+    if (q.length === 0) return null;
 
+    let terms = q.split(" ");
     let now = Date.now();
+    let hay = index.hay;
+    let weights = index.weights;
     let out = [];
-    for (let i = 0; i < dataset.length; i++) {
-        let item = dataset[i];
-        let quality = scoreItem(item, q, fields);
+    for (let i = 0; i < hay.length; i++) {
+        let quality = scoreIndexedRow(hay[i], weights, q, terms);
         if (quality > 0) {
+            let item = index.items[i];
             let hScore = historyStore ? decayedScore(historyStore[keyOf(item)], halfLifeDays, now) : 0;
             out.push({ item: item, quality: quality, hScore: hScore, idx: i });
         }

@@ -115,6 +115,12 @@ PanelWindow {
     property var nerdLookup: ({})
     property var kaoLookup: ({})
 
+    // Lazily-built, per-tab normalized field indexes (EmojiSearch.buildFieldIndex)
+    // so typing never re-normalizes the immutable datasets.
+    property var emojiFieldIndex: null
+    property var nerdFieldIndex: null
+    property var kaoFieldIndex: null
+
     property var resultsModel: []
     property var categoriesModel: []
     property int featuredCount: 0
@@ -252,6 +258,7 @@ PanelWindow {
         } catch (e) {
             emojiWindow.emojiRaw = [];
         }
+        emojiWindow.emojiFieldIndex = null;
         emojiWindow.emojiLoaded = true;
         if (emojiWindow.activeTab === "emoji") {
             emojiWindow.rebuildCategories();
@@ -269,6 +276,7 @@ PanelWindow {
         } catch (e) {
             emojiWindow.nerdRaw = [];
         }
+        emojiWindow.nerdFieldIndex = null;
         emojiWindow.nerdLoaded = true;
         if (emojiWindow.activeTab === "nerd") {
             emojiWindow.rebuildCategories();
@@ -286,6 +294,7 @@ PanelWindow {
         } catch (e) {
             emojiWindow.kaoRaw = [];
         }
+        emojiWindow.kaoFieldIndex = null;
         emojiWindow.kaoLoaded = true;
         if (emojiWindow.activeTab === "kao") {
             emojiWindow.rebuildCategories();
@@ -348,8 +357,8 @@ PanelWindow {
         return emojiWindow.emojiRaw;
     }
 
-    function fieldsForActiveTab() {
-        if (emojiWindow.activeTab === "nerd") {
+    function fieldsForTab(tab) {
+        if (tab === "nerd") {
             return [
                 { get: i => i.n, weight: 3 },
                 { get: i => i.g, weight: 1 },
@@ -357,7 +366,7 @@ PanelWindow {
                 { get: i => i.e, weight: 5 }
             ];
         }
-        if (emojiWindow.activeTab === "kao") {
+        if (tab === "kao") {
             return [
                 { get: i => i.n, weight: 3 },
                 { get: i => i.k, weight: 2 },
@@ -372,6 +381,40 @@ PanelWindow {
             { get: i => i.u, weight: 1 },
             { get: i => i.e, weight: 5 }
         ];
+    }
+
+    // Built once per tab. Query searches always run against the whole dataset
+    // (category filtering only applies while the query is empty, see
+    // rebuildResults), so a single full-dataset index covers every search.
+    function activeFieldIndex() {
+        if (emojiWindow.activeTab === "nerd") {
+            if (!emojiWindow.nerdFieldIndex && emojiWindow.nerdLoaded)
+                emojiWindow.nerdFieldIndex = ESearch.buildFieldIndex(emojiWindow.nerdRaw, emojiWindow.fieldsForTab("nerd"));
+            return emojiWindow.nerdFieldIndex;
+        }
+        if (emojiWindow.activeTab === "kao") {
+            if (!emojiWindow.kaoFieldIndex && emojiWindow.kaoLoaded)
+                emojiWindow.kaoFieldIndex = ESearch.buildFieldIndex(emojiWindow.kaoRaw, emojiWindow.fieldsForTab("kao"));
+            return emojiWindow.kaoFieldIndex;
+        }
+        if (!emojiWindow.emojiFieldIndex && emojiWindow.emojiLoaded)
+            emojiWindow.emojiFieldIndex = ESearch.buildFieldIndex(emojiWindow.emojiRaw, emojiWindow.fieldsForTab("emoji"));
+        return emojiWindow.emojiFieldIndex;
+    }
+
+    // Assigning a fresh array to a view's `model` triggers a full reset
+    // (every delegate destroyed and rebuilt). Skip it when the new result is
+    // element-wise identical, which happens on reopen/history refreshes.
+    function assignResults(next) {
+        let cur = emojiWindow.resultsModel;
+        if (cur && cur.length === next.length) {
+            let same = true;
+            for (let i = 0; i < next.length; i++) {
+                if (cur[i] !== next[i]) { same = false; break; }
+            }
+            if (same) return;
+        }
+        emojiWindow.resultsModel = next;
     }
 
     function keyOfActiveTab(item) {
@@ -399,12 +442,12 @@ PanelWindow {
                 emojiWindow.featuredCount = merged.count;
                 dataset = merged.items;
             }
-            emojiWindow.resultsModel = dataset;
+            emojiWindow.assignResults(dataset);
         } else {
-            emojiWindow.resultsModel = ESearch.filterAndSort(
-                dataset, q, emojiWindow.fieldsForActiveTab(),
-                emojiWindow.keyOfActiveTab, historyAdapter.entries, emojiWindow.halfLifeDays
-            );
+            let index = emojiWindow.activeFieldIndex();
+            emojiWindow.assignResults(index
+                ? ESearch.filterAndSortIndexed(index, q, emojiWindow.keyOfActiveTab, historyAdapter.entries, emojiWindow.halfLifeDays)
+                : []);
         }
 
         let selectedIndex = selected ? emojiWindow.resultsModel.findIndex(it => emojiWindow.keyOfActiveTab(it) === selected) : -1;

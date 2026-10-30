@@ -206,6 +206,7 @@ Item {
 
     function isModuleActive(moduleId) {
         let norm = BarModuleRegistry.normalizeId(moduleId);
+        if (norm === "focus" && !CurrentFocus.isFocused) return false;
         let checkFlat = arr => {
             for (let i = 0; i < arr.length; i++) {
                 if (BarModuleRegistry.normalizeId(arr[i]) === norm) return true;

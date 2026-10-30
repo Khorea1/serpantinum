@@ -9,7 +9,11 @@ Item {
 
     property string appClass: ""
     property string appTitle: ""
-    readonly property string displayText: appTitle.trim()
+    property int maxTitleLength: 28
+    readonly property string displayText: {
+        const t = appTitle.trim();
+        return t.length > maxTitleLength ? t.substring(0, maxTitleLength) + "…" : t;
+    }
     readonly property bool isFocused: appClass !== "Desktop" && displayText !== ""
 
     function updateFocus(dataStr) {

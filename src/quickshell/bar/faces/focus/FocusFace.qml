@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import "../../../reusables"
 import "../../../"
 
 Item {
@@ -20,11 +19,11 @@ Item {
     readonly property bool isFocused: CurrentFocus.isFocused
     readonly property bool isFaceVisible: isFocused
 
-    property real leftPadding: (isSolid && !distinctPills) ? 0 : (barWindow ? barWindow.s(6) : 6)
-    property real rightPadding: (isSolid && !distinctPills) ? 0 : (barWindow ? barWindow.s(12) : 12)
-    property real maxWidth: barWindow ? barWindow.s(300) : 300
-    property real maxTextWidth: Math.max(0, maxWidth - (leftPadding + focusIconButton.width + innerLayout.spacing + rightPadding))
-    property real targetWidth: (moduleActive && isFocused) ? Math.min(maxWidth, leftPadding + focusIconButton.width + innerLayout.spacing + titleTextMain.width + rightPadding) : 0
+    property real leftPadding: (isSolid && !distinctPills) ? 0 : (barWindow ? barWindow.s(4) : 4)
+    property real rightPadding: (isSolid && !distinctPills) ? 0 : (barWindow ? barWindow.s(6) : 6)
+    property real maxWidth: barWindow ? barWindow.s(180) : 180
+    property real maxTextWidth: Math.max(0, maxWidth - (leftPadding + focusGlyph.width + innerLayout.spacing + rightPadding))
+    property real targetWidth: (moduleActive && isFocused) ? Math.min(maxWidth, leftPadding + focusGlyph.width + innerLayout.spacing + titleTextMain.width + rightPadding) : 0
 
     implicitWidth: targetWidth
     implicitHeight: parent ? parent.height : 0
@@ -34,21 +33,33 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.leftPadding
         anchors.verticalCenter: parent.verticalCenter
-        spacing: barWindow ? barWindow.s(root.isCompact ? 5 : 6) : (root.isCompact ? 5 : 6)
+        spacing: barWindow ? barWindow.s(4) : 4
 
-        IconButton {
-            id: focusIconButton
-            width: barWindow ? barWindow.s(root.isCompact ? 28 : 30) : (root.isCompact ? 28 : 30)
-            height: barWindow ? barWindow.s(root.isCompact ? 28 : 30) : (root.isCompact ? 28 : 30)
-            cornerRadius: barWindow ? barWindow.s(root.isCompact ? 9 : 10) : (root.isCompact ? 9 : 10)
-            buttonIcon: "✦"
-            iconFontSize: barWindow ? barWindow.s(root.isCompact ? 14 : 15) : (root.isCompact ? 14 : 15)
-            accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-            textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
+        Item {
+            id: focusGlyph
+            width: barWindow ? barWindow.s(root.isCompact ? 14 : 16) : (root.isCompact ? 14 : 16)
+            height: width
             anchors.verticalCenter: parent.verticalCenter
-            onClicked: {
-                if (Caching.serpantinumDir) {
-                    Quickshell.execDetached(["bash", "-c", Caching.serpantinumDir + "/scripts/qs_manager.sh toggle applauncher"])
+
+            Text {
+                anchors.centerIn: parent
+                text: "󱎴"
+                font.family: ThemeBackend.iconFont
+                font.pixelSize: barWindow ? barWindow.s(root.isCompact ? 13 : 14) : (root.isCompact ? 13 : 14)
+                color: glyphArea.containsMouse ? ThemeBackend.text : ThemeBackend.subtext0
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
+
+            MouseArea {
+                id: glyphArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (Caching.serpantinumDir) {
+                        Quickshell.execDetached(["bash", "-c", Caching.serpantinumDir + "/scripts/qs_manager.sh toggle applauncher"])
+                    }
                 }
             }
         }
